@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSF FY27 · The Shared Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bitter:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  @font-face{font-family:'Brandon Grotesque';font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/brandon-regular.woff2') format('woff2')}
+  @font-face{font-family:'Brandon Grotesque';font-style:normal;font-weight:500;font-display:swap;src:url('/fonts/brandon-medium.woff2') format('woff2')}
+  @font-face{font-family:'Brandon Grotesque';font-style:normal;font-weight:700;font-display:swap;src:url('/fonts/brandon-bold.woff2') format('woff2')}
+  @font-face{font-family:'Brandon Grotesque';font-style:normal;font-weight:800;font-display:swap;src:url('/fonts/brandon-black.woff2') format('woff2')}
+  :root{--green:#4E8209;--teal:#007F9B;--ink:#333230;--muted:#5C665A;--line:#e3e7dd;--tan:#E3D9C2;
+    --g1:#64A70B;--g2:#00A9CE;--g3:#A5228E}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{font-family:"Brandon Grotesque","Montserrat",-apple-system,Helvetica,Arial,sans-serif;color:var(--ink);
+    background:var(--tan);min-height:100vh;-webkit-font-smoothing:antialiased}
+  h1{font-family:"Chaparral Pro","Bitter",Georgia,serif;letter-spacing:-.02em}
+  .topstrip{height:12px;background:linear-gradient(90deg,#4E8209,#007F9B)}
+  header{background:#fff;padding:18px 40px;display:flex;align-items:center;gap:18px;box-shadow:0 1px 0 var(--line)}
+  header img{height:42px;width:auto;display:block}
+  header .t{font-size:17px;font-weight:700;color:var(--ink);line-height:1.25}
+  header .t span{display:block;font-weight:400;color:var(--muted);font-size:14px}
+  .wrap{display:flex;gap:34px;align-items:stretch;max-width:1500px;margin:0 auto;padding:34px 40px 40px;flex-wrap:wrap}
+  .left{flex:1 1 520px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .right{flex:1 1 420px;display:flex;flex-direction:column;min-width:340px}
+  .kick{font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:1.6px;color:var(--teal);text-align:center;margin:0 0 6px}
+  h1{font-size:38px;text-align:center;margin:0 0 14px;color:var(--ink)}
+  .heartwrap{position:relative;width:100%;max-width:560px}
+  .heartwrap svg{width:100%;height:auto;display:block;overflow:visible}
+  .heartoutline{filter:drop-shadow(0 12px 26px rgba(78,130,9,.16))}
+  .count{text-align:center;margin:16px 0 0}
+  .count b{display:block;font-family:"Chaparral Pro","Bitter",serif;font-size:64px;font-weight:700;color:var(--green);line-height:1;letter-spacing:-.02em}
+  .count b.bump{animation:cb .6s cubic-bezier(.34,1.56,.64,1)}
+  @keyframes cb{0%{transform:scale(1)}35%{transform:scale(1.2);color:var(--g2)}100%{transform:scale(1)}}
+  .count span{font-size:15px;color:var(--muted);letter-spacing:.4px}
+  .feedhead{font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:1.3px;color:var(--green);margin:4px 0 12px}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin:0 0 14px}
+  .legend span{display:inline-flex;align-items:center;gap:7px;font-size:14px;color:var(--muted);font-weight:600}
+  .legend i{width:12px;height:12px;border-radius:50%;display:inline-block}
+  .feed{flex:1;overflow:hidden;border:1px solid var(--line);border-radius:16px;background:#fff;padding:6px;min-height:340px}
+  .feed-item{padding:16px 18px;border-bottom:1px solid var(--line);animation:fp .5s ease}
+  .feed-item:last-child{border-bottom:0}
+  @keyframes fp{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:none}}
+  .fi-team{font-size:15px;font-weight:700;color:var(--ink);display:flex;align-items:center}
+  .fi-team .when{font-weight:500;color:var(--green);font-size:13px;margin-left:6px}
+  .fi-dot{width:11px;height:11px;border-radius:50%;margin-right:9px;flex:0 0 auto}
+  .fi-commit{font-size:16px;line-height:1.5;color:#38412f;margin-top:4px}
+  @media(prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+<div class="topstrip"></div>
+<header>
+  <img src="/logo.png" alt="OSF HealthCare">
+  <div class="t">FY27 Strategy<span>The shared OSF board</span></div>
+</header>
+<div class="wrap">
+  <div class="left">
+    <p class="kick">Mission Teams across OSF</p>
+    <h1>One OSF, one heart.</h1>
+    <div class="heartwrap">
+      <svg viewBox="0 0 200 176" role="img" aria-label="A heart filling with Mission Teams">
+        <defs><clipPath id="hc"><path d="M100 168 C 44 124, 10 96, 10 58 C 10 30, 32 14, 56 14 C 76 14, 91 27, 100 45 C 109 27, 124 14, 144 14 C 168 14, 190 30, 190 58 C 190 96, 156 124, 100 168 Z"/></clipPath></defs>
+        <path class="heartoutline" d="M100 168 C 44 124, 10 96, 10 58 C 10 30, 32 14, 56 14 C 76 14, 91 27, 100 45 C 109 27, 124 14, 144 14 C 168 14, 190 30, 190 58 C 190 96, 156 124, 100 168 Z" fill="rgba(255,255,255,.55)" stroke="#4E8209" stroke-width="2"/>
+        <g id="dots" clip-path="url(#hc)"></g>
+      </svg>
+    </div>
+    <div class="count"><b id="count">0</b><span>commitment cards</span></div>
+  </div>
+  <div class="right">
+    <div class="feedhead">What teams are committing to</div>
+    <div class="feed" id="feed"></div>
+  </div>
+</div>
+<script src="screen.js"></script>
+</body>
+</html>
