@@ -1,12 +1,12 @@
 (function(){
   "use strict";
-  var TOTAL = 7;
+  var TOTAL = 8;
   var svgns = 'http://www.w3.org/2000/svg';
   var cur = 0;
   var screens = Array.prototype.slice.call(document.querySelectorAll('.screen'));
   var dotsBox = document.getElementById('dots');
   var partTag = document.getElementById('parttag');
-  var PART_LABELS = ['A team walkthrough','Your commitment card','Your commitment card','Your commitment card','Our commitments','Your Strategy Commitment Card','The shared OSF board'];
+  var PART_LABELS = ['Team walkthrough','Team commitment card','Team commitment card','Team commitment card','Our commitments','On target','Team Commitment Card','The shared OSF board'];
 
   // build progress dots (skip welcome + finished = 7 middle steps feel right; show all 9 lightly)
   for(var i=0;i<TOTAL;i++){ var d=document.createElement('i'); dotsBox.appendChild(d); }
@@ -20,9 +20,11 @@
     dotEls.forEach(function(d,idx){ d.classList.toggle('on', idx===n); d.classList.toggle('done', idx<n); });
     partTag.textContent = PART_LABELS[n];
     cur = n;
-    var active = document.querySelector('.screen[data-part="'+n+'"]'); if(active && n!==6) staggerReveal(active);
-    if(n===5) renderCard();
-    if(n===6) renderBoard();
+    var active = document.querySelector('.screen[data-part="'+n+'"]'); if(active && n!==7) staggerReveal(active);
+    if(n!==5) stopOTCycle();
+    if(n===5) renderOnTarget();
+    if(n===6) renderCard();
+    if(n===7) renderBoard();
     try{ window.scrollTo({top:0,behavior:'smooth'}); }catch(e){ window.scrollTo(0,0); }
   }
 
@@ -74,10 +76,7 @@
     else { selected.push(name); el.classList.add('on'); }
     updateSel();
   }
-  function addCustom(){
-    var v = window.prompt('Add a team or division you partner with:');
-    if(!v) return; v = v.replace(/[<>]/g,'').trim().slice(0,40); if(!v) return;
-    if(selected.indexOf(v)>=0) return;
+  function createChip(v){
     var b = document.createElement('button');
     b.className='chip on'; b.type='button'; b.setAttribute('data-name',v);
     b.innerHTML = '<svg class="ck" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>'+esc(v);
@@ -85,9 +84,29 @@
     chipsBox.insertBefore(b, addBtn);
     selected.push(v); updateSel();
   }
+  // inline add field (window.prompt is blocked in sandboxed/embedded previews)
+  function addCustom(){
+    var existing = chipsBox.querySelector('.chip-input');
+    if(existing){ existing.querySelector('input').focus(); return; }
+    var wrap = document.createElement('span');
+    wrap.className='chip-input';
+    wrap.innerHTML='<input type="text" maxlength="40" placeholder="Team or division…" autocomplete="off" aria-label="Add a team or division"><button type="button" class="ci-add">Add</button>';
+    chipsBox.insertBefore(wrap, addBtn);
+    var inp = wrap.querySelector('input'), ok = wrap.querySelector('.ci-add'), done=false;
+    function finish(create){
+      if(done) return; done=true;
+      var v = inp.value.replace(/[<>]/g,'').trim().slice(0,40);
+      if(create && v && selected.indexOf(v)<0) createChip(v);
+      if(wrap.parentNode) wrap.parentNode.removeChild(wrap);
+    }
+    ok.addEventListener('mousedown', function(e){ e.preventDefault(); finish(true); });
+    inp.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); finish(true); } else if(e.key==='Escape'){ e.preventDefault(); finish(false); } });
+    inp.addEventListener('blur', function(){ finish(true); });
+    inp.focus();
+  }
   function updateSel(){
     toReach.disabled = selected.length===0;
-    if(!selected.length){ selCount.textContent='None selected yet. Tap the teams you partner with.'; }
+    if(!selected.length){ selCount.textContent='None selected yet. Tap the teams we partner with.'; }
     else { selCount.textContent = selected.length+' team'+(selected.length>1?'s':'')+' selected. Pick as many as fit.'; }
   }
 
@@ -153,6 +172,177 @@
     gateFinish();
   });
 
+  // ---- on target: the target builds outside-in — Excellence, then One OSF Team,
+  // then Destination OSF at the center. Each goal's commitments land as its ring arrives.
+  function renderBullseye(commits){
+    var mount = document.getElementById('bullseye'); if(!mount) return;
+    var cx=180, cy=172;
+    var reduce=false; try{ reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){}
+    // outer -> center, revealed in this order. `tx` = darker label color for contrast.
+    var RINGS=[
+      {goal:'g1', r:154, land:130, fill:'#eef6e0', stroke:'#64A70B', tx:'#3f6d08', label:'EXCELLENCE',      ly:-134, delay:0.15},
+      {goal:'g2', r:110, land:84,  fill:'#e2f4fa', stroke:'#00A9CE', tx:'#00647d', label:'ONE OSF TEAM',    ly:-88,  delay:1.05},
+      {goal:'g3', r:68,  land:0,   fill:'#f6e4f1', stroke:'#A5228E', tx:'#7c1a6a', label:'DESTINATION OSF', ly:-44,  delay:1.95}
+    ];
+    function ring(g){ for(var i=0;i<RINGS.length;i++){ if(RINGS[i].goal===g) return RINGS[i]; } return null; }
+    var svg='<svg viewBox="0 0 360 372" role="img" aria-label="Reaching Destination OSF by first being excellent and one OSF team">';
+    // rings + labels, each in a group that scales up from the center when its turn comes
+    RINGS.forEach(function(R){
+      var reveal = reduce ? '' :
+        '<animateTransform attributeName="transform" type="scale" from="0.45" to="1" begin="'+R.delay+'s" dur="0.6s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.34 1.3 0.5 1"/>'+
+        '<animate attributeName="opacity" from="0" to="1" begin="'+R.delay+'s" dur="0.35s" fill="freeze"/>';
+      var pw = R.label.length*7.7 + 20;   // white pill sized to the label so it always reads
+      svg+='<g transform="translate('+cx+' '+cy+')"><g'+(reduce?'':' opacity="0"')+'>'+
+        '<circle data-ring="'+R.goal+'" cx="0" cy="0" r="'+R.r+'" fill="'+R.fill+'" stroke="'+R.stroke+'" stroke-width="2"/>'+
+        '<rect x="'+(-pw/2).toFixed(1)+'" y="'+(R.ly-13)+'" width="'+pw.toFixed(1)+'" height="22" rx="11" fill="#ffffff" opacity="0.92"/>'+
+        '<text x="0" y="'+(R.ly+4)+'" text-anchor="middle" font-family="Brandon Grotesque, Montserrat, sans-serif" font-size="13" font-weight="700" letter-spacing="0.5" fill="'+R.tx+'">'+R.label+'</text>'+
+        reveal+
+      '</g></g>';
+    });
+    var counts={g1:0,g2:0,g3:0};
+    commits.forEach(function(c){ if(counts[c.goal]!=null) counts[c.goal]++; });
+    var idx={g1:0,g2:0,g3:0};
+    var dots='';
+    commits.forEach(function(c,ci){
+      var R=ring(c.goal); if(!R) return;
+      var total=counts[c.goal]||1, k=idx[c.goal]++;
+      var spin=(c.goal==='g2'?55:c.goal==='g3'?90:35);
+      var ang=(-90 + k*(360/total) + spin)*Math.PI/180;
+      var lr = R.goal==='g3' ? (total>1? 20:0) : R.land;
+      var lx=cx+lr*Math.cos(ang), ly=cy+lr*Math.sin(ang);
+      var col=R.stroke;
+      if(reduce){
+        dots+='<circle data-goal="'+c.goal+'" data-idx="'+ci+'" cx="'+lx.toFixed(1)+'" cy="'+ly.toFixed(1)+'" r="8" fill="'+col+'" stroke="#fff" stroke-width="2"><title>'+esc(c.text)+'</title></circle>';
+      } else {
+        var sx=cx+((k%2)?46:-46), sy=372;
+        var path='M '+sx+' '+sy+' Q '+cx+' '+(cy+70)+' '+lx.toFixed(1)+' '+ly.toFixed(1);
+        var beg=(R.delay + 0.5 + k*0.22).toFixed(2);   // land just after this goal's ring appears
+        dots+='<circle data-goal="'+c.goal+'" data-idx="'+ci+'" data-lx="'+lx.toFixed(1)+'" data-ly="'+ly.toFixed(1)+'" cx="0" cy="0" r="8" fill="'+col+'" stroke="#fff" stroke-width="2" opacity="0">'+
+          '<title>'+esc(c.text)+'</title>'+
+          '<animateMotion dur="0.7s" begin="'+beg+'s" path="'+path+'" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.22 1 0.36 1"/>'+
+          '<animate attributeName="opacity" dur="0.16s" begin="'+beg+'s" values="0;1" fill="freeze"/>'+
+          '<animate attributeName="r" dur="0.42s" begin="'+(parseFloat(beg)+0.58).toFixed(2)+'s" values="8;13;8" fill="freeze"/>'+
+        '</circle>';
+      }
+    });
+    svg+=dots+'</svg>';
+    mount.innerHTML=svg;
+  }
+
+  // interactive stack of commitment cards beside the target
+  var otReduce=false, otCommits=[];
+  try{ otReduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){}
+  var GOAL_TX={g1:'#3f6d08',g2:'#00647d',g3:'#7c1a6a'};
+  function buildCommitCards(commits){
+    var host=document.getElementById('commitCards'); if(!host) return;
+    otCommits=commits;
+    var html='';
+    commits.forEach(function(c,i){
+      html+='<div class="otc" data-goal="'+c.goal+'" data-i="'+i+'">'+
+        '<div class="otc-goal">'+esc(GOAL_NAMES[c.goal]||'')+'</div>'+
+        '<div class="otc-text">'+esc(c.text)+'</div>'+
+        '<div class="otc-foot">Our commitment for '+esc(GOAL_NAMES[c.goal]||'this goal')+'</div>'+
+      '</div>';
+    });
+    host.innerHTML=html;
+    // nav: prev / dots / next
+    var nav=document.getElementById('otNav');
+    if(nav){
+      var dh='<button type="button" data-nav="-1" aria-label="Previous"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg></button><div class="otdots">';
+      commits.forEach(function(c,i){ dh+='<i data-i="'+i+'"></i>'; });
+      dh+='</div><button type="button" data-nav="1" aria-label="Next"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 6l6 6-6 6"/></svg></button>';
+      nav.innerHTML=dh;
+      Array.prototype.slice.call(nav.querySelectorAll('.otdots i')).forEach(function(d){
+        d.addEventListener('click', function(){ setActiveOT(Number(d.getAttribute('data-i'))); });
+      });
+      Array.prototype.slice.call(nav.querySelectorAll('button[data-nav]')).forEach(function(b){
+        b.addEventListener('click', function(){ setActiveOT(activeOT()+Number(b.getAttribute('data-nav'))); });
+      });
+    }
+    // click a card (front = next, behind = bring forward)
+    host.addEventListener('click', function(e){
+      if(host._dragged) { host._dragged=false; return; }
+      var card=e.target.closest('.otc'); if(!card) return;
+      var ci=Number(card.getAttribute('data-i'));
+      setActiveOT(ci===activeOT() ? ci+1 : ci);
+    });
+    // swipe / drag
+    var downX=null;
+    host.addEventListener('pointerdown', function(e){ downX=e.clientX; host._dragged=false; });
+    window.addEventListener('pointerup', function(e){
+      if(downX===null) return; var dx=e.clientX-downX; downX=null;
+      if(Math.abs(dx)>45){ host._dragged=true; setActiveOT(activeOT()+(dx<0?1:-1)); }
+    });
+    sizeStack(host);
+  }
+  // make the stack as tall as its tallest card (+ room for the peeking cards behind)
+  function sizeStack(host){
+    var maxH=0;
+    Array.prototype.slice.call(host.querySelectorAll('.otc')).forEach(function(c){ maxH=Math.max(maxH, c.offsetHeight); });
+    if(maxH){ host.style.height = (maxH + 46) + 'px'; }
+  }
+  function activeOT(){ var h=document.getElementById('commitCards'); return h? Number(h.getAttribute('data-active')||0):0; }
+  function highlightRing(goal){
+    var bs=document.getElementById('bullseye'); if(!bs) return;
+    Array.prototype.slice.call(bs.querySelectorAll('circle[data-ring]')).forEach(function(r){
+      var on = r.getAttribute('data-ring')===goal;
+      r.setAttribute('stroke-width', on?'5':'2');
+      r.style.filter = on ? 'drop-shadow(0 0 7px '+r.getAttribute('stroke')+')' : 'none';
+    });
+    Array.prototype.slice.call(bs.querySelectorAll('circle[data-goal]')).forEach(function(d){
+      var on = d.getAttribute('data-goal')===goal;
+      d.setAttribute('stroke-width', on?'3.5':'2');
+      d.style.filter = on ? 'drop-shadow(0 0 6px '+d.getAttribute('fill')+')' : 'none';
+    });
+    // colored words in the closing line
+    Array.prototype.slice.call(document.querySelectorAll('.bull-msg [data-goal]')).forEach(function(w){
+      w.classList.toggle('lit', w.getAttribute('data-goal')===goal);
+    });
+  }
+  function setActiveOT(i){
+    var host=document.getElementById('commitCards'); if(!host) return;
+    var cards=Array.prototype.slice.call(host.querySelectorAll('.otc'));
+    if(!cards.length) return;
+    var n=cards.length; i=((i%n)+n)%n;
+    host.setAttribute('data-active', i);
+    cards.forEach(function(card,ci){
+      var rel=(ci-i+n)%n;                         // 0 = front, then stacked behind
+      var depth=Math.min(rel,3);
+      card.style.zIndex = String(50-rel);
+      card.style.opacity = rel<=2 ? '1' : '0';
+      card.style.transform = 'translateY('+(depth*15)+'px) scale('+(1-depth*0.05)+')';
+    });
+    Array.prototype.slice.call(document.querySelectorAll('#otNav .otdots i')).forEach(function(d,di){ d.classList.toggle('on', di===i); });
+    highlightRing(cards[i].getAttribute('data-goal'));
+  }
+  // jump to the first card of a goal (used by ring hover + word hover)
+  function showGoalCard(goal){
+    for(var i=0;i<otCommits.length;i++){ if(otCommits[i].goal===goal){ setActiveOT(i); return; } }
+  }
+  function stopOTCycle(){ /* no auto-cycle: fully interactive */ }
+  function wireTargetHover(){
+    var bs=document.getElementById('bullseye'); if(!bs) return;
+    Array.prototype.slice.call(bs.querySelectorAll('circle[data-ring]')).forEach(function(r){
+      r.addEventListener('mouseenter', function(){ showGoalCard(r.getAttribute('data-ring')); });
+    });
+    Array.prototype.slice.call(bs.querySelectorAll('circle[data-goal]')).forEach(function(d){
+      d.addEventListener('mouseenter', function(){ setActiveOT(Number(d.getAttribute('data-idx'))); });
+    });
+  }
+  function wireMsgHover(){
+    Array.prototype.slice.call(document.querySelectorAll('.bull-msg [data-goal]')).forEach(function(w){
+      w.addEventListener('mouseenter', function(){ showGoalCard(w.getAttribute('data-goal')); });
+    });
+  }
+  function renderOnTarget(){
+    var commits = collectCommitments();
+    renderBullseye(commits);
+    buildCommitCards(commits);
+    setActiveOT(0);
+    // wire hovers after the target builds in
+    setTimeout(function(){ if(cur===5){ wireTargetHover(); wireMsgHover(); } }, otReduce?0:2300);
+  }
+
   // ---- finished card ----
   function renderCard(){
     var name = teamIdentity() || 'Our Team';
@@ -190,92 +380,66 @@
     var mid = shown.map(function(c){return {label:c, more:false};});
     if(extra>0) mid.push({label:'+'+extra+' more', more:true});
 
-    var W=540, rowH=46;
+    var W=600, rowH=54;
     var rows = Math.max(1, mid.length);
-    var H = Math.max(272, rows*rowH + 78);
-    var cy = H/2, teamX=92, midX=286, patX=452;
+    var H = Math.max(300, rows*rowH + 92);
+    var cy = H/2, teamX=108, midX=316, patX=512;
     var startY = cy - (mid.length-1)*rowH/2;
     var pts = mid.map(function(nd,i){ return {x:midX, y:startY+i*rowH, nd:nd}; });
 
-    var PADX=112, PADY=94;
-    var svg = '<svg viewBox="'+(-PADX)+' '+(-PADY)+' '+(W+2*PADX)+' '+(H+2*PADY)+'" style="overflow:visible" role="img" aria-label="How our work reaches our patients through the teams we support, circled by the FY27 strategy">';
+    var PADX=16, PADY=20;
+    var svg = '<svg viewBox="'+(-PADX)+' '+(-PADY)+' '+(W+2*PADX)+' '+(H+2*PADY)+'" style="overflow:visible" role="img" aria-label="How our work reaches our patients, from our team through the teams we work with">';
 
     // connecting lines: team -> each supported team -> the patient
     var lines='';
     if(pts.length){
       pts.forEach(function(p){
-        lines += '<line x1="'+(teamX+16)+'" y1="'+cy+'" x2="'+p.x+'" y2="'+p.y.toFixed(1)+'" stroke="#c8d4b8" stroke-width="1.6"/>';
-        lines += '<line x1="'+p.x+'" y1="'+p.y.toFixed(1)+'" x2="'+(patX-16)+'" y2="'+cy+'" stroke="#c8d4b8" stroke-width="1.6"/>';
+        lines += '<line x1="'+(teamX+22)+'" y1="'+cy+'" x2="'+p.x+'" y2="'+p.y.toFixed(1)+'" stroke="#c8d4b8" stroke-width="1.8"/>';
+        lines += '<line x1="'+p.x+'" y1="'+p.y.toFixed(1)+'" x2="'+(patX-22)+'" y2="'+cy+'" stroke="#c8d4b8" stroke-width="1.8"/>';
       });
     } else {
-      lines += '<line x1="'+(teamX+16)+'" y1="'+cy+'" x2="'+(patX-16)+'" y2="'+cy+'" stroke="#c8d4b8" stroke-width="1.6" stroke-dasharray="5 4"/>';
+      lines += '<line x1="'+(teamX+22)+'" y1="'+cy+'" x2="'+(patX-22)+'" y2="'+cy+'" stroke="#c8d4b8" stroke-width="1.8" stroke-dasharray="5 4"/>';
     }
     svg += '<g>'+lines+'</g>';
 
     // the patient (right)
     svg += '<g>'+
-      '<circle cx="'+patX+'" cy="'+cy+'" r="31" fill="#fff" stroke="#4E8209" stroke-width="2.4"/>'+
-      '<g transform="translate('+patX+' '+cy+') scale(1.0)"><path transform="translate(-12 -12.1)" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="#A5228E"/></g>'+
+      '<circle cx="'+patX+'" cy="'+cy+'" r="40" fill="#fff" stroke="#4E8209" stroke-width="2.8"/>'+
+      '<g transform="translate('+patX+' '+cy+') scale(1.4)"><path transform="translate(-12 -12.1)" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="#A5228E"/></g>'+
       '</g>'+
-      '<text x="'+patX+'" y="'+(cy+50)+'" text-anchor="middle" font-family="Brandon Grotesque, Montserrat, sans-serif" font-size="10.5" font-weight="700" fill="#5c665a" letter-spacing="0.6">OUR PATIENTS</text>';
+      '<text x="'+patX+'" y="'+(cy+62)+'" text-anchor="middle" font-family="Brandon Grotesque, Montserrat, sans-serif" font-size="13" font-weight="700" fill="#5c665a" letter-spacing="0.6">OUR PATIENTS</text>';
 
     // the teams we support / partner with (middle)
     pts.forEach(function(p){
-      var label = trunc(p.nd.label, 18);
-      var rw = Math.max(70, label.length*6.2+20);
+      var label = trunc(p.nd.label, 24);
+      var rw = Math.max(96, label.length*7.4+26);
       var fill = p.nd.more ? '#f4f0e6' : '#eef6e0';
       var stroke = p.nd.more ? '#e0d8c4' : '#cbe0a6';
       var tcol = p.nd.more ? '#7a7360' : '#3f6d08';
       svg += '<g>'+
-        '<rect x="'+(p.x-rw/2).toFixed(1)+'" y="'+(p.y-13).toFixed(1)+'" width="'+rw.toFixed(1)+'" height="26" rx="13" fill="'+fill+'" stroke="'+stroke+'" stroke-width="1.5"/>'+
-        '<text x="'+p.x+'" y="'+(p.y+4).toFixed(1)+'" text-anchor="middle" font-family="Brandon Grotesque, Montserrat, sans-serif" font-size="11.5" font-weight="600" fill="'+tcol+'">'+esc(label)+'</text>'+
+        '<rect x="'+(p.x-rw/2).toFixed(1)+'" y="'+(p.y-16).toFixed(1)+'" width="'+rw.toFixed(1)+'" height="32" rx="16" fill="'+fill+'" stroke="'+stroke+'" stroke-width="1.6"/>'+
+        '<text x="'+p.x+'" y="'+(p.y+5).toFixed(1)+'" text-anchor="middle" font-family="Brandon Grotesque, Montserrat, sans-serif" font-size="13.5" font-weight="600" fill="'+tcol+'">'+esc(label)+'</text>'+
         '</g>';
     });
 
     // our team (left) — a team icon, mirroring the patient on the right
-    var tlabel = trunc(teamName, 20);
+    var tlabel = trunc(teamName, 22);
     svg += '<g>'+
-      '<circle cx="'+teamX+'" cy="'+cy+'" r="31" fill="#eef6e0" stroke="#4E8209" stroke-width="2.4"/>'+
-      '<g transform="translate('+teamX+' '+cy+') scale(1.05)"><g transform="translate(-12 -12)" fill="#4E8209">'+
+      '<circle cx="'+teamX+'" cy="'+cy+'" r="40" fill="#eef6e0" stroke="#4E8209" stroke-width="2.8"/>'+
+      '<g transform="translate('+teamX+' '+cy+') scale(1.4)"><g transform="translate(-12 -12)" fill="#4E8209">'+
         '<circle cx="12" cy="8" r="3.3"/>'+
         '<path d="M5 19.5c0-3.9 3.1-6 7-6s7 2.1 7 6z"/>'+
         '<circle cx="4.2" cy="10.6" r="2.3"/>'+
         '<circle cx="19.8" cy="10.6" r="2.3"/>'+
       '</g></g>'+
       '</g>'+
-      '<text x="'+teamX+'" y="'+(cy+49)+'" text-anchor="middle" font-family="Brandon Grotesque, Montserrat, sans-serif" font-size="11" font-weight="700" fill="#3f6d08">'+esc(tlabel)+'</text>';
+      '<text x="'+teamX+'" y="'+(cy+62)+'" text-anchor="middle" font-family="Brandon Grotesque, Montserrat, sans-serif" font-size="13" font-weight="700" fill="#3f6d08">'+esc(tlabel)+'</text>';
 
-    // the FY27 strategy, as one thing circling the whole connection
-    var ocx=W/2, ocy=H/2, rx=W/2+70, ry=H/2+58;
-    var DUR=26, SCOL='#4E8209', SLABEL='The FY27 Strategy';
-    var orbitPath='M '+(ocx-rx)+' '+ocy+' a '+rx+' '+ry+' 0 1 1 '+(2*rx)+' 0 a '+rx+' '+ry+' 0 1 1 '+(-2*rx)+' 0';
-    var reduce=false; try{ reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){}
-    function tokenMarkup(){
-      var w=Math.max(120, SLABEL.length*7.4+44);
-      return '<rect x="'+(-w/2).toFixed(1)+'" y="-15" width="'+w.toFixed(1)+'" height="30" rx="15" fill="'+SCOL+'" stroke="'+SCOL+'" stroke-width="1.6"/>'+
-        '<path transform="translate('+(-w/2+16).toFixed(1)+' 0) scale(0.72)" d="M0 3.6C-1 1.3-3.4 1-4.6 2.4-5.8 3.8-5.5 6-3.9 7.6L0 11.4 3.9 7.6C5.5 6 5.8 3.8 4.6 2.4 3.4 1 1 1.3 0 3.6Z" fill="#fff"/>'+
-        '<text x="'+(9).toFixed(1)+'" y="4" text-anchor="middle" font-family="Brandon Grotesque, Montserrat, sans-serif" font-size="12" font-weight="700" fill="#fff" letter-spacing="0.4">'+esc(SLABEL)+'</text>';
-    }
-    var orbit='<g class="strat-orbit">'+
-      '<ellipse cx="'+ocx+'" cy="'+ocy+'" rx="'+rx+'" ry="'+ry+'" fill="none" stroke="#d7e2c6" stroke-width="1.3" stroke-dasharray="2 8" opacity="0.85"/>';
-    if(reduce){
-      orbit+='<g transform="translate('+ocx.toFixed(1)+' '+(ocy-ry).toFixed(1)+')">'+tokenMarkup()+'</g>';
-    } else {
-      orbit+='<g>'+tokenMarkup()+
-        '<animateMotion dur="'+DUR+'s" repeatCount="indefinite" rotate="0" path="'+orbitPath+'" calcMode="linear"/>'+
-      '</g>';
-    }
-    orbit+='</g>';
-    svg += orbit;
 
     svg += '</svg>';
     document.getElementById('web').innerHTML = svg;
     var cap = document.getElementById('webcap');
-    if(conns.length){
-      cap.textContent = 'The '+conns.length+' team'+(conns.length>1?'s':'')+' we work with are how our work reaches our patients.';
-    } else {
-      cap.textContent = 'One way or another, what we do reaches our patients.';
-    }
+    cap.innerHTML = 'From our team, through the teams we work with, all the way to our patients.';
   }
 
   // ---- shared board heart — live via WebSocket ----
@@ -309,7 +473,7 @@
       var m; try { m = JSON.parse(ev.data); } catch(e){ return; }
       if(m.type === 'init'){
         board.count = m.count || 0; board.feed = (m.feed || []).slice(); board.inited = true;
-        if(cur === 6){ var g = document.getElementById('teamdots'); if(g){ g.innerHTML=''; board.built=false; } setCount(); renderFeed(); buildDots(); }
+        if(cur === 7){ var g = document.getElementById('teamdots'); if(g){ g.innerHTML=''; board.built=false; } setCount(); renderFeed(); buildDots(); }
       } else if(m.type === 'accepted'){ arrive(m.item, m.count, true); }
       else if(m.type === 'add'){ arrive(m.item, m.count, false); }
     };
@@ -338,7 +502,7 @@
         if(board.ws && board.ws.readyState === 1){ submitTeam(); }
         else if(location.protocol === 'file:' || !board.ws){ submitTeam(); }
         else { var n=0, iv=setInterval(function(){ if(board.ws && board.ws.readyState===1){ clearInterval(iv); submitTeam(); } else if(++n>30){ clearInterval(iv); submitTeam(); } }, 120); }
-      }, 850);
+      }, 1000);
     }
   }
 
@@ -409,11 +573,11 @@
     if(typeof count === 'number') board.count = count; else board.count++;
     var entry = { team:(item&&item.team)||'A Mission Team', commit:(item&&item.commit)||'', goal:(item&&item.goal)||'', mine:!!isMine };
     board.feed.unshift(entry); if(board.feed.length>60) board.feed.pop();
-    if(cur === 6){
+    if(cur === 7){
       setCount(); renderFeed();
       var g = document.getElementById('teamdots');
       if(g && board.built) makeDot(g, {team:entry.team, commit:entry.commit, goal:entry.goal}, isMine, true);
-      if(isMine){ var hw = document.querySelector('.screen[data-part="6"] .heartwrap'); if(hw){ hw.classList.remove('land'); void hw.offsetWidth; hw.classList.add('land'); } }
+      if(isMine){ var hw = document.querySelector('.screen[data-part="7"] .heartwrap'); if(hw){ hw.classList.remove('land'); void hw.offsetWidth; hw.classList.add('land'); } }
     }
   }
 
@@ -448,7 +612,7 @@
   // ---- print / restart ----
   document.getElementById('printBtn').addEventListener('click', function(){ window.print(); });
   var printBoardBtn = document.getElementById('printBoardBtn');
-  if(printBoardBtn) printBoardBtn.addEventListener('click', function(){ show(6); setTimeout(function(){ window.print(); }, 450); });
+  if(printBoardBtn) printBoardBtn.addEventListener('click', function(){ window.print(); });
   document.getElementById('restartBtn').addEventListener('click', function(){
     teamDept.value=''; teamName.value=''; teamWork.value=''; reach.value='';
     Array.prototype.slice.call(commitList.querySelectorAll('.commit-item.commit-extra')).forEach(function(it){ it.parentNode.removeChild(it); });

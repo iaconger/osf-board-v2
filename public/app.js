@@ -6,7 +6,7 @@
   var screens = Array.prototype.slice.call(document.querySelectorAll('.screen'));
   var dotsBox = document.getElementById('dots');
   var partTag = document.getElementById('parttag');
-  var PART_LABELS = ['A team walkthrough','Your commitment card','Your commitment card','Your commitment card','Our commitments','On target','Your Strategy Commitment Card','The shared OSF board'];
+  var PART_LABELS = ['Team walkthrough','Team commitment card','Team commitment card','Team commitment card','Our commitments','On target','Team Commitment Card','The shared OSF board'];
 
   // build progress dots (skip welcome + finished = 7 middle steps feel right; show all 9 lightly)
   for(var i=0;i<TOTAL;i++){ var d=document.createElement('i'); dotsBox.appendChild(d); }
@@ -106,7 +106,7 @@
   }
   function updateSel(){
     toReach.disabled = selected.length===0;
-    if(!selected.length){ selCount.textContent='None selected yet. Tap the teams you partner with.'; }
+    if(!selected.length){ selCount.textContent='None selected yet. Tap the teams we partner with.'; }
     else { selCount.textContent = selected.length+' team'+(selected.length>1?'s':'')+' selected. Pick as many as fit.'; }
   }
 

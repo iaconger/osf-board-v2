@@ -80,8 +80,10 @@
   .together .p{width:30px;height:30px;border-radius:50%;border:2.5px solid var(--green);background:#eef6e0;
     display:flex;align-items:center;justify-content:center}
   .together .p svg{width:15px;height:15px}
-  .meta-row{display:flex;justify-content:center;gap:40px;flex-wrap:wrap;margin:10px 0 36px}
-  .meta-row div{font-size:14px;color:var(--muted);letter-spacing:.2px}
+  .meta-row{display:flex;justify-content:center;gap:16px;flex-wrap:wrap;margin:10px 0 36px}
+  .meta-row div{width:172px;font-size:14px;color:var(--muted);letter-spacing:.2px;display:flex;flex-direction:column;align-items:center;text-align:center}
+  .meta-row .mi-ic{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:10px}
+  .meta-row .mi-ic svg{width:23px;height:23px}
   .meta-row b{display:block;font-family:"Chaparral Pro","Bitter",serif;font-size:21px;color:var(--ink);font-weight:600;margin-bottom:2px}
   .mission{max-width:52ch;margin:6px auto 4px;background:var(--soft);border:1px solid var(--line);border-radius:12px;
     padding:16px 20px;font-size:15px;line-height:1.6;color:#38412f;text-align:left}
@@ -338,14 +340,14 @@
 <main>
   <div class="stage">
     <div class="stage-top">
-      <div class="part-tag"><i></i><span id="parttag">A team walkthrough</span></div>
+      <div class="part-tag"><i></i><span id="parttag">Team walkthrough</span></div>
       <div class="dots" id="dots"></div>
     </div>
 
     <!-- 0 · WELCOME -->
     <section class="screen active" data-part="0">
       <div class="welcome">
-        <p class="kicker">FY27 Strategy · Module 4</p>
+        <p class="kicker">FY27 Strategy · Module 4: Moment of Pride</p>
         <h2 class="big">Let's create our team's<br>commitment to the strategy.</h2>
         <div class="together" aria-hidden="true">
           <span class="p"><svg viewBox="0 0 24 24" fill="none" stroke="#4E8209" stroke-width="2.2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></span>
@@ -353,11 +355,11 @@
           <span class="p"><svg viewBox="0 0 24 24" fill="none" stroke="#4E8209" stroke-width="2.2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></span>
           <span class="p"><svg viewBox="0 0 24 24" fill="none" stroke="#4E8209" stroke-width="2.2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></span>
         </div>
-        <p class="lead">The strategy isn't just a plan on paper. It's brought to life through the actions and commitments of each Mission Partner. We'll do this together as a team, led by your leader: say who we are, then make a commitment to each part of the FY27 strategy.</p>
+        <p class="lead">The strategy isn't just a plan on paper. It's brought to life through the everyday actions and commitments of teams like ours. We'll do this together as a team, led by your leader: say who we are, then make a commitment to each part of the FY27 strategy.</p>
         <div class="meta-row">
-          <div><b>Together</b>as a team</div>
-          <div><b>~10 min</b>with your leader</div>
-          <div><b>3+ commitments</b>we make together</div>
+          <div><span class="mi-ic" style="background:#eef6e0;color:#5a9209"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.2" r="3"/><path d="M3.6 19a5.4 5.4 0 0 1 10.8 0"/><path d="M16 5.6a2.8 2.8 0 0 1 0 5.3"/><path d="M17 13.6a5.4 5.4 0 0 1 3.4 5.4"/></svg></span><b>Together</b>as a team</div>
+          <div><span class="mi-ic" style="background:#e2f4fa;color:#0787a3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.4"/><path d="M12 7.4V12l3.1 1.9"/></svg></span><b>~10 min</b>with your leader</div>
+          <div><span class="mi-ic" style="background:#f6e4f1;color:#a5228e"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8.4"/><circle cx="12" cy="12" r="4.4"/><circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"/></svg></span><b>3+ commitments</b>we make together</div>
         </div>
         <button class="btn" data-go="1" style="margin:0 auto">Start together
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
@@ -366,7 +368,7 @@
 
     <!-- 1 · WHO WE ARE -->
     <section class="screen" data-part="1">
-      <p class="kicker">Your Strategy Commitment Card</p>
+      <p class="kicker">Team Commitment Card</p>
       <h2 class="big">Who are we?</h2>
       <p class="sub">Fill this out together. One person can type while the team talks it through.</p>
       <div class="fld-row">
@@ -390,11 +392,11 @@
 
     <!-- 2 · WHO WE'RE CONNECTED TO -->
     <section class="screen" data-part="2">
-      <p class="kicker">Your Strategy Commitment Card</p>
+      <p class="kicker">Team Commitment Card</p>
       <h2 class="big">Who are we connected to?</h2>
       <p class="sub">Pick the teams and divisions across OSF that we work with. The ones we depend on, and the ones who depend on us. That's what <b>One OSF Team</b> looks like.</p>
       <div class="chips" id="chips"></div>
-      <div class="selcount" id="selcount">None selected yet. Tap the teams you partner with.</div>
+      <div class="selcount" id="selcount">None selected yet. Tap the teams we partner with.</div>
       <div class="row">
         <button class="back" data-go="1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Back</button>
         <button class="btn" id="toReach" data-go="3" disabled>Next
@@ -404,9 +406,9 @@
 
     <!-- 3 · HOW OUR WORK REACHES OUR PATIENTS -->
     <section class="screen" data-part="3">
-      <p class="kicker">Your Strategy Commitment Card</p>
+      <p class="kicker">Team Commitment Card</p>
       <h2 class="big">How does our work reach the people we serve?</h2>
-      <p class="sub">Some teams work right with patients. A lot of teams help the people who do. Either way, think about how what you do ends up reaching a patient.</p>
+      <p class="sub">Some of us work right with patients. A lot of us support the people who do. Either way, think about how our work ends up reaching a patient.</p>
       <label class="fld" for="reach">Our work reaches the people we serve because…</label>
       <textarea id="reach" maxlength="240" placeholder="e.g. The systems we keep running let clinicians spend more time with patients"></textarea>
       <div class="row">
@@ -418,9 +420,9 @@
 
     <!-- 4 · OUR COMMITMENTS (one per pillar, plus add more) -->
     <section class="screen" data-part="4">
-      <p class="kicker">Your Strategy Commitment Card</p>
+      <p class="kicker">Team Commitment Card</p>
       <h2 class="big">Our commitments for FY27</h2>
-      <p class="sub">Make one commitment for each goal. Add more if you have them.</p>
+      <p class="sub">Make one commitment for each goal. Add more if we have them.</p>
       <div id="commitList">
         <div class="commit-item" data-goal="g1">
           <label class="fld"><span class="pd" style="background:var(--g1)"></span>Excellence</label>
@@ -466,7 +468,7 @@
 
     <!-- 8 · FINISHED CARD + CONNECTION -->
     <section class="screen" data-part="6">
-      <p class="kicker" style="text-align:center">Our Strategy Commitment Card</p>
+      <p class="kicker" style="text-align:center">Team Commitment Card</p>
       <h2 class="big" style="text-align:center;font-size:26px">How our team connects to<br>the ministry and our patients</h2>
       <div class="web-wrap"><div id="web"></div></div>
       <p class="web-cap" id="webcap">Every team we named is one thread in the same fabric, all of it reaching our patients at the center.</p>
@@ -474,8 +476,8 @@
       <div class="mtc" id="cardOut"></div>
 
       <div class="rollup">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#4E8209" stroke-width="2"><path d="M12 2v20M2 12h20" opacity=".4"/><circle cx="12" cy="12" r="9"/></svg>
-        <div>As more teams fill out their card, you start to see the whole ministry: every team connected, and all of it adding up to care for our patients.</div>
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><g stroke="#4E8209" stroke-width="1.5" opacity=".45"><path d="M12 12 12 3.4M12 12 19.6 8M12 12 17.6 18.6M12 12 6.4 18.6M12 12 4.4 8"/></g><g fill="#4E8209"><circle cx="12" cy="3.4" r="1.9"/><circle cx="19.6" cy="8" r="1.9"/><circle cx="17.6" cy="18.6" r="1.9"/><circle cx="6.4" cy="18.6" r="1.9"/><circle cx="4.4" cy="8" r="1.9"/></g><circle cx="12" cy="12" r="3.1" fill="#4E8209"/></svg>
+        <div>As more teams fill out their card, we start to see the whole ministry: every team connected, and all of it adding up to care for our patients.</div>
       </div>
 
       <div class="row">
