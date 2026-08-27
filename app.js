@@ -508,29 +508,20 @@
   var SIL_COL  = { g1:'#64A70B', g2:'#00A9CE', g3:'#A5228E' };
   function boardSilhouette(shape){
     var A=window.OSF_ART;
+    // full-color OSF brand marks: the heart (with the pyramid swirl inside) and the pyramid (icons in each piece)
     if(shape==='heart'){
-      return '<path transform="'+HEART_TF+'" d="'+HEART_D+'" fill="rgba(78,130,9,.05)" stroke="#4E8209" stroke-width="2"/>';
+      return A.heart;
     }
-    var out='';
-    ['g1','g2','g3'].forEach(function(g){
-      out += A.lobes[g].replace(/fill="#[0-9A-Fa-f]{6}"/, 'fill="rgba('+SIL_RGBA[g]+',.06)" stroke="'+SIL_COL[g]+'" stroke-width="20"');
-    });
-    return out;
+    return A.lobes.g1 + A.lobes.g2 + A.lobes.g3 + A.ink;
   }
   function buildBoardShape(){
     if(board.shapeBuilt) return;
     var mount=document.getElementById('boardShape'); if(!mount || !window.OSF_ART) return;
     board.shapeBuilt=true; board.shape='heart';   // opens on the heart, then spins into the pyramid
-    var A=window.OSF_ART, clipTre='';
-    ['g1','g2','g3'].forEach(function(g){ clipTre+=A.lobes[g]; });
-    mount.innerHTML='<svg viewBox="'+A.vb+'" role="img" aria-label="Mission Teams across OSF filling the heart, which turns into the OSF mark">'+
-      '<defs>'+
-        '<clipPath id="clipTre">'+clipTre+'</clipPath>'+
-        '<clipPath id="clipHeart"><path transform="'+HEART_TF+'" d="'+HEART_D+'"/></clipPath>'+
-      '</defs>'+
+    var A=window.OSF_ART;
+    mount.innerHTML='<svg viewBox="'+A.vb+'" role="img" aria-label="The OSF heart, which turns into the OSF strategy mark">'+
       '<g class="sil sil-tre" style="opacity:0">'+boardSilhouette('tre')+'</g>'+
       '<g class="sil sil-heart" style="opacity:1">'+boardSilhouette('heart')+'</g>'+
-      '<g id="teamdots" clip-path="url(#clipHeart)" style="opacity:0"></g>'+
     '</svg>';
   }
   // spin the mark, and mid-spin swap the heart for the pyramid so it reads as a transformation
