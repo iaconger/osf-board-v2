@@ -510,26 +510,18 @@
     var A=window.OSF_ART;
     // full-color OSF brand marks: the heart (with the pyramid swirl inside) and the pyramid (icons in each piece)
     if(shape==='heart'){
-      return A.heart;
+      return A.heart.g1 + A.heart.g2 + A.heart.g3;
     }
-    return A.lobes.g1 + A.lobes.g2 + A.lobes.g3;   // ending pyramid: clean lobes, no icons (dots fill it)
+    return A.lobes.g1 + A.lobes.g2 + A.lobes.g3 + A.ink;
   }
   function buildBoardShape(){
     if(board.shapeBuilt) return;
     var mount=document.getElementById('boardShape'); if(!mount || !window.OSF_ART) return;
     board.shapeBuilt=true; board.shape='heart';   // opens on the heart, then spins into the pyramid
     var A=window.OSF_ART;
-    var clipTre = A.lobes.g1 + A.lobes.g2 + A.lobes.g3;   // trefoil silhouette (clips the team dots)
-    mount.innerHTML='<svg viewBox="'+A.vb+'" role="img" aria-label="The OSF heart filling with teams, which turns into the OSF strategy mark">'+
-      '<defs><clipPath id="clipTre">'+clipTre+'</clipPath>'+
-        '<radialGradient id="osfMorphGlow" cx="50%" cy="50%" r="50%">'+
-          '<stop offset="0%" stop-color="#64A70B" stop-opacity="0.85"/>'+
-          '<stop offset="55%" stop-color="#00A9CE" stop-opacity="0.30"/>'+
-          '<stop offset="100%" stop-color="#00A9CE" stop-opacity="0"/></radialGradient></defs>'+
-      '<circle class="morphglow" cx="119.4" cy="113.5" r="118" fill="url(#osfMorphGlow)"/>'+
+    mount.innerHTML='<svg viewBox="'+A.vb+'" role="img" aria-label="The OSF heart, which turns into the OSF strategy mark">'+
       '<g class="sil sil-tre" style="opacity:0">'+boardSilhouette('tre')+'</g>'+
       '<g class="sil sil-heart" style="opacity:1">'+boardSilhouette('heart')+'</g>'+
-      '<g id="teamdots" clip-path="url(#osfHeartClip)" style="opacity:0"></g>'+
     '</svg>';
   }
   // spin the mark, and mid-spin swap the heart for the pyramid so it reads as a transformation
@@ -543,12 +535,11 @@
     if(reduce || !svg){ apply(); if(g)g.style.opacity='1'; return; }
     svg.classList.remove('spinin');
     svg.classList.remove('spinmorph'); void svg.offsetWidth; svg.classList.add('spinmorph');
-    // spinMorph is 1.85s; deepest shrink is at 50% (~925ms). Ease the dots down into that
-    // trough, swap silhouette + clip while the shape is smallest and the glow blooms, then
-    // ease the new shape's dots back as it settles.
-    if(g) setTimeout(function(){ g.style.opacity='0'; }, 700);
-    setTimeout(apply, 925);
-    if(g) setTimeout(function(){ g.style.opacity='1'; }, 1180);
+    // spinMorph is 1.5s; its deepest shrink is at 50% (750ms). Fade the dots down into that
+    // trough, swap silhouette + clip while the shape is tiny, then fade the new shape's dots back.
+    if(g) setTimeout(function(){ g.style.opacity='0'; }, 560);
+    setTimeout(apply, 750);
+    if(g) setTimeout(function(){ g.style.opacity='1'; }, 940);
   }
   // full ending beat: heart spins in -> fills with teams -> spins into the pyramid
   function playBoardSequence(){
@@ -559,13 +550,13 @@
     if(reduce){ if(g)g.style.opacity='1'; spinToPyramid(); return; }
     if(svg){ svg.classList.remove('spinin'); void svg.offsetWidth; svg.classList.add('spinin'); }   // heart spins in
     setTimeout(function(){ if(g)g.style.opacity='1'; }, 850);                                        // then the teams fill it
-    board.morphTimer=setTimeout(function(){ board.morphTimer=null; if(cur===7) spinToPyramid(); }, 5200); // let the heart hold and fill with teams, then transform into the pyramid
+    board.morphTimer=setTimeout(function(){ board.morphTimer=null; if(cur===7) spinToPyramid(); }, 2500); // then spin into the pyramid
   }
 
   function buildDots(){
     var g = document.getElementById('teamdots'); if(!g || board.built) return; board.built = true;
     var known = board.feed.length ? board.feed : (OFFLINE ? seedFeed() : []);
-    var pad = Math.min(90, Math.max(known.length, board.count));
+    var pad = Math.min(210, Math.max(known.length, board.count));
     for(var i=0;i<pad;i++){ makeDot(g, (i<known.length)?known[i]:null, false, false); }
   }
 
@@ -575,15 +566,14 @@
     var y = isMine ? 74  : (14 + Math.random()*198);
     c.setAttribute('cx', x.toFixed(1)); c.setAttribute('cy', y.toFixed(1)); c.style.cursor='pointer';
     if(isMine){
-      c.setAttribute('r','7.5'); c.setAttribute('fill', '#ffffff');
-      c.setAttribute('stroke','#4E8209'); c.setAttribute('stroke-width','2.6');
+      c.setAttribute('r','7.5'); c.setAttribute('fill', HEART_COLOR);
+      c.setAttribute('stroke','#fff'); c.setAttribute('stroke-width','2.4');
       popAnim(c,'0;11;7.5','0.9s');
       if(pop) sonarRing(g, x, y);
     } else {
-      c.setAttribute('fill', '#ffffff');
-      c.setAttribute('stroke','rgba(40,44,32,.20)'); c.setAttribute('stroke-width','0.7');
-      c.setAttribute('opacity',(0.82+Math.random()*0.18).toFixed(2));
-      var r = info ? (3.6+Math.random()*1.4) : (2.6+Math.random()*1.7);
+      c.setAttribute('fill', dotColor(info && info.goal));
+      c.setAttribute('opacity',(0.5+Math.random()*0.4).toFixed(2));
+      var r = info ? (3.5+Math.random()*1.1) : (2.0+Math.random()*1.7);
       if(pop){ c.setAttribute('r','0'); popAnim(c,'0;'+(r+2).toFixed(1)+';'+r.toFixed(1),'0.7s'); } else c.setAttribute('r', r.toFixed(1));
     }
     if(info){ c.setAttribute('data-team', info.team + (isMine?' · your team':'')); if(info.commit) c.setAttribute('data-commit', info.commit); }
