@@ -1,3 +1,4 @@
+
 (function(){
   "use strict";
   var TOTAL = 8;
@@ -6,7 +7,7 @@
   var screens = Array.prototype.slice.call(document.querySelectorAll('.screen'));
   var dotsBox = document.getElementById('dots');
   var partTag = document.getElementById('parttag');
-  var PART_LABELS = ['Team walkthrough','Team commitment card','Team commitment card','Team commitment card','Our commitments','On target','Team Commitment Card','The shared OSF board'];
+  var PART_LABELS = ['Team walkthrough','Team commitment card','Team commitment card','Team commitment card','Our commitments','How it connects','Team Commitment Card','The shared OSF board'];
 
   // build progress dots (skip welcome + finished = 7 middle steps feel right; show all 9 lightly)
   for(var i=0;i<TOTAL;i++){ var d=document.createElement('i'); dotsBox.appendChild(d); }
@@ -172,61 +173,39 @@
     gateFinish();
   });
 
-  // ---- on target: the target builds outside-in — Excellence, then One OSF Team,
-  // then Destination OSF at the center. Each goal's commitments land as its ring arrives.
+  // ---- on target: the target is the OSF mark — three interlocking circles for
+  // Excellence, One OSF Team, and Destination OSF. Lobes assemble in strategy order,
+  // then the icons print on, then a count badge shows how many commitments landed on each.
+  var BULL_BADGE={ g1:{x:150,y:34,c:'#64A70B'}, g2:{x:203,y:92,c:'#00A9CE'}, g3:{x:55,y:190,c:'#A5228E'} };
   function renderBullseye(commits){
     var mount = document.getElementById('bullseye'); if(!mount) return;
-    var cx=180, cy=172;
+    var A = window.OSF_ART; if(!A){ return; }
     var reduce=false; try{ reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){}
-    // outer -> center, revealed in this order. `tx` = darker label color for contrast.
-    var RINGS=[
-      {goal:'g1', r:154, land:130, fill:'#eef6e0', stroke:'#64A70B', tx:'#3f6d08', label:'EXCELLENCE',      ly:-134, delay:0.15},
-      {goal:'g2', r:110, land:84,  fill:'#e2f4fa', stroke:'#00A9CE', tx:'#00647d', label:'ONE OSF TEAM',    ly:-88,  delay:1.05},
-      {goal:'g3', r:68,  land:0,   fill:'#f6e4f1', stroke:'#A5228E', tx:'#7c1a6a', label:'DESTINATION OSF', ly:-44,  delay:1.95}
-    ];
-    function ring(g){ for(var i=0;i<RINGS.length;i++){ if(RINGS[i].goal===g) return RINGS[i]; } return null; }
-    var svg='<svg viewBox="0 0 360 372" role="img" aria-label="Reaching Destination OSF by first being excellent and one OSF team">';
-    // rings + labels, each in a group that scales up from the center when its turn comes
-    RINGS.forEach(function(R){
-      var reveal = reduce ? '' :
-        '<animateTransform attributeName="transform" type="scale" from="0.45" to="1" begin="'+R.delay+'s" dur="0.6s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.34 1.3 0.5 1"/>'+
-        '<animate attributeName="opacity" from="0" to="1" begin="'+R.delay+'s" dur="0.35s" fill="freeze"/>';
-      var pw = R.label.length*7.7 + 20;   // white pill sized to the label so it always reads
-      svg+='<g transform="translate('+cx+' '+cy+')"><g'+(reduce?'':' opacity="0"')+'>'+
-        '<circle data-ring="'+R.goal+'" cx="0" cy="0" r="'+R.r+'" fill="'+R.fill+'" stroke="'+R.stroke+'" stroke-width="2"/>'+
-        '<rect x="'+(-pw/2).toFixed(1)+'" y="'+(R.ly-13)+'" width="'+pw.toFixed(1)+'" height="22" rx="11" fill="#ffffff" opacity="0.92"/>'+
-        '<text x="0" y="'+(R.ly+4)+'" text-anchor="middle" font-family="Brandon Grotesque, Montserrat, sans-serif" font-size="13" font-weight="700" letter-spacing="0.5" fill="'+R.tx+'">'+R.label+'</text>'+
-        reveal+
-      '</g></g>';
-    });
     var counts={g1:0,g2:0,g3:0};
     commits.forEach(function(c){ if(counts[c.goal]!=null) counts[c.goal]++; });
-    var idx={g1:0,g2:0,g3:0};
-    var dots='';
-    commits.forEach(function(c,ci){
-      var R=ring(c.goal); if(!R) return;
-      var total=counts[c.goal]||1, k=idx[c.goal]++;
-      var spin=(c.goal==='g2'?55:c.goal==='g3'?90:35);
-      var ang=(-90 + k*(360/total) + spin)*Math.PI/180;
-      var lr = R.goal==='g3' ? (total>1? 20:0) : R.land;
-      var lx=cx+lr*Math.cos(ang), ly=cy+lr*Math.sin(ang);
-      var col=R.stroke;
-      if(reduce){
-        dots+='<circle data-goal="'+c.goal+'" data-idx="'+ci+'" cx="'+lx.toFixed(1)+'" cy="'+ly.toFixed(1)+'" r="8" fill="'+col+'" stroke="#fff" stroke-width="2"><title>'+esc(c.text)+'</title></circle>';
-      } else {
-        var sx=cx+((k%2)?46:-46), sy=372;
-        var path='M '+sx+' '+sy+' Q '+cx+' '+(cy+70)+' '+lx.toFixed(1)+' '+ly.toFixed(1);
-        var beg=(R.delay + 0.5 + k*0.22).toFixed(2);   // land just after this goal's ring appears
-        dots+='<circle data-goal="'+c.goal+'" data-idx="'+ci+'" data-lx="'+lx.toFixed(1)+'" data-ly="'+ly.toFixed(1)+'" cx="0" cy="0" r="8" fill="'+col+'" stroke="#fff" stroke-width="2" opacity="0">'+
-          '<title>'+esc(c.text)+'</title>'+
-          '<animateMotion dur="0.7s" begin="'+beg+'s" path="'+path+'" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.22 1 0.36 1"/>'+
-          '<animate attributeName="opacity" dur="0.16s" begin="'+beg+'s" values="0;1" fill="freeze"/>'+
-          '<animate attributeName="r" dur="0.42s" begin="'+(parseFloat(beg)+0.58).toFixed(2)+'s" values="8;13;8" fill="freeze"/>'+
-        '</circle>';
-      }
+    var svg='<svg viewBox="'+A.vb+'" role="img" aria-label="Our commitments mapped to Excellence, One OSF Team, and Destination OSF">';
+    // the three brand lobes — each in a wrapper that pops in (see .lp CSS)
+    ['g1','g2','g3'].forEach(function(g){
+      svg+='<g class="lp" data-goal="'+g+'">'+A.lobes[g]+'</g>';
     });
-    svg+=dots+'</svg>';
+    // the white icons + centre disc print on top, once the lobes have settled
+    svg+='<g class="inkwrap">'+A.ink+'</g>';
+    // count badge on each lobe that received commitments
+    ['g1','g2','g3'].forEach(function(g){
+      if(!counts[g]) return;
+      var b=BULL_BADGE[g];
+      svg+='<g class="badge" data-goal="'+g+'">'+
+        '<circle cx="'+b.x+'" cy="'+b.y+'" r="13" fill="'+b.c+'" stroke="#fff" stroke-width="2.5"/>'+
+        '<text x="'+b.x+'" y="'+(b.y+5)+'" text-anchor="middle" font-size="15" fill="#fff">'+counts[g]+'</text>'+
+      '</g>';
+    });
+    svg+='</svg>';
     mount.innerHTML=svg;
+    if(!reduce){
+      mount.classList.remove('reveal'); void mount.offsetWidth; mount.classList.add('reveal');
+      // drop the reveal class once it's done, so hover-dimming can take over the opacity
+      setTimeout(function(){ mount.classList.remove('reveal'); }, 2700);
+    } else { mount.classList.remove('reveal'); }
   }
 
   // interactive stack of commitment cards beside the target
@@ -282,17 +261,12 @@
     if(maxH){ host.style.height = (maxH + 46) + 'px'; }
   }
   function activeOT(){ var h=document.getElementById('commitCards'); return h? Number(h.getAttribute('data-active')||0):0; }
-  function highlightRing(goal){
+  function highlightRing(goal, strong){
     var bs=document.getElementById('bullseye'); if(!bs) return;
-    Array.prototype.slice.call(bs.querySelectorAll('circle[data-ring]')).forEach(function(r){
-      var on = r.getAttribute('data-ring')===goal;
-      r.setAttribute('stroke-width', on?'5':'2');
-      r.style.filter = on ? 'drop-shadow(0 0 7px '+r.getAttribute('stroke')+')' : 'none';
-    });
-    Array.prototype.slice.call(bs.querySelectorAll('circle[data-goal]')).forEach(function(d){
-      var on = d.getAttribute('data-goal')===goal;
-      d.setAttribute('stroke-width', on?'3.5':'2');
-      d.style.filter = on ? 'drop-shadow(0 0 6px '+d.getAttribute('fill')+')' : 'none';
+    // gentle (card sync) = glow the active lobe; strong (hover) = also dim the others
+    bs.classList.toggle('dim', !!(goal && strong));
+    Array.prototype.slice.call(bs.querySelectorAll('.lp')).forEach(function(l){
+      l.classList.toggle('on', l.getAttribute('data-goal')===goal);
     });
     // colored words in the closing line
     Array.prototype.slice.call(document.querySelectorAll('.bull-msg [data-goal]')).forEach(function(w){
@@ -313,7 +287,7 @@
       card.style.transform = 'translateY('+(depth*15)+'px) scale('+(1-depth*0.05)+')';
     });
     Array.prototype.slice.call(document.querySelectorAll('#otNav .otdots i')).forEach(function(d,di){ d.classList.toggle('on', di===i); });
-    highlightRing(cards[i].getAttribute('data-goal'));
+    highlightRing(cards[i].getAttribute('data-goal'), true);   // flipping cards clearly lights that pillar
   }
   // jump to the first card of a goal (used by ring hover + word hover)
   function showGoalCard(goal){
@@ -322,11 +296,15 @@
   function stopOTCycle(){ /* no auto-cycle: fully interactive */ }
   function wireTargetHover(){
     var bs=document.getElementById('bullseye'); if(!bs) return;
-    Array.prototype.slice.call(bs.querySelectorAll('circle[data-ring]')).forEach(function(r){
-      r.addEventListener('mouseenter', function(){ showGoalCard(r.getAttribute('data-ring')); });
+    // hover a lobe (or its count badge) -> bring up that goal's commitments + focus it
+    Array.prototype.slice.call(bs.querySelectorAll('.lp,.badge')).forEach(function(el){
+      el.addEventListener('mouseenter', function(){ var g=el.getAttribute('data-goal'); showGoalCard(g); highlightRing(g, true); });
     });
-    Array.prototype.slice.call(bs.querySelectorAll('circle[data-goal]')).forEach(function(d){
-      d.addEventListener('mouseenter', function(){ setActiveOT(Number(d.getAttribute('data-idx'))); });
+    // leaving the target clears the highlight back to the active card's goal
+    bs.addEventListener('mouseleave', function(){
+      var h=document.getElementById('commitCards'); if(!h) return;
+      var cards=h.querySelectorAll('.otc'); var a=activeOT();
+      if(cards[a]) highlightRing(cards[a].getAttribute('data-goal'), true);
     });
   }
   function wireMsgHover(){
@@ -496,7 +474,7 @@
     if(!board.inited && OFFLINE){ board.count = 1246; board.feed = seedFeed(); board.inited = true; }
     // show the current total right away, then tick +1 when our team lands
     var cel = document.getElementById('teamcount'); if(cel) cel.textContent = board.count.toLocaleString();
-    renderFeed(); buildDots(); wireHover();
+    renderFeed(); buildBoardShape(); buildDots(); wireHover(); playBoardSequence();
     if(!board.submitted){
       setTimeout(function(){
         if(board.ws && board.ws.readyState === 1){ submitTeam(); }
@@ -523,6 +501,67 @@
     feed.scrollTop = 0;
   }
 
+  // ---- the ending shape: the OSF mark (pyramid) or a heart, both filling with teams ----
+  var HEART_D = 'M100 168 C 44 124, 10 96, 10 58 C 10 30, 32 14, 56 14 C 76 14, 91 27, 100 45 C 109 27, 124 14, 144 14 C 168 14, 190 30, 190 58 C 190 96, 156 124, 100 168 Z';
+  var HEART_TF = 'translate(4.4 8.85) scale(1.15)';
+  var SIL_RGBA = { g1:'100,167,11', g2:'0,169,206', g3:'165,34,142' };
+  var SIL_COL  = { g1:'#64A70B', g2:'#00A9CE', g3:'#A5228E' };
+  function boardSilhouette(shape){
+    var A=window.OSF_ART;
+    if(shape==='heart'){
+      return '<path transform="'+HEART_TF+'" d="'+HEART_D+'" fill="rgba(78,130,9,.05)" stroke="#4E8209" stroke-width="2"/>';
+    }
+    var out='';
+    ['g1','g2','g3'].forEach(function(g){
+      out += A.lobes[g].replace(/fill="#[0-9A-Fa-f]{6}"/, 'fill="rgba('+SIL_RGBA[g]+',.06)" stroke="'+SIL_COL[g]+'" stroke-width="20"');
+    });
+    return out;
+  }
+  function buildBoardShape(){
+    if(board.shapeBuilt) return;
+    var mount=document.getElementById('boardShape'); if(!mount || !window.OSF_ART) return;
+    board.shapeBuilt=true; board.shape='heart';   // opens on the heart, then spins into the pyramid
+    var A=window.OSF_ART, clipTre='';
+    ['g1','g2','g3'].forEach(function(g){ clipTre+=A.lobes[g]; });
+    mount.innerHTML='<svg viewBox="'+A.vb+'" role="img" aria-label="Mission Teams across OSF filling the heart, which turns into the OSF mark">'+
+      '<defs>'+
+        '<clipPath id="clipTre">'+clipTre+'</clipPath>'+
+        '<clipPath id="clipHeart"><path transform="'+HEART_TF+'" d="'+HEART_D+'"/></clipPath>'+
+      '</defs>'+
+      '<g class="sil sil-tre" style="opacity:0">'+boardSilhouette('tre')+'</g>'+
+      '<g class="sil sil-heart" style="opacity:1">'+boardSilhouette('heart')+'</g>'+
+      '<g id="teamdots" clip-path="url(#clipHeart)" style="opacity:0"></g>'+
+    '</svg>';
+  }
+  // spin the mark, and mid-spin swap the heart for the pyramid so it reads as a transformation
+  function spinToPyramid(){
+    var mount=document.getElementById('boardShape'); if(!mount) return;
+    var svg=mount.querySelector('svg'), g=mount.querySelector('#teamdots');
+    var st=mount.querySelector('.sil-tre'), sh=mount.querySelector('.sil-heart');
+    var reduce=false; try{ reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){}
+    board.shape='tre';
+    function apply(){ if(st)st.style.opacity='1'; if(sh)sh.style.opacity='0'; if(g)g.setAttribute('clip-path','url(#clipTre)'); }
+    if(reduce || !svg){ apply(); if(g)g.style.opacity='1'; return; }
+    svg.classList.remove('spinin');
+    svg.classList.remove('spinmorph'); void svg.offsetWidth; svg.classList.add('spinmorph');
+    // spinMorph is 1.5s; its deepest shrink is at 50% (750ms). Fade the dots down into that
+    // trough, swap silhouette + clip while the shape is tiny, then fade the new shape's dots back.
+    if(g) setTimeout(function(){ g.style.opacity='0'; }, 560);
+    setTimeout(apply, 750);
+    if(g) setTimeout(function(){ g.style.opacity='1'; }, 940);
+  }
+  // full ending beat: heart spins in -> fills with teams -> spins into the pyramid
+  function playBoardSequence(){
+    if(board.seqRun) return; board.seqRun=true;
+    var mount=document.getElementById('boardShape'); if(!mount) return;
+    var svg=mount.querySelector('svg'), g=mount.querySelector('#teamdots');
+    var reduce=false; try{ reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){}
+    if(reduce){ if(g)g.style.opacity='1'; spinToPyramid(); return; }
+    if(svg){ svg.classList.remove('spinin'); void svg.offsetWidth; svg.classList.add('spinin'); }   // heart spins in
+    setTimeout(function(){ if(g)g.style.opacity='1'; }, 850);                                        // then the teams fill it
+    board.morphTimer=setTimeout(function(){ board.morphTimer=null; if(cur===7) spinToPyramid(); }, 2500); // then spin into the pyramid
+  }
+
   function buildDots(){
     var g = document.getElementById('teamdots'); if(!g || board.built) return; board.built = true;
     var known = board.feed.length ? board.feed : (OFFLINE ? seedFeed() : []);
@@ -532,18 +571,18 @@
 
   function makeDot(g, info, isMine, pop){
     var c = document.createElementNS(svgns,'circle');
-    var x = isMine ? 100 : (12 + Math.random()*176);
-    var y = isMine ? 82  : (16 + Math.random()*140);
+    var x = isMine ? 119 : (14 + Math.random()*210);
+    var y = isMine ? 74  : (14 + Math.random()*198);
     c.setAttribute('cx', x.toFixed(1)); c.setAttribute('cy', y.toFixed(1)); c.style.cursor='pointer';
     if(isMine){
-      c.setAttribute('r','6.5'); c.setAttribute('fill', HEART_COLOR);
-      c.setAttribute('stroke','#fff'); c.setAttribute('stroke-width','2.2');
-      popAnim(c,'0;10;6.5','0.9s');
+      c.setAttribute('r','7.5'); c.setAttribute('fill', HEART_COLOR);
+      c.setAttribute('stroke','#fff'); c.setAttribute('stroke-width','2.4');
+      popAnim(c,'0;11;7.5','0.9s');
       if(pop) sonarRing(g, x, y);
     } else {
       c.setAttribute('fill', dotColor(info && info.goal));
       c.setAttribute('opacity',(0.5+Math.random()*0.4).toFixed(2));
-      var r = info ? (3.1+Math.random()*0.9) : (1.7+Math.random()*1.6);
+      var r = info ? (3.5+Math.random()*1.1) : (2.0+Math.random()*1.7);
       if(pop){ c.setAttribute('r','0'); popAnim(c,'0;'+(r+2).toFixed(1)+';'+r.toFixed(1),'0.7s'); } else c.setAttribute('r', r.toFixed(1));
     }
     if(info){ c.setAttribute('data-team', info.team + (isMine?' · your team':'')); if(info.commit) c.setAttribute('data-commit', info.commit); }
@@ -627,3 +666,4 @@
   boardConnect();
   show(0);
 })();
+
