@@ -512,7 +512,7 @@
     if(shape==='heart'){
       return A.heart;
     }
-    return A.lobes.g1 + A.lobes.g2 + A.lobes.g3 + A.ink;
+    return A.lobes.g1 + A.lobes.g2 + A.lobes.g3;   // ending pyramid: clean lobes, no icons (dots fill it)
   }
   function buildBoardShape(){
     if(board.shapeBuilt) return;
@@ -521,7 +521,12 @@
     var A=window.OSF_ART;
     var clipTre = A.lobes.g1 + A.lobes.g2 + A.lobes.g3;   // trefoil silhouette (clips the team dots)
     mount.innerHTML='<svg viewBox="'+A.vb+'" role="img" aria-label="The OSF heart filling with teams, which turns into the OSF strategy mark">'+
-      '<defs><clipPath id="clipTre">'+clipTre+'</clipPath></defs>'+
+      '<defs><clipPath id="clipTre">'+clipTre+'</clipPath>'+
+        '<radialGradient id="osfMorphGlow" cx="50%" cy="50%" r="50%">'+
+          '<stop offset="0%" stop-color="#64A70B" stop-opacity="0.85"/>'+
+          '<stop offset="55%" stop-color="#00A9CE" stop-opacity="0.30"/>'+
+          '<stop offset="100%" stop-color="#00A9CE" stop-opacity="0"/></radialGradient></defs>'+
+      '<circle class="morphglow" cx="119.4" cy="113.5" r="118" fill="url(#osfMorphGlow)"/>'+
       '<g class="sil sil-tre" style="opacity:0">'+boardSilhouette('tre')+'</g>'+
       '<g class="sil sil-heart" style="opacity:1">'+boardSilhouette('heart')+'</g>'+
       '<g id="teamdots" clip-path="url(#osfHeartClip)" style="opacity:0"></g>'+
@@ -538,11 +543,12 @@
     if(reduce || !svg){ apply(); if(g)g.style.opacity='1'; return; }
     svg.classList.remove('spinin');
     svg.classList.remove('spinmorph'); void svg.offsetWidth; svg.classList.add('spinmorph');
-    // spinMorph is 1.5s; its deepest shrink is at 50% (750ms). Fade the dots down into that
-    // trough, swap silhouette + clip while the shape is tiny, then fade the new shape's dots back.
-    if(g) setTimeout(function(){ g.style.opacity='0'; }, 560);
-    setTimeout(apply, 750);
-    if(g) setTimeout(function(){ g.style.opacity='1'; }, 940);
+    // spinMorph is 1.85s; deepest shrink is at 50% (~925ms). Ease the dots down into that
+    // trough, swap silhouette + clip while the shape is smallest and the glow blooms, then
+    // ease the new shape's dots back as it settles.
+    if(g) setTimeout(function(){ g.style.opacity='0'; }, 700);
+    setTimeout(apply, 925);
+    if(g) setTimeout(function(){ g.style.opacity='1'; }, 1180);
   }
   // full ending beat: heart spins in -> fills with teams -> spins into the pyramid
   function playBoardSequence(){
@@ -553,7 +559,7 @@
     if(reduce){ if(g)g.style.opacity='1'; spinToPyramid(); return; }
     if(svg){ svg.classList.remove('spinin'); void svg.offsetWidth; svg.classList.add('spinin'); }   // heart spins in
     setTimeout(function(){ if(g)g.style.opacity='1'; }, 850);                                        // then the teams fill it
-    board.morphTimer=setTimeout(function(){ board.morphTimer=null; if(cur===7) spinToPyramid(); }, 2500); // then spin into the pyramid
+    board.morphTimer=setTimeout(function(){ board.morphTimer=null; if(cur===7) spinToPyramid(); }, 2800); // then spin into the pyramid
   }
 
   function buildDots(){
