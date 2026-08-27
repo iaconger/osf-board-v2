@@ -1124,9 +1124,12 @@ window.OSF_ART = {
     var mount=document.getElementById('boardShape'); if(!mount || !window.OSF_ART) return;
     board.shapeBuilt=true; board.shape='heart';   // opens on the heart, then spins into the pyramid
     var A=window.OSF_ART;
-    mount.innerHTML='<svg viewBox="'+A.vb+'" role="img" aria-label="The OSF heart, which turns into the OSF strategy mark">'+
+    var clipTre = A.lobes.g1 + A.lobes.g2 + A.lobes.g3;   // trefoil silhouette (clips the team dots)
+    mount.innerHTML='<svg viewBox="'+A.vb+'" role="img" aria-label="The OSF heart filling with teams, which turns into the OSF strategy mark">'+
+      '<defs><clipPath id="clipTre">'+clipTre+'</clipPath></defs>'+
       '<g class="sil sil-tre" style="opacity:0">'+boardSilhouette('tre')+'</g>'+
       '<g class="sil sil-heart" style="opacity:1">'+boardSilhouette('heart')+'</g>'+
+      '<g id="teamdots" clip-path="url(#osfHeartClip)" style="opacity:0"></g>'+
     '</svg>';
   }
   // spin the mark, and mid-spin swap the heart for the pyramid so it reads as a transformation
@@ -1161,7 +1164,7 @@ window.OSF_ART = {
   function buildDots(){
     var g = document.getElementById('teamdots'); if(!g || board.built) return; board.built = true;
     var known = board.feed.length ? board.feed : (OFFLINE ? seedFeed() : []);
-    var pad = Math.min(210, Math.max(known.length, board.count));
+    var pad = Math.min(90, Math.max(known.length, board.count));
     for(var i=0;i<pad;i++){ makeDot(g, (i<known.length)?known[i]:null, false, false); }
   }
 
@@ -1171,14 +1174,15 @@ window.OSF_ART = {
     var y = isMine ? 74  : (14 + Math.random()*198);
     c.setAttribute('cx', x.toFixed(1)); c.setAttribute('cy', y.toFixed(1)); c.style.cursor='pointer';
     if(isMine){
-      c.setAttribute('r','7.5'); c.setAttribute('fill', HEART_COLOR);
-      c.setAttribute('stroke','#fff'); c.setAttribute('stroke-width','2.4');
+      c.setAttribute('r','7.5'); c.setAttribute('fill', '#ffffff');
+      c.setAttribute('stroke','#4E8209'); c.setAttribute('stroke-width','2.6');
       popAnim(c,'0;11;7.5','0.9s');
       if(pop) sonarRing(g, x, y);
     } else {
-      c.setAttribute('fill', dotColor(info && info.goal));
-      c.setAttribute('opacity',(0.5+Math.random()*0.4).toFixed(2));
-      var r = info ? (3.5+Math.random()*1.1) : (2.0+Math.random()*1.7);
+      c.setAttribute('fill', '#ffffff');
+      c.setAttribute('stroke','rgba(40,44,32,.20)'); c.setAttribute('stroke-width','0.7');
+      c.setAttribute('opacity',(0.82+Math.random()*0.18).toFixed(2));
+      var r = info ? (3.6+Math.random()*1.4) : (2.6+Math.random()*1.7);
       if(pop){ c.setAttribute('r','0'); popAnim(c,'0;'+(r+2).toFixed(1)+';'+r.toFixed(1),'0.7s'); } else c.setAttribute('r', r.toFixed(1));
     }
     if(info){ c.setAttribute('data-team', info.team + (isMine?' · your team':'')); if(info.commit) c.setAttribute('data-commit', info.commit); }
