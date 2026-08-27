@@ -1168,7 +1168,7 @@ window.OSF_ART = {
     if(reduce){ if(g)g.style.opacity='1'; spinToPyramid(); return; }
     if(svg){ svg.classList.remove('spinin'); void svg.offsetWidth; svg.classList.add('spinin'); }   // heart spins in
     setTimeout(function(){ if(g)g.style.opacity='1'; }, 850);                                        // then the teams fill it
-    board.morphTimer=setTimeout(function(){ board.morphTimer=null; if(cur===7) spinToPyramid(); }, 2800); // then spin into the pyramid
+    board.morphTimer=setTimeout(function(){ board.morphTimer=null; if(cur===7) spinToPyramid(); }, 5200); // let the heart hold and fill with teams, then transform into the pyramid
   }
 
   function buildDots(){
