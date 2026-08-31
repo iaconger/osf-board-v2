@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>OSF FY27 · Strategy Commitment</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjNjRBNzBCIi8+PHN0b3Agb2Zmc2V0PSIuNSIgc3RvcC1jb2xvcj0iIzNmOWE1MiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzAwN0Y5QiIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCIgcng9IjE0IiBmaWxsPSJ1cmwoI2cpIi8+PGcgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjMuNCI+PGNpcmNsZSBjeD0iMzIiIGN5PSIzMiIgcj0iMTkiLz48Y2lyY2xlIGN4PSIzMiIgY3k9IjMyIiByPSIxMS41Ii8+PC9nPjxjaXJjbGUgY3g9IjMyIiBjeT0iMzIiIHI9IjQuNiIgZmlsbD0iI2ZmZmZmZiIvPjwvc3ZnPg==">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjNjRBNzBCIi8+PHN0b3Agb2Zmc2V0PSIuNSIgc3RvcC1jb2xvcj0iIzNmOWE1MiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzAwN0Y5QiIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCIgcng9IjE0IiBmaWxsPSJ1cmwoI2cpIi8+PGcgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjMuMyI+PGNpcmNsZSBjeD0iMzIiIGN5PSIyMy41IiByPSIxMi42Ii8+PGNpcmNsZSBjeD0iNDIuNCIgY3k9IjQxIiByPSIxMi42Ii8+PGNpcmNsZSBjeD0iMjEuNiIgY3k9IjQxIiByPSIxMi42Ii8+PC9nPjwvc3ZnPg==">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bitter:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -77,8 +77,13 @@
   .welcome{text-align:center;padding:14px 8px 6px}
   .welcome h2.big{font-size:36px;margin-bottom:22px}
   .welcome .lead{margin-left:auto;margin-right:auto}
-  .together{display:flex;align-items:center;justify-content:center;gap:14px;margin:22px 0 26px}
-  .together .introtre{width:128px;height:auto;display:block;transform-origin:center}
+  .together{position:relative;display:flex;align-items:center;justify-content:center;gap:14px;margin:30px 0 34px}
+  /* soft branded halo so the mark reads as an intentional hero, not a floating graphic */
+  .together::before{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:270px;height:270px;border-radius:50%;z-index:0;pointer-events:none;
+    background:radial-gradient(circle, rgba(100,167,11,.09) 0%, rgba(0,169,206,.05) 42%, rgba(0,169,206,0) 66%)}
+  .together .introtre{position:relative;z-index:1;width:196px;height:auto;display:block;transform-origin:center;
+    filter:drop-shadow(0 14px 26px rgba(46,68,20,.16))}
   .screen[data-part="0"].active .together .introtre{animation:introSpin .9s cubic-bezier(.2,.9,.3,1)}
   @keyframes introSpin{0%{opacity:0;transform:rotate(-140deg) scale(.3)}60%{opacity:1}100%{opacity:1;transform:rotate(0) scale(1)}}
   .meta-row{display:flex;justify-content:center;gap:16px;flex-wrap:wrap;margin:10px 0 36px}
@@ -270,11 +275,25 @@
 
   /* shared board heart */
   .board-sub{text-align:center;font-size:16px;color:var(--green);font-weight:600;margin:0 0 20px}
-  .heartwrap{position:relative;max-width:430px;margin:8px auto 4px}
+  .heartwrap{position:relative;max-width:640px;width:100%;margin:14px auto 6px}
   .heartwrap svg{width:100%;height:auto;display:block;overflow:visible}
   #boardShape svg{width:100%;height:auto;display:block;overflow:visible;transform-origin:center}
   #boardShape .sil{transition:opacity .34s ease}
   #boardShape #teamdots{transition:opacity .36s ease}
+  /* strategy icons just outside the heart, each in its pillar color */
+  #boardShape .heart-icons .hicon circle{filter:drop-shadow(0 3px 6px rgba(0,0,0,.20))}
+  #boardShape .heart-icons .hicon{cursor:pointer;transform-box:fill-box;transform-origin:center;transition:transform .2s cubic-bezier(.2,.85,.25,1),opacity .2s ease}
+  #boardShape .heart-icons .hicon:hover{transform:scale(1.12)}
+  /* when a pillar is selected, its icon pops and the others dim so it reads as the active filter */
+  #boardShape .heart-icons.filtering .hicon:not(.active){opacity:.4}
+  #boardShape .heart-icons .hicon.active{transform:scale(1.14)}
+  /* fluid, tactile dots: hover lifts + glows the dot and gently dims the rest for focus */
+  #boardShape #teamdots .tdot{cursor:pointer;transform-box:fill-box;transform-origin:center center;
+    transition:transform .22s cubic-bezier(.2,.85,.25,1), filter .22s ease, opacity .22s ease}
+  #boardShape #teamdots .tdot:hover{transform:scale(2); filter:drop-shadow(0 2px 6px rgba(0,0,0,.45))}
+  #boardShape #teamdots .tdot.mine:hover{transform:scale(1.4)}
+  #boardShape #teamdots:hover .tdot:not(:hover){opacity:.45}
+  @media(prefers-reduced-motion:reduce){#boardShape #teamdots .tdot{transition:none}}
   /* the heart eases in, fills with teams, then fluidly transforms into the pyramid */
   #boardShape svg{will-change:transform}
   #boardShape svg.spinin{animation:spinIn 1.05s cubic-bezier(.16,1,.3,1)}
@@ -287,23 +306,40 @@
   #boardShape svg.spinmorph .morphglow{animation:glowPulse 1.85s ease}
   @keyframes glowPulse{0%{opacity:0;transform:scale(.2)}50%{opacity:.4;transform:scale(1.35)}100%{opacity:0;transform:scale(.25)}}
   @media(prefers-reduced-motion:reduce){#boardShape svg.spinin,#boardShape svg.spinmorph,#boardShape svg.spinmorph .morphglow{animation:none}}
-  .dottip{position:absolute;pointer-events:none;opacity:0;transition:opacity .12s;transform:translate(-50%,-100%);
-    background:#1c2418;color:#fff;padding:9px 12px;border-radius:9px;font-size:13px;line-height:1.45;
-    max-width:230px;box-shadow:0 8px 22px rgba(0,0,0,.28);z-index:6;text-align:left}
-  .dottip.show{opacity:1}
+  .dottip{position:absolute;pointer-events:none;opacity:0;
+    transition:opacity .16s ease, left .24s cubic-bezier(.2,.85,.25,1), top .24s cubic-bezier(.2,.85,.25,1), transform .16s ease;
+    transform:translate(-50%,-100%) translateY(5px) scale(.96);transform-origin:50% 100%;
+    background:#1c2418;color:#fff;padding:9px 12px;border-radius:10px;font-size:13px;line-height:1.45;
+    max-width:230px;box-shadow:0 10px 26px rgba(0,0,0,.30);z-index:6;text-align:left}
+  .dottip::after{content:"";position:absolute;left:50%;top:100%;transform:translateX(-50%);
+    border:6px solid transparent;border-top-color:#1c2418}
+  .dottip.show{opacity:1;transform:translate(-50%,-100%) translateY(-2px) scale(1)}
   .dottip b{display:block;font-weight:700;margin-bottom:2px}
   .dottip .c{color:#d8e6c2}
   .heartoutline,#boardShape .sil{filter:drop-shadow(0 10px 22px rgba(78,130,9,.15))}
-  .bigcount{text-align:center;margin:16px 0 8px}
+  /* the heart petals recolor smoothly when a pillar filter is chosen */
+  #boardShape .sil-heart path[data-goal]{transition:fill .45s ease}
+  .ot-badgehint{text-align:center;font-size:12.5px;color:var(--muted);margin:8px auto 0;max-width:30ch;line-height:1.4}
+  .bigcount{text-align:center;margin:16px 0 8px;position:relative}
   .bigcount b{display:block;font-family:"Chaparral Pro","Bitter",serif;font-size:42px;font-weight:700;color:var(--green);letter-spacing:-.02em;line-height:1;transition:color .2s}
-  .bigcount b.bump{animation:countBump .6s cubic-bezier(.34,1.56,.64,1)}
-  @keyframes countBump{0%{transform:scale(1)}35%{transform:scale(1.22);color:var(--g2)}100%{transform:scale(1)}}
+  .bigcount b.bump{animation:countBump .7s cubic-bezier(.34,1.56,.64,1)}
+  @keyframes countBump{0%{transform:scale(1)}30%{transform:scale(1.28);color:var(--g2)}100%{transform:scale(1)}}
   .bigcount span{font-size:14px;color:var(--muted);letter-spacing:.3px}
+  /* a "+1" that rises off the counter when your team lands */
+  .plusone{position:absolute;left:50%;top:2px;transform:translateX(-50%);font-family:"Chaparral Pro","Bitter",serif;
+    font-weight:700;font-size:26px;color:var(--g2);pointer-events:none;opacity:0;animation:plusRise 1.5s ease forwards}
+  @keyframes plusRise{0%{opacity:0;transform:translate(-50%,10px) scale(.7)}20%{opacity:1}100%{opacity:0;transform:translate(-50%,-34px) scale(1.1)}}
+  /* a little flag that points at your team's dot as it lands in the heart */
+  .mineflag{position:absolute;pointer-events:none;transform:translate(-50%,-100%);opacity:0;z-index:7;
+    background:linear-gradient(90deg,#64A70B,#00A9CE,#A5228E);color:#fff;font-weight:700;font-size:12.5px;
+    padding:6px 12px;border-radius:999px;white-space:nowrap;box-shadow:0 8px 20px rgba(0,0,0,.25)}
+  .mineflag.show{animation:flagPop 2.6s cubic-bezier(.2,.85,.25,1) forwards}
+  @keyframes flagPop{0%{opacity:0;transform:translate(-50%,-70%) scale(.8)}12%{opacity:1;transform:translate(-50%,-100%) scale(1)}80%{opacity:1;transform:translate(-50%,-100%) scale(1)}100%{opacity:0;transform:translate(-50%,-120%) scale(.95)}}
   .feedhead{text-align:center;font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--green);margin:28px 0 12px}
   .feed-legend{display:flex;justify-content:center;flex-wrap:wrap;gap:16px;margin:0 0 14px}
   .feed-legend span{display:inline-flex;align-items:center;gap:7px;font-size:14px;font-weight:600;color:var(--muted)}
   .feed-legend i{width:12px;height:12px;border-radius:50%;flex:0 0 auto}
-  .feed{max-height:260px;overflow-y:auto;border:1px solid var(--line);border-radius:14px;background:#fff;padding:6px}
+  .feed{max-height:460px;overflow-y:auto;border:1px solid var(--line);border-radius:14px;background:#fff;padding:6px}
   .feed-item{padding:13px 15px;border-radius:10px;border-bottom:1px solid var(--line)}
   .feed-item:last-child{border-bottom:0}
   .feed-item.me{background:#f2f8e8;border:1px solid #cbe0a6;margin-bottom:4px}
@@ -313,6 +349,23 @@
   .fi-commit{font-size:16px;line-height:1.5;color:#38412f;margin-top:4px}
   .feed-item.me{animation:feedPop .55s ease}
   .feed-empty{padding:26px 18px;text-align:center;font-size:15px;color:var(--muted);line-height:1.5}
+  /* pillar filter + pagination for the teams feed */
+  .feedfilter{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:0 0 14px}
+  .feedfilter .ff{border:1.5px solid var(--line);background:#fff;color:var(--muted);border-radius:999px;
+    padding:7px 15px;font:inherit;font-size:13.5px;font-weight:700;cursor:pointer;transition:.16s}
+  .feedfilter .ff:hover{border-color:#bcc7b2;color:var(--ink)}
+  .feedfilter .ff.on{color:#fff;border-color:transparent}
+  .feedfilter .ff[data-f="all"].on{background:var(--ink)}
+  .feedfilter .ff[data-f="g1"].on{background:#64A70B}
+  .feedfilter .ff[data-f="g2"].on{background:#0787a3}
+  .feedfilter .ff[data-f="g3"].on{background:#A5228E}
+  .feednav{display:flex;align-items:center;justify-content:center;gap:16px;margin:14px 0 4px}
+  .feednav:empty{display:none}
+  .feednav .fn-btn{width:38px;height:38px;border-radius:50%;border:1.5px solid var(--line);background:#fff;color:var(--green);
+    display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:.15s}
+  .feednav .fn-btn:hover{border-color:var(--green);box-shadow:0 4px 12px rgba(78,130,9,.18)}
+  .feednav .fn-btn svg{width:18px;height:18px}
+  .feednav .fn-ind{font-size:14px;font-weight:700;color:var(--muted);min-width:96px;text-align:center}
   @keyframes feedPop{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:none}}
   /* transition into the heart */
   .screen[data-part="7"].active .heartwrap{animation:heartRise .6s ease}
@@ -504,7 +557,9 @@
       <h2 class="big" style="text-align:center;font-size:26px">It all connects</h2>
       <p class="sub" style="text-align:center;max-width:52ch;margin:0 auto 10px">To reach Destination OSF, we build Excellence, then become One OSF Team.</p>
       <div class="ontarget">
-        <div class="ot-target"><div id="bullseye"></div></div>
+        <div class="ot-target"><div id="bullseye"></div>
+          <p class="ot-badgehint">Each number shows how many of your commitments map to that goal.</p>
+        </div>
         <div class="ot-col">
           <div class="ot-stack" id="commitCards"></div>
           <div class="otnav" id="otNav"></div>
@@ -553,11 +608,19 @@
       <div class="heartwrap">
         <div id="boardShape"></div>
         <div class="dottip" id="dottip"></div>
+        <div class="mineflag" id="mineflag">Your team is on the board ♥</div>
       </div>
       <div class="bigcount"><b id="teamcount">0</b><span>commitment cards across OSF</span></div>
 
       <div class="feedhead">What teams are committing to this year</div>
+      <div class="feedfilter" id="feedfilter">
+        <button type="button" class="ff on" data-f="all">All</button>
+        <button type="button" class="ff" data-f="g1">Excellence</button>
+        <button type="button" class="ff" data-f="g2">One OSF Team</button>
+        <button type="button" class="ff" data-f="g3">Destination OSF</button>
+      </div>
       <div class="feed" id="feed"></div>
+      <div class="feednav" id="feednav"></div>
 
       <div class="rollup">
         <svg viewBox="0 0 24 24" fill="none" stroke="#4E8209" stroke-width="2"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
