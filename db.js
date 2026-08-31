@@ -38,6 +38,9 @@ async function init() {
       commitment  TEXT NOT NULL,
       goal        TEXT DEFAULT ''
     )`);
+    // Store every commitment on a card (with its pillar) so nothing is lost on
+    // reload. Added via ALTER so existing databases pick it up on next deploy.
+    await pool.query(`ALTER TABLE submissions ADD COLUMN IF NOT EXISTS commitments JSONB DEFAULT '[]'::jsonb`);
   } else {
     fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
   }
@@ -47,17 +50,23 @@ async function init() {
 async function loadAll() {
   if (mode === 'postgres') {
     const { rows } = await pool.query(
-      'SELECT ts, team, work, connections, reach, commitment, goal FROM submissions ORDER BY id ASC'
+      'SELECT ts, team, work, connections, reach, commitment, goal, commitments FROM submissions ORDER BY id ASC'
     );
-    return rows.map((r) => ({
-      ts: r.ts ? new Date(r.ts).toISOString() : '',
-      team: r.team,
-      work: r.work || '',
-      connections: Array.isArray(r.connections) ? r.connections : [],
-      reach: r.reach || '',
-      commit: r.commitment || '',
-      goal: r.goal || '',
-    }));
+    return rows.map((r) => {
+      let commitments = Array.isArray(r.commitments) ? r.commitments : [];
+      // older rows predate the commitments column: rebuild from the legacy pair
+      if (!commitments.length) commitments = [{ text: r.commitment || '', goal: r.goal || '' }];
+      return {
+        ts: r.ts ? new Date(r.ts).toISOString() : '',
+        team: r.team,
+        work: r.work || '',
+        connections: Array.isArray(r.connections) ? r.connections : [],
+        reach: r.reach || '',
+        commitments,
+        commit: commitments[0] ? commitments[0].text : (r.commitment || ''),
+        goal: r.goal || '',
+      };
+    });
   }
   const out = [];
   try {
@@ -74,9 +83,12 @@ async function loadAll() {
 // Persist one card. Fire-and-forget: a storage hiccup never blocks the live board.
 function insert(entry) {
   if (mode === 'postgres') {
+    const commitments = Array.isArray(entry.commitments) && entry.commitments.length
+      ? entry.commitments
+      : [{ text: entry.commit || '', goal: entry.goal || '' }];
     pool.query(
-      'INSERT INTO submissions (ts, team, work, connections, reach, commitment, goal) VALUES ($1,$2,$3,$4,$5,$6,$7)',
-      [entry.ts, entry.team, entry.work || '', JSON.stringify(entry.connections || []), entry.reach || '', entry.commit, entry.goal || '']
+      'INSERT INTO submissions (ts, team, work, connections, reach, commitment, goal, commitments) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)',
+      [entry.ts, entry.team, entry.work || '', JSON.stringify(entry.connections || []), entry.reach || '', entry.commit, entry.goal || '', JSON.stringify(commitments)]
     ).catch((err) => { console.error('db insert failed:', err.message); }); // eslint-disable-line no-console
   } else {
     try { fs.appendFile(DATA_FILE, `${JSON.stringify(entry)}\n`, () => {}); } catch { /* ignore */ }

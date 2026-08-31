@@ -433,11 +433,37 @@
     {team:'Food & Nutrition', dv:'Food & Nutrition', commit:'Get every meal to the floor warm and on time.', goal:'g1'},
     {team:'Care Coordination', dv:'Care Management', commit:'Make sure no patient leaves without a follow-up plan.', goal:'g2'},
     {team:'Behavioral Health · Bloomington', dv:'Behavioral Health', commit:'Shorten the wait for a first appointment.', goal:'g1'},
-    {team:'Finance · Shared Services', dv:'Finance', commit:'Free up dollars that go straight back into patient care.', goal:'g3'}
+    {team:'Finance · Shared Services', dv:'Finance', commit:'Free up dollars that go straight back into patient care.', goal:'g3'},
+    {team:'Emergency Department · Peoria', dv:'Emergency Services', commit:'Get every patient a first assessment within 10 minutes of arrival.', goal:'g1'},
+    {team:'Imaging · Rockford', dv:'Imaging & Radiology', commit:'Read urgent scans and call results back the same hour.', goal:'g1'},
+    {team:'Case Management', dv:'Care Management', commit:'Line up home support before discharge, not after.', goal:'g2'},
+    {team:'Sterile Processing', dv:'Surgical Services', commit:'Have every tray ready and complete before the first case.', goal:'g2'},
+    {team:'Population Health', dv:'Population Health', commit:'Close care gaps for 500 more patients this year.', goal:'g3'},
+    {team:'Patient Experience', dv:'Patient Experience', commit:'Answer every call light before the second ring.', goal:'g1'},
+    {team:'Lab · Bloomington', dv:'Laboratory', commit:'Cut STAT lab turnaround to under 45 minutes.', goal:'g1'},
+    {team:'OSF OnCall', dv:'Digital Health', commit:'Get a virtual visit started in under five minutes.', goal:'g3'},
+    {team:'Rehabilitation Services', dv:'Rehabilitation', commit:'Start therapy the day the order is written.', goal:'g1'},
+    {team:'Marketing & Communications', dv:'Marketing', commit:'Make every patient message clear, kind, and in plain language.', goal:'g3'},
+    {team:'Scheduling · Central', dv:'Access', commit:'Offer every caller an appointment within two weeks.', goal:'g2'},
+    {team:'Chaplaincy', dv:'Mission Services', commit:'Reach every newly admitted patient who asks for support.', goal:'g3'},
+    {team:'ICU · Saint Francis', dv:'Nursing', commit:'Round as a full care team on every patient, every shift.', goal:'g2'},
+    {team:'Quality & Safety', dv:'Quality', commit:'Turn every safety report into a change within 30 days.', goal:'g1'},
+    {team:'Home Care', dv:'Home Care', commit:'See every new referral within 24 hours of discharge.', goal:'g2'},
+    {team:'Pediatrics · Children’s', dv:'Medical Group', commit:'Make every child feel safe and every parent heard.', goal:'g1'},
+    {team:'Billing Support', dv:'Revenue Cycle', commit:'Resolve billing questions on the first call.', goal:'g3'},
+    {team:'Facilities', dv:'Facilities', commit:'Fix any patient-room issue the same day it’s reported.', goal:'g2'},
+    {team:'Surgical Prep', dv:'Surgical Services', commit:'Keep families updated every step of the procedure.', goal:'g1'},
+    {team:'Behavioral Health · Peoria', dv:'Behavioral Health', commit:'Follow up with every patient within 48 hours of discharge.', goal:'g2'},
+    {team:'Nutrition Services', dv:'Food & Nutrition', commit:'Match every therapeutic diet order exactly, every tray.', goal:'g1'},
+    {team:'IT Clinical Apps', dv:'OSF Digital / IT', commit:'Give clinicians one less click in every workflow.', goal:'g2'},
+    {team:'Volunteer Services', dv:'Mission Services', commit:'Greet and guide every family who walks through our doors.', goal:'g3'},
+    {team:'Cardiology · CVI', dv:'Medical Group', commit:'Get every chest-pain patient to the right care faster.', goal:'g1'}
   ];
   var HEART_COLOR = '#4E8209'; // every team on the heart shows in one OSF green
   function dotColor(goal){ return HEART_COLOR; }
-  var board = { count:0, feed:[], built:false, submitted:false, inited:false, hoverWired:false, ws:null };
+  var board = { count:0, feed:[], built:false, submitted:false, inited:false, hoverWired:false, ws:null, page:0, filter:'all', navWired:false, filterWired:false, iconsWired:false };
+  var PAGE_SIZE = 18;
+  var DOT_CAP = 46;   // the heart shows more dots than one feed page, for a fuller fill
   var OFFLINE = (location.protocol === 'file:'); // file:// preview shows sample data; the deployed app is real-only
 
   function seedFeed(){ return SEED_COMMITS.map(function(s){ return { team:s.team+' · '+s.dv, commit:s.commit, goal:s.goal }; }); }
@@ -451,7 +477,7 @@
       var m; try { m = JSON.parse(ev.data); } catch(e){ return; }
       if(m.type === 'init'){
         board.count = m.count || 0; board.feed = (m.feed || []).slice(); board.inited = true;
-        if(cur === 7){ var g = document.getElementById('teamdots'); if(g){ g.innerHTML=''; board.built=false; } setCount(); renderFeed(); buildDots(); }
+        if(cur === 7){ setCount(); renderPage(board.page); }
       } else if(m.type === 'accepted'){ arrive(m.item, m.count, true); }
       else if(m.type === 'add'){ arrive(m.item, m.count, false); }
     };
@@ -474,7 +500,7 @@
     if(!board.inited && OFFLINE){ board.count = 1246; board.feed = seedFeed(); board.inited = true; }
     // show the current total right away, then tick +1 when our team lands
     var cel = document.getElementById('teamcount'); if(cel) cel.textContent = board.count.toLocaleString();
-    renderFeed(); buildBoardShape(); buildDots(); wireHover(); playBoardSequence();
+    buildBoardShape(); renderPage(0); wireHover(); wireFeedNav(); wireFeedFilter(); wireHeartIcons(); playBoardSequence();
     if(!board.submitted){
       setTimeout(function(){
         if(board.ws && board.ws.readyState === 1){ submitTeam(); }
@@ -486,19 +512,113 @@
 
   function setCount(){ animateCount(document.getElementById('teamcount'), board.count); }
 
-  function renderFeed(){
+  var GOAL_DOTCOL = { g1:'#64A70B', g2:'#00A9CE', g3:'#A5228E' };
+  var GOAL_LABEL  = { g1:'Excellence', g2:'One OSF Team', g3:'Destination OSF' };
+  // when a pillar filter is active, the whole heart takes that pillar's color; "all" restores the tri-color mark
+  function recolorHeart(filter){
+    var g = document.querySelector('#boardShape .sil-heart'); if(!g) return;
+    var paths = g.querySelectorAll('path[data-goal]');
+    for(var i=0;i<paths.length;i++){
+      var own = paths[i].getAttribute('data-goal');
+      var col = (filter && filter!=='all') ? (GOAL_DOTCOL[filter]||GOAL_DOTCOL[own]) : GOAL_DOTCOL[own];
+      paths[i].setAttribute('fill', col);
+      paths[i].setAttribute('stroke', col);   // keep the seam-closing stroke in sync with the fill
+    }
+  }
+  // all known teams (real feed, or sample data in preview), newest first
+  function allTeams(){ return board.feed.length ? board.feed : (OFFLINE ? seedFeed() : []); }
+  // the teams that match the active pillar filter
+  function filteredTeams(){
+    var list = allTeams();
+    return board.filter==='all' ? list : list.filter(function(t){ return t.goal===board.filter; });
+  }
+  function mineEntry(){ for(var i=0;i<board.feed.length;i++){ if(board.feed[i].mine) return board.feed[i]; } return null; }
+  // a fuller set of teams for the heart dots: a rotating window so each page refreshes the fill
+  function dotWindow(pg, teams){
+    var list = teams || filteredTeams();
+    var n = list.length; if(!n) return [];
+    var cap = Math.min(DOT_CAP, n), start = (pg*PAGE_SIZE) % n, out=[];
+    for(var i=0;i<cap;i++){ out.push(list[(start+i)%n]); }
+    return out;
+  }
+
+  function renderFeedList(slice){
     var feed = document.getElementById('feed'); if(!feed) return;
-    var list = board.feed.length ? board.feed : (OFFLINE ? seedFeed() : []);
-    if(!list.length){
-      feed.innerHTML = '<div class="feed-empty">No teams yet. Yours will be the first one on the board.</div>';
+    if(!slice.length){
+      feed.innerHTML = '<div class="feed-empty">No teams here yet'+(board.filter!=='all'?' for '+GOAL_LABEL[board.filter]:'')+'. Yours could be the first.</div>';
       return;
     }
-    feed.innerHTML = list.slice(0,40).map(function(it){
-      var dot = '<span class="fi-dot" style="background:'+HEART_COLOR+'"></span>';
+    feed.innerHTML = slice.map(function(it){
+      var col = GOAL_DOTCOL[it.goal] || HEART_COLOR;
+      var dot = '<span class="fi-dot" style="background:'+col+'"></span>';
       return '<div class="feed-item'+(it.mine?' me':'')+'"><div class="fi-team">'+dot+esc(it.team)+
-        (it.mine?' <span class="when">· just now</span>':'')+'</div><div class="fi-commit">'+esc(it.commit||'')+'</div></div>';
+        (it.mine?' <span class="when">· your team</span>':'')+'</div><div class="fi-commit">'+esc(it.commit||'')+'</div></div>';
     }).join('');
     feed.scrollTop = 0;
+  }
+  function updateFeedNav(pg, pages){
+    var nav=document.getElementById('feednav'); if(!nav) return;
+    if(pages<=1){ nav.innerHTML=''; nav.style.display='none'; return; }
+    nav.style.display='';
+    nav.innerHTML='<button type="button" class="fn-btn" data-fn="-1" aria-label="Previous teams"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg></button>'+
+      '<span class="fn-ind">Page '+(pg+1)+' of '+pages+'</span>'+
+      '<button type="button" class="fn-btn" data-fn="1" aria-label="More teams"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 6l6 6-6 6"/></svg></button>';
+  }
+  // render one page of teams: the feed list + the heart dots for those same teams (+ your team, always)
+  function renderPage(pg){
+    var teams = filteredTeams();
+    var pages = Math.max(1, Math.ceil(teams.length/PAGE_SIZE));
+    pg = ((pg%pages)+pages)%pages; board.page = pg;
+    var slice = teams.slice(pg*PAGE_SIZE, pg*PAGE_SIZE+PAGE_SIZE);
+    renderFeedList(slice);
+    updateFeedNav(pg, pages);
+    var g = document.getElementById('teamdots'); board.built = true;
+    if(g){
+      g.innerHTML='';
+      var me = mineEntry(), meShown=false;
+      var dots = dotWindow(pg, teams);
+      dots.forEach(function(it, i){ if(it.mine) meShown=true; makeDot(g, it, !!it.mine, true, (i%16)*0.04); });
+      // ambient dots (no tooltip) fill the heart out so it reads full — the wider board of teams
+      var target = 64;
+      for(var k=dots.length; k<target; k++){ makeDot(g, null, false, true, (k%16)*0.04); }
+      if(me && !meShown) makeDot(g, me, true, false);   // keep your team on the heart across pages
+    }
+    recolorHeart(board.filter);   // heart color follows the active pillar filter
+  }
+  function wireFeedNav(){
+    if(board.navWired) return; board.navWired=true;
+    var nav=document.getElementById('feednav'); if(nav) nav.addEventListener('click', function(e){
+      var btn=e.target.closest('[data-fn]'); if(!btn) return;
+      renderPage(board.page + Number(btn.getAttribute('data-fn')));
+    });
+  }
+  // single place to set the pillar filter — keeps the chips, the heart icons, and the board in sync
+  function setFilter(f){
+    board.filter = f;
+    var ff=document.getElementById('feedfilter');
+    if(ff) Array.prototype.slice.call(ff.querySelectorAll('.ff')).forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-f')===f); });
+    var hi=document.querySelector('#boardShape .heart-icons');
+    if(hi){ hi.classList.toggle('filtering', f!=='all');
+      Array.prototype.slice.call(hi.querySelectorAll('.hicon')).forEach(function(g){ g.classList.toggle('active', g.getAttribute('data-goal')===f); }); }
+    renderPage(0);
+  }
+  function wireFeedFilter(){
+    if(board.filterWired) return; board.filterWired=true;
+    var ff=document.getElementById('feedfilter'); if(!ff) return;
+    ff.addEventListener('click', function(e){
+      var btn=e.target.closest('[data-f]'); if(!btn) return;
+      setFilter(btn.getAttribute('data-f'));
+    });
+  }
+  // click a strategy icon around the heart to filter to that pillar; click it again to clear
+  function wireHeartIcons(){
+    if(board.iconsWired) return;
+    var hi=document.querySelector('#boardShape .heart-icons'); if(!hi) return; board.iconsWired=true;
+    hi.addEventListener('click', function(e){
+      var g=e.target.closest('.hicon'); if(!g) return;
+      var goal=g.getAttribute('data-goal');
+      setFilter(board.filter===goal ? 'all' : goal);
+    });
   }
 
   // ---- the ending shape: the OSF mark (pyramid) or a heart, both filling with teams ----
@@ -520,16 +640,36 @@
     board.shapeBuilt=true; board.shape='heart';   // opens on the heart, then spins into the pyramid
     var A=window.OSF_ART;
     var clipTre = A.lobes.g1 + A.lobes.g2 + A.lobes.g3;   // trefoil silhouette (clips the team dots)
-    mount.innerHTML='<svg viewBox="'+A.vb+'" role="img" aria-label="The OSF heart filling with teams, which turns into the OSF strategy mark">'+
+    // three strategy icons sit just outside the heart, each by its matching color
+    var HICON={
+      g1:'<path d="M12 2.6l2.75 5.94 6.5.72-4.85 4.4 1.32 6.4L12 17.1l-5.72 2.96 1.32-6.4-4.85-4.4 6.5-.72z"/>',
+      g2:'<path d="M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm7 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM3 19.6a6 6 0 0 1 12 0zm11.9 0a6 6 0 0 0-2.5-4.85A5 5 0 0 1 21 19.6z"/>',
+      g3:'<path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/>'
+    };
+    var HIPOS={ g1:{x:125,y:11,c:'#64A70B',t:'Excellence'}, g2:{x:233,y:120,c:'#00A9CE',t:'One OSF Team'}, g3:{x:17,y:120,c:'#A5228E',t:'Destination OSF'} };
+    var heartIcons='<g class="heart-icons">';
+    ['g1','g2','g3'].forEach(function(k){ var p=HIPOS[k];
+      heartIcons+='<g class="hicon" data-goal="'+k+'"><title>'+p.t+'</title>'+
+        '<circle cx="'+p.x+'" cy="'+p.y+'" r="12.5" fill="'+p.c+'" stroke="#fff" stroke-width="2.4"/>'+
+        '<g transform="translate('+(p.x-8)+' '+(p.y-8)+') scale(.667)" fill="#fff">'+HICON[k]+'</g></g>';
+    });
+    heartIcons+='</g>';
+    // the heart sits ~6.3 units right of the artwork's box center; shift the viewBox so it centers
+    mount.innerHTML='<svg viewBox="6.27 -4 238.87 236" role="img" aria-label="The OSF heart filling with teams, which turns into the OSF strategy mark">'+
       '<defs><clipPath id="clipTre">'+clipTre+'</clipPath>'+
         '<radialGradient id="osfMorphGlow" cx="50%" cy="50%" r="50%">'+
           '<stop offset="0%" stop-color="#64A70B" stop-opacity="0.85"/>'+
           '<stop offset="55%" stop-color="#00A9CE" stop-opacity="0.30"/>'+
-          '<stop offset="100%" stop-color="#00A9CE" stop-opacity="0"/></radialGradient></defs>'+
+          '<stop offset="100%" stop-color="#00A9CE" stop-opacity="0"/></radialGradient>'+
+        '<linearGradient id="osfDotGrad" x1="0" y1="0" x2="1" y2="1">'+
+          '<stop offset="0" stop-color="#64A70B"/>'+
+          '<stop offset=".5" stop-color="#00A9CE"/>'+
+          '<stop offset="1" stop-color="#A5228E"/></linearGradient></defs>'+
       '<circle class="morphglow" cx="119.4" cy="113.5" r="118" fill="url(#osfMorphGlow)"/>'+
       '<g class="sil sil-tre" style="opacity:0">'+boardSilhouette('tre')+'</g>'+
       '<g class="sil sil-heart" style="opacity:1">'+boardSilhouette('heart')+'</g>'+
       '<g id="teamdots" clip-path="url(#osfHeartClip)" style="opacity:0"></g>'+
+      heartIcons+
     '</svg>';
   }
   // spin the mark, and mid-spin swap the heart for the pyramid so it reads as a transformation
@@ -568,30 +708,35 @@
     for(var i=0;i<pad;i++){ makeDot(g, (i<known.length)?known[i]:null, false, false); }
   }
 
-  function makeDot(g, info, isMine, pop){
+  function makeDot(g, info, isMine, pop, delay){
     var c = document.createElementNS(svgns,'circle');
-    var x = isMine ? 119 : (14 + Math.random()*210);
-    var y = isMine ? 74  : (14 + Math.random()*198);
-    c.setAttribute('cx', x.toFixed(1)); c.setAttribute('cy', y.toFixed(1)); c.style.cursor='pointer';
+    // spread across the heart's actual bounds so the fill is fuller with less edge clipping
+    var x = isMine ? 125 : (40 + Math.random()*172);
+    var y = isMine ? 92  : (46 + Math.random()*150);
+    c.setAttribute('cx', x.toFixed(1)); c.setAttribute('cy', y.toFixed(1));
+    c.setAttribute('class', isMine ? 'tdot mine' : 'tdot');
     if(isMine){
-      c.setAttribute('r','7.5'); c.setAttribute('fill', '#ffffff');
-      c.setAttribute('stroke','#4E8209'); c.setAttribute('stroke-width','2.6');
-      popAnim(c,'0;11;7.5','0.9s');
+      c.setAttribute('r','6.5'); c.setAttribute('fill', '#ffffff');
+      c.setAttribute('stroke','url(#osfDotGrad)'); c.setAttribute('stroke-width','3');
+      popAnim(c,'0;9.5;6.5','0.9s',0);
       if(pop) sonarRing(g, x, y);
     } else {
       c.setAttribute('fill', '#ffffff');
-      c.setAttribute('stroke','rgba(40,44,32,.20)'); c.setAttribute('stroke-width','0.7');
+      c.setAttribute('stroke','rgba(30,36,24,.38)'); c.setAttribute('stroke-width','0.75');
       c.setAttribute('opacity',(0.82+Math.random()*0.18).toFixed(2));
-      var r = info ? (3.6+Math.random()*1.4) : (2.6+Math.random()*1.7);
-      if(pop){ c.setAttribute('r','0'); popAnim(c,'0;'+(r+2).toFixed(1)+';'+r.toFixed(1),'0.7s'); } else c.setAttribute('r', r.toFixed(1));
+      // smaller dots so the fuller heart doesn't get busy
+      var r = info ? (2.2+Math.random()*1.2) : (1.8+Math.random()*1.1);
+      if(pop){ c.setAttribute('r','0'); popAnim(c,'0;'+(r+1.6).toFixed(1)+';'+r.toFixed(1),'0.6s', delay||0); } else c.setAttribute('r', r.toFixed(1));
     }
     if(info){ c.setAttribute('data-team', info.team + (isMine?' · your team':'')); if(info.commit) c.setAttribute('data-commit', info.commit); }
     g.appendChild(c);
   }
-  function popAnim(c, values, dur){
+  function popAnim(c, values, dur, delay){
     var an = document.createElementNS(svgns,'animate');
     an.setAttribute('attributeName','r'); an.setAttribute('values',values);
     an.setAttribute('keyTimes','0;0.6;1'); an.setAttribute('dur',dur); an.setAttribute('fill','freeze');
+    an.setAttribute('calcMode','spline'); an.setAttribute('keySplines','.2 .8 .3 1;.4 0 .6 1');
+    if(delay){ an.setAttribute('begin', delay.toFixed(2)+'s'); c.setAttribute('r','0'); }
     c.appendChild(an);
   }
   // a soft ripple where the team's dot lands in the heart
@@ -611,12 +756,37 @@
   function arrive(item, count, isMine){
     if(typeof count === 'number') board.count = count; else board.count++;
     var entry = { team:(item&&item.team)||'A Mission Team', commit:(item&&item.commit)||'', goal:(item&&item.goal)||'', mine:!!isMine };
-    board.feed.unshift(entry); if(board.feed.length>60) board.feed.pop();
+    board.feed.unshift(entry); if(board.feed.length>240) board.feed.pop();
     if(cur === 7){
-      setCount(); renderFeed();
-      var g = document.getElementById('teamdots');
-      if(g && board.built) makeDot(g, {team:entry.team, commit:entry.commit, goal:entry.goal}, isMine, true);
-      if(isMine){ var hw = document.querySelector('.screen[data-part="7"] .heartwrap'); if(hw){ hw.classList.remove('land'); void hw.offsetWidth; hw.classList.add('land'); } }
+      setCount();
+      // your team jumps you to the first page to see it land; others refresh only if you're on page 1
+      if(isMine){ setFilter('all'); }   // your team lands on the full board (also resets chips + icons)
+      else if(board.page===0){ renderPage(0); }
+      if(isMine){
+        var hw = document.querySelector('.screen[data-part="7"] .heartwrap'); if(hw){ hw.classList.remove('land'); void hw.offsetWidth; hw.classList.add('land'); }
+        plusOne();          // a "+1" rises off the counter
+        celebrateMine();    // your dot pulses in with a flag
+      }
+    }
+  }
+  // "+1" floats up from the counter as your card joins the total
+  function plusOne(){
+    var wrap=document.querySelector('.screen[data-part="7"] .bigcount'); if(!wrap) return;
+    var p=document.createElement('span'); p.className='plusone'; p.textContent='+1';
+    wrap.appendChild(p); setTimeout(function(){ if(p.parentNode) p.parentNode.removeChild(p); }, 1600);
+  }
+  // draw extra attention to your team's dot: big ripple + a flag that points at it
+  function celebrateMine(){
+    var g=document.getElementById('teamdots'); if(!g) return;
+    var dot=g.querySelector('.tdot.mine'); if(!dot) return;
+    var cx=parseFloat(dot.getAttribute('cx')), cy=parseFloat(dot.getAttribute('cy'));
+    sonarRing(g, cx, cy); setTimeout(function(){ sonarRing(g, cx, cy); }, 260);   // double ripple
+    var wrap=g.closest('.heartwrap'), flag=document.getElementById('mineflag');
+    if(wrap && flag){
+      var wr=wrap.getBoundingClientRect(), dr=dot.getBoundingClientRect();
+      flag.style.left=(dr.left-wr.left+dr.width/2)+'px';
+      flag.style.top=(dr.top-wr.top-8)+'px';
+      flag.classList.remove('show'); void flag.offsetWidth; flag.classList.add('show');
     }
   }
 
@@ -625,15 +795,20 @@
     var g = document.getElementById('teamdots'); if(!g) return;
     var wrap = g.closest('.heartwrap'), tip = document.getElementById('dottip'); if(!wrap||!tip) return;
     board.hoverWired = true;
+    // enter a dot: fill + glide the tip to it. Anchor to the dot's CENTER so the tip
+    // stays put while the dot scales up on hover (scale is from center) — no jump.
     g.addEventListener('mouseover', function(e){
       var t=e.target; if(t.tagName!=='circle') return;
-      var team=t.getAttribute('data-team')||'A Mission Team across OSF', cm=t.getAttribute('data-commit');
+      var team=t.getAttribute('data-team'); if(!team) return;   // ambient filler dots have no tooltip
+      var cm=t.getAttribute('data-commit');
       tip.innerHTML='<b>'+esc(team)+'</b>'+(cm?'<span class="c">'+esc(cm)+'</span>':'');
       var wr=wrap.getBoundingClientRect(), dr=t.getBoundingClientRect();
-      tip.style.left=Math.min(Math.max(46,dr.left-wr.left+dr.width/2),wr.width-46)+'px';
-      tip.style.top=(dr.top-wr.top-6)+'px'; tip.classList.add('show');
+      var cx=dr.left-wr.left+dr.width/2, cy=dr.top-wr.top+dr.height/2;
+      tip.style.left=Math.min(Math.max(46,cx),wr.width-46)+'px';
+      tip.style.top=(cy-15)+'px'; tip.classList.add('show');
     });
-    g.addEventListener('mouseout', function(e){ if(e.target.tagName==='circle') tip.classList.remove('show'); });
+    // hide only when the pointer leaves the whole dot field, so moving dot-to-dot glides
+    g.addEventListener('mouseleave', function(){ tip.classList.remove('show'); });
   }
 
   function flashCount(el){ el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }

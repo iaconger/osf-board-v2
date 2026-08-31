@@ -108,6 +108,58 @@ function csvCell(v) {
   return `"${s.replace(/"/g, '""')}"`;
 }
 
+// readable strategic-pillar names, used everywhere data leaves the server
+const GOAL_NAME = { g1: 'Excellence', g2: 'One OSF Team', g3: 'Destination OSF' };
+
+// ISO -> "Aug 28, 2026, 9:15 AM CT" so a shared report reads naturally
+function fmtCentral(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return String(iso);
+  try {
+    return `${new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/Chicago',
+      year: 'numeric', month: 'short', day: '2-digit',
+      hour: 'numeric', minute: '2-digit', hour12: true,
+    }).format(d)} CT`;
+  } catch { return d.toISOString(); }
+}
+
+// teams are stored as "Department · Team"; split for tidy columns
+function splitTeam(t) {
+  const s = String(t || '');
+  const i = s.indexOf(' · ');
+  return i >= 0 ? { dept: s.slice(0, i), team: s.slice(i + 3) } : { dept: '', team: s };
+}
+
+function commitmentList(e) {
+  return Array.isArray(e.commitments) && e.commitments.length
+    ? e.commitments
+    : [{ text: e.commit || '', goal: e.goal || '' }];
+}
+
+// at-a-glance counts: teams, commitments, and how they split across pillars
+function summarize() {
+  const p = { g1: 0, g2: 0, g3: 0, none: 0 };
+  let commitments = 0;
+  for (const e of captured) {
+    for (const c of commitmentList(e)) {
+      commitments += 1;
+      if (p[c.goal] !== undefined) p[c.goal] += 1; else p.none += 1;
+    }
+  }
+  return {
+    teams: captured.length,
+    commitments,
+    byPillar: {
+      Excellence: p.g1,
+      'One OSF Team': p.g2,
+      'Destination OSF': p.g3,
+      Unassigned: p.none,
+    },
+  };
+}
+
 // most recent real commitments first, padded with examples so the board is lively
 function feedForInit() {
   const real = state.feed.slice(-40).reverse().map((e) => ({ team: e.team, commit: e.commit, goal: e.goal || '' }));
@@ -141,31 +193,50 @@ app.get('/healthz', (_req, res) => res.status(200).type('text/plain').send('ok')
 
 app.get('/export', (req, res) => {
   if (!EXPORT_KEY || req.query.key !== EXPORT_KEY) return res.status(403).type('text/plain').send('Forbidden');
-  const goalName = { g1: 'Excellence', g2: 'One OSF Team', g3: 'Destination OSF' };
-  const rows = ['timestamp,team,strategic_goal,what_we_do,connected_to,reaches_patient,commitment'];
+  const rows = [[
+    'Submitted (Central Time)', 'Department', 'Team', 'Strategic Goal',
+    'What We Do', 'Teams We Work With', 'How Our Work Reaches Patients',
+    'Commitment #', 'Commitment',
+  ].map(csvCell).join(',')];
   for (const e of captured) {
-    // one row per commitment on the card, so nothing is lost in export
-    const list = Array.isArray(e.commitments) && e.commitments.length ? e.commitments : [{ text: e.commit || '', goal: e.goal || '' }];
-    for (const c of list) {
+    const { dept, team } = splitTeam(e.team);
+    const list = commitmentList(e);
+    // one tidy row per commitment, so nothing is lost and every row stands alone
+    list.forEach((c, i) => {
       rows.push([
-        e.ts || '', e.team, goalName[c.goal] || '', e.work || '', (e.connections || []).join('; '), e.reach || '', c.text || '',
+        fmtCentral(e.ts), dept, team, GOAL_NAME[c.goal] || '',
+        e.work || '', (e.connections || []).join('; '), e.reach || '',
+        String(i + 1), c.text || '',
       ].map(csvCell).join(','));
-    }
+    });
   }
-  res.setHeader('Content-Disposition', 'attachment; filename="osf-strategy-commitments.csv"');
-  res.type('text/csv').send(rows.join('\n'));
+  // BOM + CRLF so Excel opens it with correct encoding and clean line breaks
+  const csv = `﻿${rows.join('\r\n')}\r\n`;
+  const stamp = new Date().toISOString().slice(0, 10);
+  res.setHeader('Content-Disposition', `attachment; filename="osf-strategy-commitments-${stamp}.csv"`);
+  res.type('text/csv; charset=utf-8').send(csv);
 });
 app.get('/export.json', (req, res) => {
   if (!EXPORT_KEY || req.query.key !== EXPORT_KEY) return res.status(403).json({ error: 'Forbidden' });
-  const goalName = { g1: 'Excellence', g2: 'One OSF Team', g3: 'Destination OSF' };
   res.json({
+    generatedAt: new Date().toISOString(),
     count: captured.length,
+    summary: summarize(),
     submissions: captured.map((e) => {
-      const list = Array.isArray(e.commitments) && e.commitments.length ? e.commitments : [{ text: e.commit || '', goal: e.goal || '' }];
+      const { dept, team } = splitTeam(e.team);
       return {
-        ts: e.ts || '', team: e.team,
-        work: e.work || '', connections: e.connections || [], reach: e.reach || '',
-        commitments: list.map((c) => ({ goal: c.goal || '', goalName: goalName[c.goal] || '', commit: c.text || '' })),
+        submitted: e.ts || '',
+        submittedLocal: fmtCentral(e.ts),
+        department: dept,
+        team,
+        whatWeDo: e.work || '',
+        worksWith: e.connections || [],
+        reachesPatient: e.reach || '',
+        commitments: commitmentList(e).map((c) => ({
+          pillar: GOAL_NAME[c.goal] || '',
+          pillarCode: c.goal || '',
+          commitment: c.text || '',
+        })),
       };
     }),
   });
