@@ -324,7 +324,7 @@
   // ---- finished card ----
   function renderCard(){
     var name = teamIdentity() || 'Our Team';
-    var work = teamWork.value.trim();
+    var work = teamWork ? teamWork.value.trim() : '';
     var conns = selected.slice();
     var reachV = reach.value.trim();
     var commitments = collectCommitments();
@@ -488,7 +488,7 @@
   function submitTeam(){
     if(board.submitted) return; board.submitted = true;
     var cms = collectCommitments();
-    var payload = { type:'submit', team:teamIdentity(), work:teamWork.value.trim(),
+    var payload = { type:'submit', team:teamIdentity(), work:(teamWork ? teamWork.value.trim() : ''),
       connections:selected.slice(0,12), reach:reach.value.trim(), commitments:cms };
     if(board.ws && board.ws.readyState === 1){ board.ws.send(JSON.stringify(payload)); }
     else if(cms.length){ arrive({team:payload.team, commit:cms[0].text, goal:'', commitments:cms}, board.count + 1, true); }   // offline echo: carry all commitments
@@ -846,7 +846,7 @@
   var printBoardBtn = document.getElementById('printBoardBtn');
   if(printBoardBtn) printBoardBtn.addEventListener('click', function(){ window.print(); });
   document.getElementById('restartBtn').addEventListener('click', function(){
-    teamDept.value=''; teamName.value=''; teamWork.value=''; reach.value='';
+    teamDept.value=''; teamName.value=''; if(teamWork) teamWork.value=''; reach.value='';
     Array.prototype.slice.call(commitList.querySelectorAll('.commit-item.commit-extra')).forEach(function(it){ it.parentNode.removeChild(it); });
     Array.prototype.slice.call(commitList.querySelectorAll('.commit-in')).forEach(function(t){ t.value=''; });
     selected.length=0;

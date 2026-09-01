@@ -504,8 +504,6 @@
           <input type="text" id="teamName" maxlength="60" placeholder="e.g. UX & SEO" autocomplete="off">
         </div>
       </div>
-      <label class="fld" for="teamWork">What is our team's role in Destination OSF? <span class="opt">(optional)</span></label>
-      <input type="text" id="teamWork" maxlength="120" placeholder="e.g. We build the digital tools that move care forward at OSF" autocomplete="off">
       <div class="row">
         <button class="back" data-go="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Back</button>
         <button class="btn" id="toConn" data-go="2" disabled>Next
@@ -997,7 +995,7 @@ window.OSF_ART = {
   // ---- finished card ----
   function renderCard(){
     var name = teamIdentity() || 'Our Team';
-    var work = teamWork.value.trim();
+    var work = teamWork ? teamWork.value.trim() : '';
     var conns = selected.slice();
     var reachV = reach.value.trim();
     var commitments = collectCommitments();
@@ -1161,7 +1159,7 @@ window.OSF_ART = {
   function submitTeam(){
     if(board.submitted) return; board.submitted = true;
     var cms = collectCommitments();
-    var payload = { type:'submit', team:teamIdentity(), work:teamWork.value.trim(),
+    var payload = { type:'submit', team:teamIdentity(), work:(teamWork ? teamWork.value.trim() : ''),
       connections:selected.slice(0,12), reach:reach.value.trim(), commitments:cms };
     if(board.ws && board.ws.readyState === 1){ board.ws.send(JSON.stringify(payload)); }
     else if(cms.length){ arrive({team:payload.team, commit:cms[0].text, goal:'', commitments:cms}, board.count + 1, true); }   // offline echo: carry all commitments
@@ -1519,7 +1517,7 @@ window.OSF_ART = {
   var printBoardBtn = document.getElementById('printBoardBtn');
   if(printBoardBtn) printBoardBtn.addEventListener('click', function(){ window.print(); });
   document.getElementById('restartBtn').addEventListener('click', function(){
-    teamDept.value=''; teamName.value=''; teamWork.value=''; reach.value='';
+    teamDept.value=''; teamName.value=''; if(teamWork) teamWork.value=''; reach.value='';
     Array.prototype.slice.call(commitList.querySelectorAll('.commit-item.commit-extra')).forEach(function(it){ it.parentNode.removeChild(it); });
     Array.prototype.slice.call(commitList.querySelectorAll('.commit-in')).forEach(function(t){ t.value=''; });
     selected.length=0;

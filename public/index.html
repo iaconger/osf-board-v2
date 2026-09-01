@@ -347,6 +347,7 @@
   .fi-team .when{font-weight:500;color:var(--green);font-size:13px}
   .fi-team .dv{font-weight:500;color:var(--muted);font-size:13px}
   .fi-commit{font-size:16px;line-height:1.5;color:#38412f;margin-top:4px}
+  .fi-commit.fi-muted{color:#9aa295;font-style:italic;font-size:14px}
   .feed-item.me{animation:feedPop .55s ease}
   .feed-empty{padding:26px 18px;text-align:center;font-size:15px;color:var(--muted);line-height:1.5}
   /* pillar filter + pagination for the teams feed */
@@ -487,8 +488,6 @@
           <input type="text" id="teamName" maxlength="60" placeholder="e.g. UX & SEO" autocomplete="off">
         </div>
       </div>
-      <label class="fld" for="teamWork">What is our team's role in Destination OSF? <span class="opt">(optional)</span></label>
-      <input type="text" id="teamWork" maxlength="120" placeholder="e.g. We build the digital tools that move OSF's care forward" autocomplete="off">
       <div class="row">
         <button class="back" data-go="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Back</button>
         <button class="btn" id="toConn" data-go="2" disabled>Next
@@ -514,9 +513,9 @@
     <section class="screen" data-part="3">
       <p class="kicker">Team Commitment Card</p>
       <h2 class="big">How does our work reach the people we serve?</h2>
-      <p class="sub">Some of us work right with patients. A lot of us support the people who do. Either way, think about how our work ends up reaching a patient.</p>
+      <p class="sub">Some of us work directly with the people we serve. A lot of us support the people who do. Either way, think about how our work ends up reaching them.</p>
       <label class="fld" for="reach">Our work reaches the people we serve because…</label>
-      <textarea id="reach" maxlength="240" placeholder="e.g. The systems we keep running let clinicians spend more time with patients"></textarea>
+      <textarea id="reach" maxlength="240" placeholder="e.g. The systems we keep running give clinicians more time at the bedside"></textarea>
       <div class="row">
         <button class="back" data-go="2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Back</button>
         <button class="btn" id="toCommit" data-go="4" disabled>Next
@@ -532,7 +531,7 @@
       <div id="commitList">
         <div class="commit-item" data-goal="g1">
           <label class="fld"><span class="pd" style="background:var(--g1)"></span>Excellence</label>
-          <textarea class="commit-in" data-goal="g1" maxlength="200" placeholder="How will we raise the bar for our patients or each other?"></textarea>
+          <textarea class="commit-in" data-goal="g1" maxlength="200" placeholder="How will we raise the bar for the people we serve or each other?"></textarea>
         </div>
         <div class="commit-item" data-goal="g2">
           <label class="fld"><span class="pd" style="background:var(--g2)"></span>One OSF Team</label>
@@ -577,15 +576,15 @@
     <!-- 8 · FINISHED CARD + CONNECTION -->
     <section class="screen" data-part="6">
       <p class="kicker" style="text-align:center">Team Commitment Card</p>
-      <h2 class="big" style="text-align:center;font-size:26px">How our team connects to<br>the ministry and our patients</h2>
+      <h2 class="big" style="text-align:center;font-size:26px">How our team connects to<br>the Ministry and the people we serve</h2>
       <div class="web-wrap"><div id="web"></div></div>
-      <p class="web-cap" id="webcap">Every team we named is one thread in the same fabric, all of it reaching our patients at the center.</p>
+      <p class="web-cap" id="webcap">Every team we named is one thread in the same fabric, all of it reaching the people we serve at the center.</p>
 
       <div class="mtc" id="cardOut"></div>
 
       <div class="rollup">
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><g stroke="#4E8209" stroke-width="1.5" opacity=".45"><path d="M12 12 12 3.4M12 12 19.6 8M12 12 17.6 18.6M12 12 6.4 18.6M12 12 4.4 8"/></g><g fill="#4E8209"><circle cx="12" cy="3.4" r="1.9"/><circle cx="19.6" cy="8" r="1.9"/><circle cx="17.6" cy="18.6" r="1.9"/><circle cx="6.4" cy="18.6" r="1.9"/><circle cx="4.4" cy="8" r="1.9"/></g><circle cx="12" cy="12" r="3.1" fill="#4E8209"/></svg>
-        <div>As more teams fill out their card, we start to see the whole ministry: every team connected, and all of it adding up to care for our patients.</div>
+        <div>As more teams fill out their card, we start to see the whole Ministry: every team connected, and all of it adding up to care for the people we serve.</div>
       </div>
 
       <div class="row">
@@ -624,7 +623,7 @@
 
       <div class="rollup">
         <svg viewBox="0 0 24 24" fill="none" stroke="#4E8209" stroke-width="2"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-        <div>Every dot is a team like yours. Some work right with patients, some support the teams who do. Together, we're bringing the strategy to life, with all we have.</div>
+        <div>Every dot is a team like yours. Some work directly with the people we serve, some support the teams who do. Together, we're bringing the strategy to life, with all we have.</div>
       </div>
       <div class="row">
         <button class="back" data-go="6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Back to our card</button>
