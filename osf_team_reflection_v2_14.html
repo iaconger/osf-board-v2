@@ -347,6 +347,7 @@
   .fi-team .when{font-weight:500;color:var(--green);font-size:13px}
   .fi-team .dv{font-weight:500;color:var(--muted);font-size:13px}
   .fi-commit{font-size:16px;line-height:1.5;color:#38412f;margin-top:4px}
+  .fi-commit.fi-muted{color:#9aa295;font-style:italic;font-size:14px}
   .feed-item.me{animation:feedPop .55s ease}
   .feed-empty{padding:26px 18px;text-align:center;font-size:15px;color:var(--muted);line-height:1.5}
   /* pillar filter + pagination for the teams feed */
@@ -504,7 +505,7 @@
         </div>
       </div>
       <label class="fld" for="teamWork">What is our team's role in Destination OSF? <span class="opt">(optional)</span></label>
-      <input type="text" id="teamWork" maxlength="120" placeholder="e.g. We build the digital tools that move OSF's care forward" autocomplete="off">
+      <input type="text" id="teamWork" maxlength="120" placeholder="e.g. We build the digital tools that move care forward at OSF" autocomplete="off">
       <div class="row">
         <button class="back" data-go="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Back</button>
         <button class="btn" id="toConn" data-go="2" disabled>Next
@@ -530,9 +531,9 @@
     <section class="screen" data-part="3">
       <p class="kicker">Team Commitment Card</p>
       <h2 class="big">How does our work reach the people we serve?</h2>
-      <p class="sub">Some of us work right with patients. A lot of us support the people who do. Either way, think about how our work ends up reaching a patient.</p>
+      <p class="sub">Some of us work directly with the people we serve. A lot of us support the people who do. Either way, think about how our work ends up reaching them.</p>
       <label class="fld" for="reach">Our work reaches the people we serve because…</label>
-      <textarea id="reach" maxlength="240" placeholder="e.g. The systems we keep running let clinicians spend more time with patients"></textarea>
+      <textarea id="reach" maxlength="240" placeholder="e.g. The systems we keep running give clinicians more time at the bedside"></textarea>
       <div class="row">
         <button class="back" data-go="2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Back</button>
         <button class="btn" id="toCommit" data-go="4" disabled>Next
@@ -548,7 +549,7 @@
       <div id="commitList">
         <div class="commit-item" data-goal="g1">
           <label class="fld"><span class="pd" style="background:var(--g1)"></span>Excellence</label>
-          <textarea class="commit-in" data-goal="g1" maxlength="200" placeholder="How will we raise the bar for our patients or each other?"></textarea>
+          <textarea class="commit-in" data-goal="g1" maxlength="200" placeholder="How will we raise the bar for the people we serve or each other?"></textarea>
         </div>
         <div class="commit-item" data-goal="g2">
           <label class="fld"><span class="pd" style="background:var(--g2)"></span>One OSF Team</label>
@@ -593,15 +594,15 @@
     <!-- 8 · FINISHED CARD + CONNECTION -->
     <section class="screen" data-part="6">
       <p class="kicker" style="text-align:center">Team Commitment Card</p>
-      <h2 class="big" style="text-align:center;font-size:26px">How our team connects to<br>the ministry and our patients</h2>
+      <h2 class="big" style="text-align:center;font-size:26px">How our team connects to<br>the Ministry and the people we serve</h2>
       <div class="web-wrap"><div id="web"></div></div>
-      <p class="web-cap" id="webcap">Every team we named is one thread in the same fabric, all of it reaching our patients at the center.</p>
+      <p class="web-cap" id="webcap">Every team we named is one thread in the same fabric, all of it reaching the people we serve at the center.</p>
 
       <div class="mtc" id="cardOut"></div>
 
       <div class="rollup">
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><g stroke="#4E8209" stroke-width="1.5" opacity=".45"><path d="M12 12 12 3.4M12 12 19.6 8M12 12 17.6 18.6M12 12 6.4 18.6M12 12 4.4 8"/></g><g fill="#4E8209"><circle cx="12" cy="3.4" r="1.9"/><circle cx="19.6" cy="8" r="1.9"/><circle cx="17.6" cy="18.6" r="1.9"/><circle cx="6.4" cy="18.6" r="1.9"/><circle cx="4.4" cy="8" r="1.9"/></g><circle cx="12" cy="12" r="3.1" fill="#4E8209"/></svg>
-        <div>As more teams fill out their card, we start to see the whole ministry: every team connected, and all of it adding up to care for our patients.</div>
+        <div>As more teams fill out their card, we start to see the whole Ministry: every team connected, and all of it adding up to care for the people we serve.</div>
       </div>
 
       <div class="row">
@@ -640,7 +641,7 @@
 
       <div class="rollup">
         <svg viewBox="0 0 24 24" fill="none" stroke="#4E8209" stroke-width="2"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-        <div>Every dot is a team like yours. Some work right with patients, some support the teams who do. Together, we're bringing the strategy to life, with all we have.</div>
+        <div>Every dot is a team like yours. Some work directly with the people we serve, some support the teams who do. Together, we're bringing the strategy to life, with all we have.</div>
       </div>
       <div class="row">
         <button class="back" data-go="6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Back to our card</button>
@@ -1163,13 +1164,13 @@ window.OSF_ART = {
     var payload = { type:'submit', team:teamIdentity(), work:teamWork.value.trim(),
       connections:selected.slice(0,12), reach:reach.value.trim(), commitments:cms };
     if(board.ws && board.ws.readyState === 1){ board.ws.send(JSON.stringify(payload)); }
-    else if(cms.length){ arrive({team:payload.team, commit:cms[0].text, goal:''}, board.count + 1, true); }   // offline echo: one card
+    else if(cms.length){ arrive({team:payload.team, commit:cms[0].text, goal:'', commitments:cms}, board.count + 1, true); }   // offline echo: carry all commitments
   }
 
   function renderBoard(){
     var name = teamIdentity() || 'Our team';
     document.getElementById('boardName').textContent = '“' + name + '” added to the board';
-    if(!board.inited && OFFLINE){ board.count = 1246; board.feed = seedFeed(); board.inited = true; }
+    if(!board.inited && OFFLINE){ board.inited = true; }   // preview starts empty too — dots appear only as teams are added
     // show the current total right away, then tick +1 when our team lands
     var cel = document.getElementById('teamcount'); if(cel) cel.textContent = board.count.toLocaleString();
     buildBoardShape(); renderPage(0); wireHover(); wireFeedNav(); wireFeedFilter(); wireHeartIcons(); playBoardSequence();
@@ -1198,11 +1199,17 @@ window.OSF_ART = {
     }
   }
   // all known teams (real feed, or sample data in preview), newest first
-  function allTeams(){ return board.feed.length ? board.feed : (OFFLINE ? seedFeed() : []); }
-  // the teams that match the active pillar filter
-  function filteredTeams(){
-    var list = allTeams();
-    return board.filter==='all' ? list : list.filter(function(t){ return t.goal===board.filter; });
+  function allTeams(){ return board.feed; }   // only real submissions — no sample/filler teams
+  // the filter is a lens, not a cut: every team stays on the board in every view.
+  // it only changes what a hover / feed row reveals (see pillarCommit + renderFeedList).
+  function filteredTeams(){ return allTeams(); }
+  // the commitment(s) a team made for the active pillar ('' on the combined view)
+  function pillarCommit(entry){
+    if(!entry || board.filter==='all') return '';
+    var cs = entry.commitments || [];
+    var out = [];
+    for(var i=0;i<cs.length;i++){ if(cs[i].goal===board.filter && cs[i].text) out.push(cs[i].text); }
+    return out.join(' · ');
   }
   function mineEntry(){ for(var i=0;i<board.feed.length;i++){ if(board.feed[i].mine) return board.feed[i]; } return null; }
   // a fuller set of teams for the heart dots: a rotating window so each page refreshes the fill
@@ -1217,14 +1224,22 @@ window.OSF_ART = {
   function renderFeedList(slice){
     var feed = document.getElementById('feed'); if(!feed) return;
     if(!slice.length){
-      feed.innerHTML = '<div class="feed-empty">No teams here yet'+(board.filter!=='all'?' for '+GOAL_LABEL[board.filter]:'')+'. Yours could be the first.</div>';
+      feed.innerHTML = '<div class="feed-empty">No teams here yet. Yours could be the first.</div>';
       return;
     }
+    var isAll = board.filter==='all';
     feed.innerHTML = slice.map(function(it){
-      var col = GOAL_DOTCOL[it.goal] || HEART_COLOR;
+      var col = isAll ? HEART_COLOR : (GOAL_DOTCOL[board.filter]||HEART_COLOR);
       var dot = '<span class="fi-dot" style="background:'+col+'"></span>';
+      var line = '';
+      if(!isAll){
+        var cm = pillarCommit(it);
+        line = cm ? '<div class="fi-commit">'+esc(cm)+'</div>'
+                  : '<div class="fi-commit fi-muted">No '+esc(GOAL_LABEL[board.filter])+' commitment</div>';
+      }
+      // combined view = just the team; a pillar view adds that pillar's commitment
       return '<div class="feed-item'+(it.mine?' me':'')+'"><div class="fi-team">'+dot+esc(it.team)+
-        (it.mine?' <span class="when">· your team</span>':'')+'</div><div class="fi-commit">'+esc(it.commit||'')+'</div></div>';
+        (it.mine?' <span class="when">· your team</span>':'')+'</div>'+line+'</div>';
     }).join('');
     feed.scrollTop = 0;
   }
@@ -1248,11 +1263,9 @@ window.OSF_ART = {
     if(g){
       g.innerHTML='';
       var me = mineEntry(), meShown=false;
+      // one dot per real team only — the heart fills as people actually add their card
       var dots = dotWindow(pg, teams);
       dots.forEach(function(it, i){ if(it.mine) meShown=true; makeDot(g, it, !!it.mine, true, (i%16)*0.04); });
-      // ambient dots (no tooltip) fill the heart out so it reads full — the wider board of teams
-      var target = 64;
-      for(var k=dots.length; k<target; k++){ makeDot(g, null, false, true, (k%16)*0.04); }
       if(me && !meShown) makeDot(g, me, true, false);   // keep your team on the heart across pages
     }
     recolorHeart(board.filter);   // heart color follows the active pillar filter
@@ -1400,7 +1413,11 @@ window.OSF_ART = {
       var r = info ? (2.2+Math.random()*1.2) : (1.8+Math.random()*1.1);
       if(pop){ c.setAttribute('r','0'); popAnim(c,'0;'+(r+1.6).toFixed(1)+';'+r.toFixed(1),'0.6s', delay||0); } else c.setAttribute('r', r.toFixed(1));
     }
-    if(info){ c.setAttribute('data-team', info.team + (isMine?' · your team':'')); if(info.commit) c.setAttribute('data-commit', info.commit); }
+    if(info){
+      c.setAttribute('data-team', info.team + (isMine?' · your team':''));
+      var cm = pillarCommit(info);          // '' on the combined view -> hover shows the team only
+      if(cm) c.setAttribute('data-commit', cm);
+    }
     g.appendChild(c);
   }
   function popAnim(c, values, dur, delay){
@@ -1427,7 +1444,9 @@ window.OSF_ART = {
 
   function arrive(item, count, isMine){
     if(typeof count === 'number') board.count = count; else board.count++;
-    var entry = { team:(item&&item.team)||'A Mission Team', commit:(item&&item.commit)||'', goal:(item&&item.goal)||'', mine:!!isMine };
+    var cms = (item&&item.commitments&&item.commitments.length) ? item.commitments
+              : ((item&&item.commit) ? [{text:item.commit, goal:(item&&item.goal)||''}] : []);
+    var entry = { team:(item&&item.team)||'A Mission Team', commit:(item&&item.commit)||'', goal:(item&&item.goal)||'', commitments:cms, mine:!!isMine };
     board.feed.unshift(entry); if(board.feed.length>240) board.feed.pop();
     if(cur === 7){
       setCount();

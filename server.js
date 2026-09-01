@@ -98,7 +98,12 @@ function originAllowed(origin, host) {
 
 function applyEntry(e) {
   state.count += 1;
-  state.feed.push({ team: e.team, commit: e.commit, goal: e.goal || '' });
+  // carry each team's full commitment set (with pillars) so the board can show
+  // pillar-specific detail on hover without reducing the set of teams shown
+  const commitments = Array.isArray(e.commitments) && e.commitments.length
+    ? e.commitments.map((c) => ({ text: c.text || '', goal: c.goal || '' }))
+    : (e.commit ? [{ text: e.commit, goal: e.goal || '' }] : []);
+  state.feed.push({ team: e.team, commit: e.commit, goal: e.goal || '', commitments });
   if (state.feed.length > LIMITS.feed) state.feed.shift();
 }
 
@@ -162,7 +167,10 @@ function summarize() {
 
 // most recent real commitments first, padded with examples so the board is lively
 function feedForInit() {
-  const real = state.feed.slice(-40).reverse().map((e) => ({ team: e.team, commit: e.commit, goal: e.goal || '' }));
+  const real = state.feed.slice(-40).reverse().map((e) => ({
+    team: e.team, commit: e.commit, goal: e.goal || '',
+    commitments: Array.isArray(e.commitments) ? e.commitments : (e.commit ? [{ text: e.commit, goal: e.goal || '' }] : []),
+  }));
   const combined = real.concat(SEED_FEED);
   return combined.slice(0, 40);
 }
@@ -190,6 +198,22 @@ app.use(helmet({
 }));
 
 app.get('/healthz', (_req, res) => res.status(200).type('text/plain').send('ok'));
+
+// Launch-readiness check — safe to open in a browser, exposes no secrets.
+// The key line is "durable": true means cards are saved to PostgreSQL and
+// survive redeploys; false means file storage that Render wipes on redeploy.
+app.get('/status', (_req, res) => {
+  res.json({
+    ok: true,
+    storage: db.mode,                                 // 'postgres' (durable) or 'file' (not safe across redeploys)
+    durable: db.mode === 'postgres',                  // <-- must be true for launch
+    cardsStored: captured.length,                     // total cards captured so far
+    exportKeyConfigured: Boolean(EXPORT_KEY),          // download of data is locked
+    allowedOriginsConfigured: ALLOWED_ORIGINS.length > 0, // only your site can connect
+    uptimeSeconds: Math.round(process.uptime()),
+    serverTime: new Date().toISOString(),
+  });
+});
 
 app.get('/export', (req, res) => {
   if (!EXPORT_KEY || req.query.key !== EXPORT_KEY) return res.status(403).type('text/plain').send('Forbidden');
@@ -331,7 +355,7 @@ wss.on('connection', (ws) => {
     if (captured.length > LIMITS.captured) captured.shift();
     db.insert(entry);
 
-    const item = { team, commit: clean[0].text, goal: '' };
+    const item = { team, commit: clean[0].text, goal: '', commitments: clean };
     ws.send(JSON.stringify({ type: 'accepted', item, count: state.count }));
     broadcastExcept(ws, { type: 'add', item, count: state.count });
   });

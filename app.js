@@ -491,13 +491,13 @@
     var payload = { type:'submit', team:teamIdentity(), work:teamWork.value.trim(),
       connections:selected.slice(0,12), reach:reach.value.trim(), commitments:cms };
     if(board.ws && board.ws.readyState === 1){ board.ws.send(JSON.stringify(payload)); }
-    else if(cms.length){ arrive({team:payload.team, commit:cms[0].text, goal:''}, board.count + 1, true); }   // offline echo: one card
+    else if(cms.length){ arrive({team:payload.team, commit:cms[0].text, goal:'', commitments:cms}, board.count + 1, true); }   // offline echo: carry all commitments
   }
 
   function renderBoard(){
     var name = teamIdentity() || 'Our team';
     document.getElementById('boardName').textContent = '“' + name + '” added to the board';
-    if(!board.inited && OFFLINE){ board.count = 1246; board.feed = seedFeed(); board.inited = true; }
+    if(!board.inited && OFFLINE){ board.inited = true; }   // preview starts empty too — dots appear only as teams are added
     // show the current total right away, then tick +1 when our team lands
     var cel = document.getElementById('teamcount'); if(cel) cel.textContent = board.count.toLocaleString();
     buildBoardShape(); renderPage(0); wireHover(); wireFeedNav(); wireFeedFilter(); wireHeartIcons(); playBoardSequence();
@@ -526,11 +526,17 @@
     }
   }
   // all known teams (real feed, or sample data in preview), newest first
-  function allTeams(){ return board.feed.length ? board.feed : (OFFLINE ? seedFeed() : []); }
-  // the teams that match the active pillar filter
-  function filteredTeams(){
-    var list = allTeams();
-    return board.filter==='all' ? list : list.filter(function(t){ return t.goal===board.filter; });
+  function allTeams(){ return board.feed; }   // only real submissions — no sample/filler teams
+  // the filter is a lens, not a cut: every team stays on the board in every view.
+  // it only changes what a hover / feed row reveals (see pillarCommit + renderFeedList).
+  function filteredTeams(){ return allTeams(); }
+  // the commitment(s) a team made for the active pillar ('' on the combined view)
+  function pillarCommit(entry){
+    if(!entry || board.filter==='all') return '';
+    var cs = entry.commitments || [];
+    var out = [];
+    for(var i=0;i<cs.length;i++){ if(cs[i].goal===board.filter && cs[i].text) out.push(cs[i].text); }
+    return out.join(' · ');
   }
   function mineEntry(){ for(var i=0;i<board.feed.length;i++){ if(board.feed[i].mine) return board.feed[i]; } return null; }
   // a fuller set of teams for the heart dots: a rotating window so each page refreshes the fill
@@ -545,14 +551,22 @@
   function renderFeedList(slice){
     var feed = document.getElementById('feed'); if(!feed) return;
     if(!slice.length){
-      feed.innerHTML = '<div class="feed-empty">No teams here yet'+(board.filter!=='all'?' for '+GOAL_LABEL[board.filter]:'')+'. Yours could be the first.</div>';
+      feed.innerHTML = '<div class="feed-empty">No teams here yet. Yours could be the first.</div>';
       return;
     }
+    var isAll = board.filter==='all';
     feed.innerHTML = slice.map(function(it){
-      var col = GOAL_DOTCOL[it.goal] || HEART_COLOR;
+      var col = isAll ? HEART_COLOR : (GOAL_DOTCOL[board.filter]||HEART_COLOR);
       var dot = '<span class="fi-dot" style="background:'+col+'"></span>';
+      var line = '';
+      if(!isAll){
+        var cm = pillarCommit(it);
+        line = cm ? '<div class="fi-commit">'+esc(cm)+'</div>'
+                  : '<div class="fi-commit fi-muted">No '+esc(GOAL_LABEL[board.filter])+' commitment</div>';
+      }
+      // combined view = just the team; a pillar view adds that pillar's commitment
       return '<div class="feed-item'+(it.mine?' me':'')+'"><div class="fi-team">'+dot+esc(it.team)+
-        (it.mine?' <span class="when">· your team</span>':'')+'</div><div class="fi-commit">'+esc(it.commit||'')+'</div></div>';
+        (it.mine?' <span class="when">· your team</span>':'')+'</div>'+line+'</div>';
     }).join('');
     feed.scrollTop = 0;
   }
@@ -576,11 +590,9 @@
     if(g){
       g.innerHTML='';
       var me = mineEntry(), meShown=false;
+      // one dot per real team only — the heart fills as people actually add their card
       var dots = dotWindow(pg, teams);
       dots.forEach(function(it, i){ if(it.mine) meShown=true; makeDot(g, it, !!it.mine, true, (i%16)*0.04); });
-      // ambient dots (no tooltip) fill the heart out so it reads full — the wider board of teams
-      var target = 64;
-      for(var k=dots.length; k<target; k++){ makeDot(g, null, false, true, (k%16)*0.04); }
       if(me && !meShown) makeDot(g, me, true, false);   // keep your team on the heart across pages
     }
     recolorHeart(board.filter);   // heart color follows the active pillar filter
@@ -728,7 +740,11 @@
       var r = info ? (2.2+Math.random()*1.2) : (1.8+Math.random()*1.1);
       if(pop){ c.setAttribute('r','0'); popAnim(c,'0;'+(r+1.6).toFixed(1)+';'+r.toFixed(1),'0.6s', delay||0); } else c.setAttribute('r', r.toFixed(1));
     }
-    if(info){ c.setAttribute('data-team', info.team + (isMine?' · your team':'')); if(info.commit) c.setAttribute('data-commit', info.commit); }
+    if(info){
+      c.setAttribute('data-team', info.team + (isMine?' · your team':''));
+      var cm = pillarCommit(info);          // '' on the combined view -> hover shows the team only
+      if(cm) c.setAttribute('data-commit', cm);
+    }
     g.appendChild(c);
   }
   function popAnim(c, values, dur, delay){
@@ -755,7 +771,9 @@
 
   function arrive(item, count, isMine){
     if(typeof count === 'number') board.count = count; else board.count++;
-    var entry = { team:(item&&item.team)||'A Mission Team', commit:(item&&item.commit)||'', goal:(item&&item.goal)||'', mine:!!isMine };
+    var cms = (item&&item.commitments&&item.commitments.length) ? item.commitments
+              : ((item&&item.commit) ? [{text:item.commit, goal:(item&&item.goal)||''}] : []);
+    var entry = { team:(item&&item.team)||'A Mission Team', commit:(item&&item.commit)||'', goal:(item&&item.goal)||'', commitments:cms, mine:!!isMine };
     board.feed.unshift(entry); if(board.feed.length>240) board.feed.pop();
     if(cur === 7){
       setCount();
