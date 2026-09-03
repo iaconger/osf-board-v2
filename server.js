@@ -116,6 +116,16 @@ function csvCell(v) {
 // readable strategic-pillar names, used everywhere data leaves the server
 const GOAL_NAME = { g1: 'Excellence', g2: 'One OSF Team', g3: 'Destination OSF' };
 
+// map a ?pillar= value (code or readable name) to a goal code, so data can be pulled per pillar
+function pillarCode(v) {
+  if (!v) return '';
+  const s = String(v).toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (s === 'g1' || s === 'excellence') return 'g1';
+  if (s === 'g2' || s === 'oneosfteam' || s === 'oneosf') return 'g2';
+  if (s === 'g3' || s === 'destinationosf' || s === 'destination') return 'g3';
+  return '';
+}
+
 // ISO -> "Aug 28, 2026, 9:15 AM CT" so a shared report reads naturally
 function fmtCentral(iso) {
   if (!iso) return '';
@@ -217,19 +227,21 @@ app.get('/status', (_req, res) => {
 
 app.get('/export', (req, res) => {
   if (!EXPORT_KEY || req.query.key !== EXPORT_KEY) return res.status(403).type('text/plain').send('Forbidden');
+  const pillar = pillarCode(req.query.pillar);   // optional: pull just one pillar's commitments
   const rows = [[
     'Submitted (Central Time)', 'Department', 'Team', 'Strategic Goal',
-    'What We Do', 'Teams We Work With', 'How Our Work Reaches Patients',
+    'Teams We Work With', 'How Our Work Reaches the People We Serve',
     'Commitment #', 'Commitment',
   ].map(csvCell).join(',')];
   for (const e of captured) {
     const { dept, team } = splitTeam(e.team);
-    const list = commitmentList(e);
+    let list = commitmentList(e);
+    if (pillar) list = list.filter((c) => c.goal === pillar);
     // one tidy row per commitment, so nothing is lost and every row stands alone
     list.forEach((c, i) => {
       rows.push([
         fmtCentral(e.ts), dept, team, GOAL_NAME[c.goal] || '',
-        e.work || '', (e.connections || []).join('; '), e.reach || '',
+        (e.connections || []).join('; '), e.reach || '',
         String(i + 1), c.text || '',
       ].map(csvCell).join(','));
     });
@@ -237,32 +249,39 @@ app.get('/export', (req, res) => {
   // BOM + CRLF so Excel opens it with correct encoding and clean line breaks
   const csv = `﻿${rows.join('\r\n')}\r\n`;
   const stamp = new Date().toISOString().slice(0, 10);
-  res.setHeader('Content-Disposition', `attachment; filename="osf-strategy-commitments-${stamp}.csv"`);
+  const tag = pillar ? `-${GOAL_NAME[pillar].toLowerCase().replace(/[^a-z0-9]+/g, '-')}` : '';
+  res.setHeader('Content-Disposition', `attachment; filename="osf-strategy-commitments${tag}-${stamp}.csv"`);
   res.type('text/csv; charset=utf-8').send(csv);
 });
 app.get('/export.json', (req, res) => {
   if (!EXPORT_KEY || req.query.key !== EXPORT_KEY) return res.status(403).json({ error: 'Forbidden' });
+  const pillar = pillarCode(req.query.pillar);
+  const subs = [];
+  for (const e of captured) {
+    const { dept, team } = splitTeam(e.team);
+    let list = commitmentList(e);
+    if (pillar) list = list.filter((c) => c.goal === pillar);
+    if (pillar && !list.length) continue;   // when pulling one pillar, skip teams with none
+    subs.push({
+      submitted: e.ts || '',
+      submittedLocal: fmtCentral(e.ts),
+      department: dept,
+      team,
+      worksWith: e.connections || [],
+      reachesPatient: e.reach || '',
+      commitments: list.map((c) => ({
+        pillar: GOAL_NAME[c.goal] || '',
+        pillarCode: c.goal || '',
+        commitment: c.text || '',
+      })),
+    });
+  }
   res.json({
     generatedAt: new Date().toISOString(),
-    count: captured.length,
+    pillar: pillar ? GOAL_NAME[pillar] : 'All',
+    count: subs.length,
     summary: summarize(),
-    submissions: captured.map((e) => {
-      const { dept, team } = splitTeam(e.team);
-      return {
-        submitted: e.ts || '',
-        submittedLocal: fmtCentral(e.ts),
-        department: dept,
-        team,
-        whatWeDo: e.work || '',
-        worksWith: e.connections || [],
-        reachesPatient: e.reach || '',
-        commitments: commitmentList(e).map((c) => ({
-          pillar: GOAL_NAME[c.goal] || '',
-          pillarCode: c.goal || '',
-          commitment: c.text || '',
-        })),
-      };
-    }),
+    submissions: subs,
   });
 });
 

@@ -23,8 +23,12 @@
 
   function msg(t) { msgEl.textContent = t || ''; }
   function setLinks(k) {
-    document.getElementById('dlcsv').href = '/export?key=' + encodeURIComponent(k);
-    document.getElementById('dljson').href = '/export.json?key=' + encodeURIComponent(k);
+    var ek = encodeURIComponent(k);
+    document.getElementById('dlcsv').href = '/export?key=' + ek;
+    document.getElementById('dljson').href = '/export.json?key=' + ek;
+    document.getElementById('dlg1').href = '/export?key=' + ek + '&pillar=g1';
+    document.getElementById('dlg2').href = '/export?key=' + ek + '&pillar=g2';
+    document.getElementById('dlg3').href = '/export?key=' + ek + '&pillar=g3';
   }
 
   function renderSummary(s) {
