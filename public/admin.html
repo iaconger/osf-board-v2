@@ -2,97 +2,222 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OSF Strategy Board — Data</title>
+<title>OSF Strategy — Leadership Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bitter:wght@400;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{--blue:#4E8209;--blue2:#64A70B;--teal:#007F9B;--ink:#1c2418;--muted:#5c665a;--line:#e3e7dd;--soft:#f8faf4;}
+  :root{
+    --green:#4E8209;--green2:#64A70B;--blue:#00A9CE;--magenta:#A5228E;--teal:#007F9B;
+    --ink:#1c2418;--muted:#5c665a;--faint:#8a938260;--line:#e6eadf;--soft:#f6f8f1;
+    --g1:#64A70B;--g2:#00A9CE;--g3:#A5228E;
+    --g1-soft:#eef6e0;--g2-soft:#e2f4f8;--g3-soft:#f7e6f3;
+    --g1-ink:#3f6d08;--g2-ink:#036178;--g3-ink:#8a1c78;
+  }
   *{box-sizing:border-box}
   body{margin:0;font-family:"Brandon Grotesque","Montserrat",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
-    color:var(--ink);background:#E3D9C2;min-height:100vh}
-  h1,h2{font-family:"Chaparral Pro","Bitter",Georgia,"Times New Roman",serif}
-  .topstrip{height:12px;width:100%;background:linear-gradient(90deg,#4E8209,#007F9B)}
-  .wrap{max-width:960px;margin:0 auto;padding:26px 18px 60px}
-  .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px 22px;box-shadow:0 12px 30px rgba(102,100,97,.12);margin-bottom:18px}
-  h1{font-size:24px;margin:0 0 4px;color:var(--ink)}
-  .sub{color:var(--muted);font-size:14px;margin:0 0 18px}
-  label{display:block;font-size:12px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.6px;margin:0 0 6px}
+    color:var(--ink);background:linear-gradient(180deg,#f2f5ec 0%,#eef1e9 100%);background-attachment:fixed;min-height:100vh}
+  h1,h2,h3{font-family:"Chaparral Pro","Bitter",Georgia,"Times New Roman",serif}
+  .topstrip{height:10px;width:100%;background:linear-gradient(90deg,var(--green),var(--teal),var(--magenta))}
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 20px 70px}
+  .head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:0 0 22px}
+  .head .eyebrow{font-size:12px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--green);margin:0 0 4px}
+  h1{font-size:30px;margin:0;color:var(--ink);line-height:1.05}
+  .head .as-of{font-size:12.5px;color:var(--muted);text-align:right}
+  .card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:22px 24px;box-shadow:0 10px 30px rgba(60,70,50,.08);margin-bottom:20px}
+  .sub{color:var(--muted);font-size:14px;margin:0 0 16px;line-height:1.5}
+  label{display:block;font-size:12px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.6px;margin:0 0 6px}
   .row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
-  input{flex:1;min-width:220px;padding:11px 13px;border:1.5px solid var(--line);border-radius:10px;font-size:15px;font-family:inherit;background:var(--soft)}
-  input:focus{outline:none;border-color:var(--blue2);background:#fff}
-  .btn{border:0;background:var(--blue);color:#fff;padding:11px 20px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:8px}
-  .btn:hover{background:var(--blue2)}
-  .btn.ghost{background:#fff;color:var(--blue);border:1.5px solid var(--blue)}
+  input{flex:1;min-width:220px;padding:12px 14px;border:1.5px solid var(--line);border-radius:11px;font-size:15px;font-family:inherit;background:var(--soft)}
+  input:focus{outline:none;border-color:var(--green2);background:#fff}
+  .btn{border:0;background:var(--green);color:#fff;padding:11px 20px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:8px;transition:background .15s,transform .05s}
+  .btn:hover{background:var(--green2)}
+  .btn:active{transform:translateY(1px)}
+  .btn.ghost{background:#fff;color:var(--green);border:1.5px solid var(--green)}
+  .btn.ghost:hover{background:var(--soft)}
+  .btn.g1{border-color:var(--g1);color:var(--g1-ink)} .btn.g1:hover{background:var(--g1-soft)}
+  .btn.g2{border-color:var(--g2);color:var(--g2-ink)} .btn.g2:hover{background:var(--g2-soft)}
+  .btn.g3{border-color:var(--g3);color:var(--g3-ink)} .btn.g3:hover{background:var(--g3-soft)}
   .msg{font-size:13.5px;color:var(--muted);margin-top:12px;min-height:1px}
-  .count{font-size:52px;font-weight:800;color:var(--blue);line-height:1.05;letter-spacing:-1px}
-  .count-sub{color:var(--muted);font-size:13px}
-  .kpis{display:flex;gap:26px;flex-wrap:wrap;margin-top:2px}
-  .kpi .n{font-size:52px;font-weight:800;color:var(--blue);line-height:1.05;letter-spacing:-1px}
-  .kpi .l{color:var(--muted);font-size:13px;max-width:180px}
-  .bars{margin-top:20px;display:none}
-  .bars h3{font-family:inherit;font-size:12px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.6px;margin:0 0 12px}
-  .bar{display:grid;grid-template-columns:150px 1fr 54px;align-items:center;gap:12px;margin-bottom:10px}
-  .bar .bl{font-size:13.5px;font-weight:600;color:var(--ink)}
-  .bar .track{background:var(--soft);border:1px solid var(--line);border-radius:999px;height:16px;overflow:hidden}
-  .bar .fill{height:100%;border-radius:999px;transition:width .5s ease}
-  .bar .bn{font-size:13px;font-weight:700;color:var(--muted);text-align:right}
-  .dl{display:none;margin-top:16px}
-  .dl .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
-  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
-  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
-  th{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)}
-  td.stmt{color:var(--ink)}
-  .pill{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:#eef6e0;color:#3f6d08;white-space:nowrap}
-  .pill.g1{background:#eef6e0;color:#3f6d08}
-  .pill.g2{background:#e2f4f8;color:#036178}
-  .pill.g3{background:#f7e6f3;color:#8a1c78}
-  .empty{color:var(--muted);font-size:14px;padding:16px 0}
+
+  /* KPI tiles */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:20px}
+  .kpi{background:#fff;border:1px solid var(--line);border-radius:18px;padding:20px 22px;box-shadow:0 10px 30px rgba(60,70,50,.08);position:relative;overflow:hidden}
+  .kpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--green2)}
+  .kpi.k2::before{background:var(--blue)} .kpi.k3::before{background:var(--magenta)} .kpi.k4::before{background:var(--teal)}
+  .kpi .n{font-size:44px;font-weight:800;color:var(--ink);line-height:1;letter-spacing:-1px}
+  .kpi .l{color:var(--muted);font-size:13px;margin-top:8px;line-height:1.35}
+
+  /* insight grid */
+  .grid2{display:grid;grid-template-columns:1.35fr 1fr;gap:20px}
+  @media (max-width:820px){.grid2{grid-template-columns:1fr}}
+  h2{font-size:19px;margin:0 0 3px;color:var(--ink)}
+  .cardnote{font-size:12.5px;color:var(--muted);margin:0 0 18px}
+
+  /* horizontal bars */
+  .hbar{display:grid;grid-template-columns:150px 1fr auto;align-items:center;gap:14px;margin-bottom:16px}
+  .hbar:last-child{margin-bottom:2px}
+  .hbar .bl{font-size:14px;font-weight:600;color:var(--ink)}
+  .hbar .bl small{display:block;font-weight:500;color:var(--muted);font-size:11.5px;margin-top:2px}
+  .hbar .track{background:var(--soft);border-radius:999px;height:20px;overflow:hidden}
+  .hbar .fill{height:100%;border-radius:999px;transition:width .6s cubic-bezier(.4,0,.2,1);min-width:3px}
+  .hbar .bn{font-size:15px;font-weight:800;color:var(--ink);min-width:34px;text-align:right}
+  .hbar .bn small{font-weight:600;color:var(--muted);font-size:11px;margin-left:3px}
+
+  /* donut */
+  .donutwrap{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+  .donut{flex:0 0 auto}
+  .legend{display:flex;flex-direction:column;gap:10px;font-size:13.5px}
+  .legend .li{display:flex;align-items:center;gap:9px}
+  .legend .sw{width:13px;height:13px;border-radius:4px;flex:0 0 auto}
+  .legend .lt{color:var(--ink);font-weight:600}
+  .legend .lv{color:var(--muted);margin-left:auto;font-weight:700}
+
+  /* ranked list */
+  .rank{display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--line)}
+  .rank:last-child{border-bottom:0}
+  .rank .rl{font-size:14px;color:var(--ink);font-weight:600}
+  .rank .rt{display:flex;align-items:center;gap:10px;min-width:150px}
+  .rank .rtrack{flex:1;background:var(--soft);border-radius:999px;height:10px;overflow:hidden}
+  .rank .rfill{height:100%;background:var(--teal);border-radius:999px}
+  .rank .rn{font-size:13.5px;font-weight:700;color:var(--muted);min-width:22px;text-align:right}
+
+  /* downloads */
+  .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+  .subhead{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin:20px 0 8px}
+
+  /* table */
   .tablewrap{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:14px;margin-top:4px}
+  thead th{text-align:left;padding:11px 12px;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);border-bottom:2px solid var(--line);background:var(--soft)}
+  tbody td{padding:12px;border-bottom:1px solid var(--line);vertical-align:top}
+  tbody tr.teamsep td{border-top:2px solid #dfe4d6}
+  td.team-cell{font-weight:700;color:var(--ink)}
+  td.meta{color:var(--muted);font-size:12.5px}
+  td.stmt{color:var(--ink);font-size:15px;line-height:1.5;max-width:520px}
+  .pill{display:inline-block;font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:999px;white-space:nowrap}
+  .pill.g1{background:var(--g1-soft);color:var(--g1-ink)}
+  .pill.g2{background:var(--g2-soft);color:var(--g2-ink)}
+  .pill.g3{background:var(--g3-soft);color:var(--g3-ink)}
+  .pill.none{background:#eee;color:#777}
+  .empty{color:var(--muted);font-size:14px;padding:16px 0}
+  .hint{font-size:12px;color:var(--muted);margin-top:10px}
+
+  /* submissions browser controls */
+  .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:2px 0 14px}
+  .controls .search{flex:1;min-width:220px;padding:10px 13px;border:1.5px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;background:var(--soft)}
+  .controls .search:focus{outline:none;border-color:var(--green2);background:#fff}
+  .controls select{padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink);cursor:pointer}
+  .controls select:focus{outline:none;border-color:var(--green2)}
+  .pager{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:16px}
+  .pager .pinfo{font-size:13px;color:var(--muted)}
+  .pager .pbtns{display:flex;gap:8px}
+  .pbtn{border:1.5px solid var(--green);background:#fff;color:var(--green);padding:8px 16px;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+  .pbtn:hover:not(:disabled){background:var(--soft)}
+  .pbtn:disabled{opacity:.4;cursor:default;border-color:var(--line);color:var(--muted)}
 </style>
 </head>
 <body>
 <div class="topstrip" aria-hidden="true"></div>
 <div class="wrap">
-  <div class="card">
-    <h1>Strategy Board — Data</h1>
-    <p class="sub">Enter your export key to see how many Mission Partners have connected and to download everything that's come in. No names or personal details are ever collected.</p>
+
+  <div class="head">
+    <div>
+      <p class="eyebrow">FY27 Mission Partner Strategy</p>
+      <h1>Leadership Dashboard</h1>
+    </div>
+    <div class="as-of" id="asof"></div>
+  </div>
+
+  <!-- key gate -->
+  <div class="card" id="gate">
+    <p class="sub">Enter your export key to see how Mission Partner teams are connecting their work to the strategy, and to download the data. No names or personal details are ever collected.</p>
     <label for="key">Export key</label>
     <div class="row">
       <input id="key" type="password" placeholder="Paste your EXPORT_KEY" autocomplete="off" spellcheck="false">
-      <button class="btn" id="load" type="button">Load data</button>
+      <button class="btn" id="load" type="button">View dashboard</button>
+      <button class="btn ghost" id="refresh" type="button" style="display:none">Refresh</button>
     </div>
     <div class="msg" id="msg"></div>
   </div>
 
-  <div class="card" id="results" style="display:none">
-    <div class="kpis">
-      <div class="kpi"><div class="n" id="kTeams">0</div><div class="l">teams have connected their work to the strategy</div></div>
-      <div class="kpi"><div class="n" id="kCommits">0</div><div class="l">commitments made across all pillars</div></div>
-    </div>
-    <div class="bars" id="bars">
-      <h3>Commitments by strategic goal</h3>
-      <div id="barlist"></div>
-    </div>
-    <div class="dl" id="dl">
-      <label>Download everything</label>
-      <div class="btns">
-        <a class="btn" id="dlcsv" href="#">Download CSV (Excel)</a>
-        <a class="btn ghost" id="dljson" href="#">Download JSON</a>
-        <button class="btn ghost" id="refresh" type="button">Refresh</button>
-      </div>
-      <label style="margin-top:20px">Download one pillar of the strategy</label>
-      <p class="sub" style="margin:0 0 10px">Each file holds only the commitments teams made to that pillar.</p>
-      <div class="btns" id="pillarbtns">
-        <a class="btn ghost" id="dlg1" href="#">Excellence — CSV</a>
-        <a class="btn ghost" id="dlg2" href="#">One OSF Team — CSV</a>
-        <a class="btn ghost" id="dlg3" href="#">Destination OSF — CSV</a>
-      </div>
-    </div>
-  </div>
+  <!-- dashboard (hidden until loaded) -->
+  <div id="dash" style="display:none">
 
-  <div class="card" id="tablecard" style="display:none">
-    <label>Most recent submissions</label>
-    <div class="tablewrap" id="tablewrap"></div>
+    <div class="kpis" id="kpis"></div>
+
+    <div class="grid2">
+      <div class="card">
+        <h2>Commitments by strategic pillar</h2>
+        <p class="cardnote">How the commitments teams have made distribute across the three pillars.</p>
+        <div id="pillarBars"></div>
+      </div>
+      <div class="card">
+        <h2>Pillar mix</h2>
+        <p class="cardnote">Share of all commitments.</p>
+        <div class="donutwrap">
+          <div class="donut" id="donut"></div>
+          <div class="legend" id="donutLegend"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <h2>Most connected functions</h2>
+        <p class="cardnote">Which teams and functions are named most often as collaborators — a read on where the ministry is working across lines.</p>
+        <div id="connections"></div>
+      </div>
+      <div class="card">
+        <h2>Participation by department</h2>
+        <p class="cardnote">Departments that have added a Strategy Commitment Card.</p>
+        <div id="departments"></div>
+      </div>
+    </div>
+
+    <div class="card" id="dlcard">
+      <h2>Download the data</h2>
+      <p class="cardnote">Excel opens as a polished, ready-to-share workbook. Each pillar file holds only that pillar's commitments.</p>
+      <div class="btns">
+        <a class="btn" id="dlxlsx" href="#">Download Excel (all)</a>
+        <a class="btn ghost" id="dlcsv" href="#">CSV</a>
+        <a class="btn ghost" id="dljson" href="#">JSON</a>
+      </div>
+      <div class="subhead">Download one pillar</div>
+      <div class="btns">
+        <a class="btn ghost g1" id="dlg1" href="#">Excellence — Excel</a>
+        <a class="btn ghost g2" id="dlg2" href="#">One OSF Team — Excel</a>
+        <a class="btn ghost g3" id="dlg3" href="#">Destination OSF — Excel</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>All submissions</h2>
+      <p class="cardnote">Every team that has connected its work to the strategy. Search, sort, and page through them all. A team's commitments are grouped together.</p>
+      <div class="controls">
+        <input class="search" id="tblSearch" type="text" placeholder="Search team, department, or commitment…" autocomplete="off" spellcheck="false">
+        <select id="tblPillar" aria-label="Filter by pillar">
+          <option value="">All pillars</option>
+          <option value="g1">Excellence</option>
+          <option value="g2">One OSF Team</option>
+          <option value="g3">Destination OSF</option>
+        </select>
+        <select id="tblSort" aria-label="Sort submissions">
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+          <option value="team">Team A–Z</option>
+          <option value="dept">Department A–Z</option>
+        </select>
+      </div>
+      <div class="tablewrap" id="tablewrap"></div>
+      <div class="pager" id="pager" style="display:none">
+        <div class="pinfo" id="pinfo"></div>
+        <div class="pbtns">
+          <button class="pbtn" id="prevPage" type="button">‹ Previous</button>
+          <button class="pbtn" id="nextPage" type="button">Next ›</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 <script src="admin.js"></script>

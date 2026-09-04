@@ -24,6 +24,7 @@ const http = require('http');
 const express = require('express');
 const helmet = require('helmet');
 const { WebSocketServer } = require('ws');
+const ExcelJS = require('exceljs');
 const db = require('./db');
 
 // ---- configuration (override via environment) ----
@@ -283,6 +284,188 @@ app.get('/export.json', (req, res) => {
     summary: summarize(),
     submissions: subs,
   });
+});
+
+// ---- Professional Excel workbook (.xlsx) ----
+// Two sheets: a polished, grouped "Commitments" report (one team block, its
+// commitments listed beneath a single set of team cells) and a flat, filterable
+// "Raw Data" sheet for pivots. Honors the optional pillar filter.
+const XL = {
+  brand: 'FF4E8209', ink: 'FF1C2418', muted: 'FF5C665A', line: 'FFE3E7DD',
+  band: 'FFF6F8F1', white: 'FFFFFFFF',
+  goalFill: { g1: 'FFEFF6E0', g2: 'FFE2F4F8', g3: 'FFF7E6F3' },
+  goalText: { g1: 'FF3F6D08', g2: 'FF036178', g3: 'FF8A1C78' },
+};
+function thinBorder() {
+  const s = { style: 'thin', color: { argb: XL.line } };
+  return { top: s, left: s, bottom: s, right: s };
+}
+function buildWorkbook(pillar) {
+  const wb = new ExcelJS.Workbook();
+  wb.creator = 'OSF FY27 Strategy Board';
+  wb.created = new Date();
+
+  // gather teams (with their commitments filtered to the pillar when set)
+  const teams = [];
+  for (const e of captured) {
+    const { dept, team } = splitTeam(e.team);
+    let list = commitmentList(e);
+    if (pillar) list = list.filter((c) => c.goal === pillar);
+    if (pillar && !list.length) continue;
+    teams.push({
+      when: fmtCentral(e.ts), dept, team,
+      works: (e.connections || []).join(', '), reach: e.reach || '', list,
+    });
+  }
+  const s = summarize();
+  const pillarLabel = pillar ? GOAL_NAME[pillar] : 'All pillars';
+
+  // ---------- Sheet 1: Commitments (grouped, presentation-ready) ----------
+  const ws = wb.addWorksheet('Commitments', {
+    views: [{ state: 'frozen', ySplit: 5 }],
+    pageSetup: { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0, margins: { left: 0.4, right: 0.4, top: 0.5, bottom: 0.5, header: 0.3, footer: 0.3 } },
+  });
+  const widths = [22, 18, 22, 30, 42, 18, 6, 62];
+  widths.forEach((w, i) => { ws.getColumn(i + 1).width = w; });
+
+  // Title
+  ws.mergeCells('A1:H1');
+  const t = ws.getCell('A1');
+  t.value = 'OSF HealthCare  —  FY27 Strategy Commitments';
+  t.font = { name: 'Calibri', size: 16, bold: true, color: { argb: XL.white } };
+  t.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: XL.brand } };
+  t.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
+  ws.getRow(1).height = 30;
+
+  // Subtitle: scope + generated date
+  ws.mergeCells('A2:H2');
+  const sub = ws.getCell('A2');
+  sub.value = `${pillarLabel}   ·   Generated ${fmtCentral(new Date().toISOString())}`;
+  sub.font = { name: 'Calibri', size: 10, italic: true, color: { argb: XL.muted } };
+  sub.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
+  ws.getRow(2).height = 18;
+
+  // Stats line
+  ws.mergeCells('A3:H3');
+  const st = ws.getCell('A3');
+  st.value = `${s.teams} teams  ·  ${s.commitments} commitments        Excellence ${s.byPillar.Excellence}  ·  One OSF Team ${s.byPillar['One OSF Team']}  ·  Destination OSF ${s.byPillar['Destination OSF']}`;
+  st.font = { name: 'Calibri', size: 10, bold: true, color: { argb: XL.ink } };
+  st.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
+  ws.getRow(3).height = 18;
+  ws.getRow(4).height = 6; // spacer
+
+  // Header row (row 5)
+  const heads = ['Submitted (Central Time)', 'Department', 'Team', 'Teams We Work With',
+    'How Our Work Reaches the People We Serve', 'Strategic Goal', '#', 'Commitment'];
+  const hr = ws.getRow(5);
+  heads.forEach((h, i) => {
+    const c = hr.getCell(i + 1);
+    c.value = h;
+    c.font = { name: 'Calibri', size: 11, bold: true, color: { argb: XL.white } };
+    c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: XL.brand } };
+    c.alignment = { vertical: 'middle', horizontal: i === 6 ? 'center' : 'left', wrapText: true, indent: i === 6 ? 0 : 1 };
+    c.border = thinBorder();
+  });
+  hr.height = 30;
+
+  // Data: one merged team block, a row per commitment beneath it
+  let r = 6; let band = false;
+  teams.forEach((tm) => {
+    const start = r;
+    const rows = Math.max(tm.list.length, 1);
+    const bandFill = band ? { type: 'pattern', pattern: 'solid', fgColor: { argb: XL.band } } : null;
+    for (let j = 0; j < rows; j += 1) {
+      const cm = tm.list[j] || { goal: '', text: '' };
+      const row = ws.getRow(r);
+      const vals = [tm.when, tm.dept, tm.team, tm.works, tm.reach,
+        cm.goal ? GOAL_NAME[cm.goal] : '', tm.list.length ? String(j + 1) : '', cm.text || ''];
+      vals.forEach((v, i) => {
+        const c = row.getCell(i + 1);
+        c.value = v;
+        c.border = thinBorder();
+        c.alignment = { vertical: 'top', horizontal: i === 6 ? 'center' : 'left', wrapText: true, indent: i === 6 ? 0 : 1 };
+        c.font = { name: 'Calibri', size: i === 7 ? 12 : 11, color: { argb: XL.ink } };
+        if (bandFill && i < 5) c.fill = bandFill;
+        // colored pillar cell
+        if (i === 5 && cm.goal) {
+          c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: XL.goalFill[cm.goal] } };
+          c.font = { name: 'Calibri', size: 11, bold: true, color: { argb: XL.goalText[cm.goal] } };
+        }
+        if (i === 7) c.alignment = { vertical: 'middle', horizontal: 'left', wrapText: true, indent: 1 };
+      });
+      row.height = 30;
+      r += 1;
+    }
+    // merge the team-level columns (A–E) across this team's commitment rows
+    if (rows > 1) {
+      for (let col = 1; col <= 5; col += 1) ws.mergeCells(start, col, r - 1, col);
+      for (let col = 1; col <= 5; col += 1) {
+        const c = ws.getCell(start, col);
+        c.alignment = { vertical: 'middle', horizontal: 'left', wrapText: true, indent: 1 };
+      }
+    }
+    band = !band;
+  });
+  if (!teams.length) {
+    ws.mergeCells('A6:H6');
+    ws.getCell('A6').value = 'No commitments captured yet.';
+    ws.getCell('A6').font = { name: 'Calibri', size: 11, italic: true, color: { argb: XL.muted } };
+    ws.getCell('A6').alignment = { horizontal: 'left', indent: 1 };
+  }
+
+  // ---------- Sheet 2: Raw Data (flat, filterable) ----------
+  const rd = wb.addWorksheet('Raw Data', { views: [{ state: 'frozen', ySplit: 1 }] });
+  const rheads = ['Submitted (Central Time)', 'Department', 'Team', 'Strategic Goal',
+    'Teams We Work With', 'How Our Work Reaches the People We Serve', 'Commitment #', 'Commitment'];
+  const rwidths = [22, 18, 22, 18, 30, 42, 12, 62];
+  rwidths.forEach((w, i) => { rd.getColumn(i + 1).width = w; });
+  const rhr = rd.getRow(1);
+  rheads.forEach((h, i) => {
+    const c = rhr.getCell(i + 1);
+    c.value = h;
+    c.font = { name: 'Calibri', size: 11, bold: true, color: { argb: XL.white } };
+    c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: XL.brand } };
+    c.alignment = { vertical: 'middle', horizontal: 'left', wrapText: true, indent: 1 };
+    c.border = thinBorder();
+  });
+  rhr.height = 28;
+  let rr = 2;
+  teams.forEach((tm) => {
+    tm.list.forEach((cm, j) => {
+      const row = rd.getRow(rr);
+      const vals = [tm.when, tm.dept, tm.team, cm.goal ? GOAL_NAME[cm.goal] : '',
+        tm.works, tm.reach, String(j + 1), cm.text || ''];
+      vals.forEach((v, i) => {
+        const c = row.getCell(i + 1);
+        c.value = v;
+        c.border = thinBorder();
+        c.alignment = { vertical: 'top', horizontal: 'left', wrapText: true, indent: 1 };
+        c.font = { name: 'Calibri', size: 11, color: { argb: XL.ink } };
+        if (i === 3 && cm.goal) c.font = { name: 'Calibri', size: 11, bold: true, color: { argb: XL.goalText[cm.goal] } };
+      });
+      row.height = 28;
+      rr += 1;
+    });
+  });
+  rd.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: 8 } };
+
+  return wb;
+}
+
+app.get('/export.xlsx', async (req, res) => {
+  if (!EXPORT_KEY || req.query.key !== EXPORT_KEY) return res.status(403).type('text/plain').send('Forbidden');
+  const pillar = pillarCode(req.query.pillar);
+  try {
+    const wb = buildWorkbook(pillar);
+    const buf = await wb.xlsx.writeBuffer();
+    const stamp = new Date().toISOString().slice(0, 10);
+    const tag = pillar ? `-${GOAL_NAME[pillar].toLowerCase().replace(/[^a-z0-9]+/g, '-')}` : '';
+    res.setHeader('Content-Disposition', `attachment; filename="osf-strategy-commitments${tag}-${stamp}.xlsx"`);
+    res.type('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet').send(Buffer.from(buf));
+  } catch (err) {
+    console.error('xlsx export failed:', err.message); // eslint-disable-line no-console
+    res.status(500).type('text/plain').send('Could not build the Excel file.');
+  }
 });
 
 app.get('/favicon.ico', (_req, res) => res.status(204).end());
