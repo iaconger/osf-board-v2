@@ -94,10 +94,12 @@
     var prio=pickedComp.map(function(n,idx){var c=compByName(n);
       return '<div class="p"><span class="n" style="background:'+c.color+'">'+(idx+1)+'</span><span class="dot" style="background:'+c.color+'"></span>'+esc(n)+'</div>';}).join('');
     var sk=pickedSkill.map(function(n){return '<span class="sktag">'+esc(n)+'</span>';}).join('');
+    var ap=(el('approach')?el('approach').value.trim():'');
+    var apBlock=ap?('<div class="lbl">How I\'ll work on it</div><div class="approach">'+esc(ap)+'</div>'):'';
     el('focusCard').innerHTML=
       '<div class="top"><div class="who">'+who+'</div><div class="role">'+(roleLine||'Leader')+'</div></div>'+
       '<div class="body"><div class="lbl">Competencies I\'m focusing on</div><div class="prio">'+(prio||'<span class="note">None selected</span>')+'</div>'+
-      '<div class="lbl">Skills I\'ll strengthen</div><div class="sklist">'+(sk||'<span class="note">None selected</span>')+'</div></div>';
+      '<div class="lbl">Skills I\'ll strengthen</div><div class="sklist">'+(sk||'<span class="note">None selected</span>')+'</div>'+apBlock+'</div>';
   }
 
   function renderBoard(){
@@ -144,10 +146,11 @@
       var rl=[card.role,card.division].filter(Boolean).map(esc).join(' · ');
       var comps=(card.comps||[]).map(function(c){var col=compByName(c.name).color;return '<span class="ec"><span class="n" style="background:'+col+'">'+c.rank+'</span><span class="dot" style="background:'+col+'"></span>'+esc(c.name)+'</span>';}).join('');
       var sk=(card.skills||[]).length?('<div class="esk">'+(card.skills||[]).map(esc).join('  ·  ')+'</div>'):'';
+      var ap=card.approach?('<div class="eapproach">'+esc(card.approach)+'</div>'):'';
       var rk=card.react||{heart:0,clap:0};
       return '<div class="excard" data-id="'+esc(card.id)+'">'+
         '<div class="eid"><b>'+who+'</b>'+(rl?' <span>· '+rl+'</span>':'')+'</div>'+
-        '<div class="ecomps">'+comps+'</div>'+sk+
+        '<div class="ecomps">'+comps+'</div>'+sk+ap+
         '<div class="erow">'+
           '<button class="react" data-react="heart" data-id="'+esc(card.id)+'">❤️ <span class="cnt">'+rk.heart+'</span></button>'+
           '<button class="react" data-react="clap" data-id="'+esc(card.id)+'">👏 <span class="cnt">'+rk.clap+'</span></button>'+
@@ -186,7 +189,8 @@
     var payload={ type:'submit',
       first:el('fn').value.trim(), last:el('ln').value.trim(),
       division:el('div').value.trim(), role:el('role').value, years:el('yrs').value,
-      comps:pickedComp.map(function(n){return {name:n};}), skills:pickedSkill.slice() };
+      comps:pickedComp.map(function(n){return {name:n};}), skills:pickedSkill.slice(),
+      approach:(el('approach')?el('approach').value.trim():'') };
     var attempts=0;
     (function trySend(){
       if(ws&&ws.readyState===1){ ws.send(JSON.stringify(payload)); }
@@ -194,7 +198,7 @@
       // if it never connects, mine falls back locally on accepted-timeout below
     })();
     // local fallback so the board still shows the person even if the socket is slow
-    setTimeout(function(){ if(!submitted){ mine={id:'local-'+Date.now(),first:el('fn').value.trim(),division:el('div').value.trim(),role:el('role').value,comps:pickedComp.map(function(n,i){return {name:n,rank:i+1};}),skills:pickedSkill.slice(),react:{heart:0,clap:0}}; boardData.push(mine); submitted=true; refreshBoardViews(); } }, 3500);
+    setTimeout(function(){ if(!submitted){ mine={id:'local-'+Date.now(),first:el('fn').value.trim(),division:el('div').value.trim(),role:el('role').value,comps:pickedComp.map(function(n,i){return {name:n,rank:i+1};}),skills:pickedSkill.slice(),approach:(el('approach')?el('approach').value.trim():''),react:{heart:0,clap:0}}; boardData.push(mine); submitted=true; refreshBoardViews(); } }, 3500);
   }
 
   // ---- save card as image ----
@@ -222,6 +226,8 @@
     el('compCount').textContent='0 of 2 selected';el('skillCount').textContent='0 of 3 selected';
     el('compNext').disabled=true;el('skillNext').disabled=true;
     el('fn').value='';el('ln').value='';el('div').value='';el('role').value='';el('yrs').value='';
+    if(el('approach')){el('approach').value='';}
+    if(el('approachCount')){el('approachCount').innerHTML='<b>0</b> / 280';}
   }
   function go(s){
     var n=String(s);
@@ -236,6 +242,12 @@
     if(s==='0')resetAll();
     go(s);
   });
+
+  // ---- personal-note counter ----
+  (function(){
+    var ta=el('approach'), cc=el('approachCount');
+    if(ta&&cc){ ta.addEventListener('input',function(){ cc.innerHTML='<b>'+ta.value.length+'</b> / 280'; }); }
+  })();
 
   // ---- explore filters + reactions wiring ----
   (function(){

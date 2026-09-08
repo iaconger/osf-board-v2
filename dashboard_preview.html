@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSF Strategy — Leadership Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bitter:wght@400;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --green:#4E8209;--green2:#64A70B;--blue:#00A9CE;--magenta:#A5228E;--teal:#007F9B;
+    --ink:#1c2418;--muted:#5c665a;--faint:#8a938260;--line:#e6eadf;--soft:#f6f8f1;
+    --g1:#64A70B;--g2:#00A9CE;--g3:#A5228E;
+    --g1-soft:#eef6e0;--g2-soft:#e2f4f8;--g3-soft:#f7e6f3;
+    --g1-ink:#3f6d08;--g2-ink:#036178;--g3-ink:#8a1c78;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Brandon Grotesque","Montserrat",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    color:var(--ink);background:linear-gradient(180deg,#f2f5ec 0%,#eef1e9 100%);background-attachment:fixed;min-height:100vh}
+  h1,h2,h3{font-family:"Chaparral Pro","Bitter",Georgia,"Times New Roman",serif}
+  .topstrip{height:10px;width:100%;background:linear-gradient(90deg,var(--green),var(--teal),var(--magenta))}
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 20px 70px}
+  .head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:0 0 22px}
+  .head .eyebrow{font-size:12px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--green);margin:0 0 4px}
+  h1{font-size:30px;margin:0;color:var(--ink);line-height:1.05}
+  .head .as-of{font-size:12.5px;color:var(--muted);text-align:right}
+  .card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:22px 24px;box-shadow:0 10px 30px rgba(60,70,50,.08);margin-bottom:20px}
+  .sub{color:var(--muted);font-size:14px;margin:0 0 16px;line-height:1.5}
+  label{display:block;font-size:12px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.6px;margin:0 0 6px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+  input{flex:1;min-width:220px;padding:12px 14px;border:1.5px solid var(--line);border-radius:11px;font-size:15px;font-family:inherit;background:var(--soft)}
+  input:focus{outline:none;border-color:var(--green2);background:#fff}
+  .btn{border:0;background:var(--green);color:#fff;padding:11px 20px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:8px;transition:background .15s,transform .05s}
+  .btn:hover{background:var(--green2)}
+  .btn:active{transform:translateY(1px)}
+  .btn.ghost{background:#fff;color:var(--green);border:1.5px solid var(--green)}
+  .btn.ghost:hover{background:var(--soft)}
+  .btn.g1{border-color:var(--g1);color:var(--g1-ink)} .btn.g1:hover{background:var(--g1-soft)}
+  .btn.g2{border-color:var(--g2);color:var(--g2-ink)} .btn.g2:hover{background:var(--g2-soft)}
+  .btn.g3{border-color:var(--g3);color:var(--g3-ink)} .btn.g3:hover{background:var(--g3-soft)}
+  .msg{font-size:13.5px;color:var(--muted);margin-top:12px;min-height:1px}
+
+  /* KPI tiles */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:20px}
+  .kpi{background:#fff;border:1px solid var(--line);border-radius:18px;padding:20px 22px;box-shadow:0 10px 30px rgba(60,70,50,.08);position:relative;overflow:hidden}
+  .kpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--green2)}
+  .kpi.k2::before{background:var(--blue)} .kpi.k3::before{background:var(--magenta)} .kpi.k4::before{background:var(--teal)}
+  .kpi .n{font-size:44px;font-weight:800;color:var(--ink);line-height:1;letter-spacing:-1px}
+  .kpi .l{color:var(--muted);font-size:13px;margin-top:8px;line-height:1.35}
+
+  /* insight grid */
+  .grid2{display:grid;grid-template-columns:1.35fr 1fr;gap:20px}
+  @media (max-width:820px){.grid2{grid-template-columns:1fr}}
+  h2{font-size:19px;margin:0 0 3px;color:var(--ink)}
+  .cardnote{font-size:12.5px;color:var(--muted);margin:0 0 18px}
+
+  /* horizontal bars */
+  .hbar{display:grid;grid-template-columns:150px 1fr auto;align-items:center;gap:14px;margin-bottom:16px}
+  .hbar:last-child{margin-bottom:2px}
+  .hbar .bl{font-size:14px;font-weight:600;color:var(--ink)}
+  .hbar .bl small{display:block;font-weight:500;color:var(--muted);font-size:11.5px;margin-top:2px}
+  .hbar .track{background:var(--soft);border-radius:999px;height:20px;overflow:hidden}
+  .hbar .fill{height:100%;border-radius:999px;transition:width .6s cubic-bezier(.4,0,.2,1);min-width:3px}
+  .hbar .bn{font-size:15px;font-weight:800;color:var(--ink);min-width:34px;text-align:right}
+  .hbar .bn small{font-weight:600;color:var(--muted);font-size:11px;margin-left:3px}
+
+  /* donut */
+  .donutwrap{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+  .donut{flex:0 0 auto}
+  .legend{display:flex;flex-direction:column;gap:10px;font-size:13.5px}
+  .legend .li{display:flex;align-items:center;gap:9px}
+  .legend .sw{width:13px;height:13px;border-radius:4px;flex:0 0 auto}
+  .legend .lt{color:var(--ink);font-weight:600}
+  .legend .lv{color:var(--muted);margin-left:auto;font-weight:700}
+
+  /* ranked list */
+  .rank{display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--line)}
+  .rank:last-child{border-bottom:0}
+  .rank .rl{font-size:14px;color:var(--ink);font-weight:600}
+  .rank .rt{display:flex;align-items:center;gap:10px;min-width:150px}
+  .rank .rtrack{flex:1;background:var(--soft);border-radius:999px;height:10px;overflow:hidden}
+  .rank .rfill{height:100%;background:var(--teal);border-radius:999px}
+  .rank .rn{font-size:13.5px;font-weight:700;color:var(--muted);min-width:22px;text-align:right}
+
+  /* downloads */
+  .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+  .subhead{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin:20px 0 8px}
+
+  /* table */
+  .tablewrap{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:14px;margin-top:4px}
+  thead th{text-align:left;padding:11px 12px;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);border-bottom:2px solid var(--line);background:var(--soft)}
+  tbody td{padding:12px;border-bottom:1px solid var(--line);vertical-align:top}
+  tbody tr.teamsep td{border-top:2px solid #dfe4d6}
+  td.team-cell{font-weight:700;color:var(--ink)}
+  td.meta{color:var(--muted);font-size:12.5px}
+  td.stmt{color:var(--ink);font-size:15px;line-height:1.5;max-width:520px}
+  .pill{display:inline-block;font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:999px;white-space:nowrap}
+  .pill.g1{background:var(--g1-soft);color:var(--g1-ink)}
+  .pill.g2{background:var(--g2-soft);color:var(--g2-ink)}
+  .pill.g3{background:var(--g3-soft);color:var(--g3-ink)}
+  .pill.none{background:#eee;color:#777}
+  .empty{color:var(--muted);font-size:14px;padding:16px 0}
+  .hint{font-size:12px;color:var(--muted);margin-top:10px}
+
+  /* participation-over-time bar chart */
+  .timeline{display:flex;align-items:flex-end;gap:8px;height:172px;padding-top:6px;overflow-x:auto}
+  .tcol{flex:1 0 auto;min-width:26px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+  .tcol .tv{font-size:12px;font-weight:800;color:var(--ink);margin-bottom:5px;height:16px}
+  .tbar{width:64%;max-width:40px;min-height:3px;border-radius:7px 7px 0 0;background:linear-gradient(180deg,#64A70B,#4E8209)}
+  .tcol .tx{font-size:11px;color:var(--muted);margin-top:8px;white-space:nowrap;height:14px}
+  .tcol .txsub{font-size:10px;color:var(--faint);white-space:nowrap}
+  .tlfoot{font-size:12px;color:var(--muted);margin-top:10px}
+
+  /* submissions browser controls */
+  .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:2px 0 14px}
+  .controls .search{flex:1;min-width:220px;padding:10px 13px;border:1.5px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;background:var(--soft)}
+  .controls .search:focus{outline:none;border-color:var(--green2);background:#fff}
+  .controls select{padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink);cursor:pointer}
+  .controls select:focus{outline:none;border-color:var(--green2)}
+  .pager{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:16px}
+  .pager .pinfo{font-size:13px;color:var(--muted)}
+  .pager .pbtns{display:flex;gap:8px}
+  .pbtn{border:1.5px solid var(--green);background:#fff;color:var(--green);padding:8px 16px;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+  .pbtn:hover:not(:disabled){background:var(--soft)}
+  .pbtn:disabled{opacity:.4;cursor:default;border-color:var(--line);color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="topstrip" aria-hidden="true"></div><style>#gate{display:none!important}.previewban{max-width:1180px;margin:0 auto;padding:16px 20px 0}.previewban .b{background:#fff8e6;border:1px solid #f0e0a8;color:#7a5c00;border-radius:12px;padding:11px 16px;font-size:13px;line-height:1.5}</style><div class="previewban"><div class="b"><strong>Preview with sample data.</strong> On your live site, leaders open <code>/admin.html</code>, enter the export key, and see the real numbers. Download buttons are inactive in this preview.</div></div>
+<div class="wrap">
+
+  <div class="head">
+    <div>
+      <p class="eyebrow">FY27 Mission Partner Strategy</p>
+      <h1>Leadership Dashboard</h1>
+    </div>
+    <div class="as-of" id="asof"></div>
+  </div>
+
+  <!-- key gate -->
+  <div class="card" id="gate">
+    <p class="sub">Enter your export key to see how Mission Partner teams are connecting their work to the strategy, and to download the data. No names or personal details are ever collected.</p>
+    <label for="key">Export key</label>
+    <div class="row">
+      <input id="key" type="password" placeholder="Paste your EXPORT_KEY" autocomplete="off" spellcheck="false">
+      <button class="btn" id="load" type="button">View dashboard</button>
+      <button class="btn ghost" id="refresh" type="button" style="display:none">Refresh</button>
+    </div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <!-- dashboard (hidden until loaded) -->
+  <div id="dash" style="display:none">
+
+    <div class="kpis" id="kpis"></div>
+
+    <div class="card">
+      <h2>Participation over time</h2>
+      <p class="cardnote" id="timeNote">Teams connecting their work to the strategy, over time.</p>
+      <div id="timeline"></div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <h2>Commitments by strategic pillar</h2>
+        <p class="cardnote">How the commitments teams have made distribute across the three pillars.</p>
+        <div id="pillarBars"></div>
+      </div>
+      <div class="card">
+        <h2>Pillar mix</h2>
+        <p class="cardnote">Share of all commitments.</p>
+        <div class="donutwrap">
+          <div class="donut" id="donut"></div>
+          <div class="legend" id="donutLegend"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <h2>Most connected functions</h2>
+        <p class="cardnote">Which teams and functions are named most often as collaborators — a read on where the ministry is working across lines.</p>
+        <div id="connections"></div>
+      </div>
+      <div class="card">
+        <h2>Participation by department</h2>
+        <p class="cardnote">Departments that have added a Strategy Commitment Card.</p>
+        <div id="departments"></div>
+      </div>
+    </div>
+
+    <div class="card" id="dlcard">
+      <h2>Download the data</h2>
+      <p class="cardnote">Excel opens as a polished, ready-to-share workbook. Each pillar file holds only that pillar's commitments.</p>
+      <div class="btns">
+        <a class="btn" id="dlxlsx" href="#">Download Excel (all)</a>
+        <a class="btn ghost" id="dlcsv" href="#">CSV</a>
+        <a class="btn ghost" id="dljson" href="#">JSON</a>
+      </div>
+      <div class="subhead">Download one pillar</div>
+      <div class="btns">
+        <a class="btn ghost g1" id="dlg1" href="#">Excellence — Excel</a>
+        <a class="btn ghost g2" id="dlg2" href="#">One OSF Team — Excel</a>
+        <a class="btn ghost g3" id="dlg3" href="#">Destination OSF — Excel</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>All submissions</h2>
+      <p class="cardnote">Every team that has connected its work to the strategy. Search, sort, and page through them all. A team's commitments are grouped together.</p>
+      <div class="controls">
+        <input class="search" id="tblSearch" type="text" placeholder="Search team, department, or commitment…" autocomplete="off" spellcheck="false">
+        <select id="tblPillar" aria-label="Filter by pillar">
+          <option value="">All pillars</option>
+          <option value="g1">Excellence</option>
+          <option value="g2">One OSF Team</option>
+          <option value="g3">Destination OSF</option>
+        </select>
+        <select id="tblSort" aria-label="Sort submissions">
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+          <option value="team">Team A–Z</option>
+          <option value="dept">Department A–Z</option>
+        </select>
+      </div>
+      <div class="tablewrap" id="tablewrap"></div>
+      <div class="pager" id="pager" style="display:none">
+        <div class="pinfo" id="pinfo"></div>
+        <div class="pbtns">
+          <button class="pbtn" id="prevPage" type="button">‹ Previous</button>
+          <button class="pbtn" id="nextPage" type="button">Next ›</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+<script>window.fetch=function(){return Promise.resolve({ok:true,status:200,json:function(){return Promise.resolve({"generatedAt":"2026-09-04T00:25:41.569Z","pillar":"All","count":14,"summary":{"teams":14,"commitments":22,"byPillar":{"Excellence":8,"One OSF Team":8,"Destination OSF":6,"Unassigned":0}},"submissions":[{"submitted":"2026-09-01T15:10:00Z","submittedLocal":"Sep 01, 10:10 AM CT","department":"Cardiology","team":"Cath Lab","worksWith":["Nursing","Pharmacy","OSF Digital / IT"],"commitments":[{"pillar":"Excellence","pillarCode":"g1","commitment":"Cut door-to-balloon time by 10% this year"},{"pillar":"One OSF Team","pillarCode":"g2","commitment":"Share morning huddle notes with the Nursing team each day"},{"pillar":"Destination OSF","pillarCode":"g3","commitment":"Pilot the new scheduling portal this quarter"}]},{"submitted":"2026-09-01T18:30:00Z","submittedLocal":"Sep 01, 1:30 PM CT","department":"OSF Digital / IT","team":"Platform Engineering","worksWith":["Security","Patient Experience"],"commitments":[{"pillar":"Excellence","pillarCode":"g1","commitment":"Reduce major-incident resolution time to under one hour"},{"pillar":"One OSF Team","pillarCode":"g2","commitment":"Cross-train with the Security team on the on-call rotation"}]},{"submitted":"2026-09-01T20:05:00Z","submittedLocal":"Sep 01, 3:05 PM CT","department":"Innovation","team":"Digital Care","worksWith":["OSF Digital / IT","Patient Experience","Marketing"],"commitments":[{"pillar":"Destination OSF","pillarCode":"g3","commitment":"Launch a virtual-first clinic pilot in two regions"}]},{"submitted":"2026-09-02T14:20:00Z","submittedLocal":"Sep 02, 9:20 AM CT","department":"Finance","team":"Revenue Cycle","worksWith":["Patient Experience","OSF Digital / IT"],"commitments":[{"pillar":"Excellence","pillarCode":"g1","commitment":"Reduce billing questions by 15%"},{"pillar":"Destination OSF","pillarCode":"g3","commitment":"Publish a plain-language billing statement"}]},{"submitted":"2026-09-02T19:15:00Z","submittedLocal":"Sep 02, 2:15 PM CT","department":"Patient Experience","team":"Guest Services","worksWith":["Nursing","Marketing"],"commitments":[{"pillar":"Excellence","pillarCode":"g1","commitment":"Answer every message within one business day"},{"pillar":"One OSF Team","pillarCode":"g2","commitment":"Round with unit leaders twice a month"}]},{"submitted":"2026-09-03T14:05:00Z","submittedLocal":"Sep 03, 9:05 AM CT","department":"Supply Chain","team":"Logistics","worksWith":["Nursing","Finance"],"commitments":[{"pillar":"Excellence","pillarCode":"g1","commitment":"Keep critical supplies above the safety line 99% of the time"},{"pillar":"One OSF Team","pillarCode":"g2","commitment":"Meet monthly with unit managers on par levels"}]},{"submitted":"2026-09-03T15:40:00Z","submittedLocal":"Sep 03, 10:40 AM CT","department":"Nursing","team":"Med-Surg 4E","worksWith":["Pharmacy","Case Management"],"commitments":[{"pillar":"Excellence","pillarCode":"g1","commitment":"Complete bedside shift report every handoff"},{"pillar":"Destination OSF","pillarCode":"g3","commitment":"Adopt the new discharge-planning tool"}]},{"submitted":"2026-09-03T16:20:00Z","submittedLocal":"Sep 03, 11:20 AM CT","department":"Pharmacy","team":"Inpatient","worksWith":["Nursing","Cardiology"],"commitments":[{"pillar":"One OSF Team","pillarCode":"g2","commitment":"Join daily care-team rounds on two units"}]},{"submitted":"2026-09-03T18:00:00Z","submittedLocal":"Sep 03, 1:00 PM CT","department":"Marketing","team":"Brand & Digital","worksWith":["Innovation","Patient Experience"],"commitments":[{"pillar":"Destination OSF","pillarCode":"g3","commitment":"Ship the new patient-facing site refresh"}]},{"submitted":"2026-09-03T20:35:00Z","submittedLocal":"Sep 03, 3:35 PM CT","department":"Quality","team":"Safety & Reliability","worksWith":["Nursing","Pharmacy","OSF Digital / IT"],"commitments":[{"pillar":"Excellence","pillarCode":"g1","commitment":"Reduce preventable safety events by 20%"},{"pillar":"One OSF Team","pillarCode":"g2","commitment":"Publish a shared safety dashboard for all units"}]},{"submitted":"2026-09-04T14:12:00Z","submittedLocal":"Sep 04, 9:12 AM CT","department":"Human Resources","team":"Talent","worksWith":["Finance","Nursing"],"commitments":[{"pillar":"One OSF Team","pillarCode":"g2","commitment":"Cut time-to-hire for clinical roles by two weeks"}]},{"submitted":"2026-09-04T15:55:00Z","submittedLocal":"Sep 04, 10:55 AM CT","department":"Case Management","team":"Care Coordination","worksWith":["Nursing","Finance"],"commitments":[{"pillar":"Destination OSF","pillarCode":"g3","commitment":"Stand up a same-day follow-up call program"}]},{"submitted":"2026-09-04T17:30:00Z","submittedLocal":"Sep 04, 12:30 PM CT","department":"Laboratory","team":"Core Lab","worksWith":["Nursing","Cardiology"],"commitments":[{"pillar":"Excellence","pillarCode":"g1","commitment":"Return stat results within 45 minutes"}]},{"submitted":"2026-09-04T19:45:00Z","submittedLocal":"Sep 04, 2:45 PM CT","department":"Facilities","team":"Environmental Services","worksWith":["Nursing","Supply Chain"],"commitments":[{"pillar":"One OSF Team","pillarCode":"g2","commitment":"Partner with units on a room-ready standard"}]}]});}});};</script><script>/* OSF Strategy Board — Leadership Dashboard.
+ * Loads the key-protected export, computes at-a-glance insights, renders simple
+ * inline SVG/CSS charts (no external libraries — strict Content-Security-Policy),
+ * and offers point-and-click downloads. No inline handlers. */
+(function () {
+  'use strict';
+  function qp(n) { try { return new URLSearchParams(location.search).get(n) || ''; } catch (e) { return ''; } }
+  function esc(s) { return (s || '').replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); }
+  function num(n) { return Number(n || 0).toLocaleString(); }
+  function el(id) { return document.getElementById(id); }
+
+  var PILLARS = [
+    { name: 'Excellence', code: 'g1', color: '#64A70B', soft: '#eef6e0', ink: '#3f6d08' },
+    { name: 'One OSF Team', code: 'g2', color: '#00A9CE', soft: '#e2f4f8', ink: '#036178' },
+    { name: 'Destination OSF', code: 'g3', color: '#A5228E', soft: '#f7e6f3', ink: '#8a1c78' }
+  ];
+  function pillarBy(name) { for (var i = 0; i < PILLARS.length; i++) if (PILLARS[i].name === name) return PILLARS[i]; return null; }
+  function pillarClass(name) { var p = pillarBy(name); return p ? p.code : 'none'; }
+
+  var keyInput = el('key');
+  var msgEl = el('msg');
+  keyInput.value = qp('key');
+  function msg(t) { msgEl.textContent = t || ''; }
+
+  function setLinks(k) {
+    var ek = encodeURIComponent(k);
+    el('dlxlsx').href = '/export.xlsx?key=' + ek;
+    el('dlcsv').href = '/export?key=' + ek;
+    el('dljson').href = '/export.json?key=' + ek;
+    el('dlg1').href = '/export.xlsx?key=' + ek + '&pillar=g1';
+    el('dlg2').href = '/export.xlsx?key=' + ek + '&pillar=g2';
+    el('dlg3').href = '/export.xlsx?key=' + ek + '&pillar=g3';
+  }
+
+  /* ---------- insight helpers ---------- */
+  function teamsPerPillar(subs) {
+    var counts = { g1: 0, g2: 0, g3: 0 };
+    subs.forEach(function (s) {
+      var seen = {};
+      (s.commitments || []).forEach(function (c) {
+        if (c.pillarCode && !seen[c.pillarCode]) { seen[c.pillarCode] = 1; if (counts[c.pillarCode] !== undefined) counts[c.pillarCode] += 1; }
+      });
+    });
+    return counts;
+  }
+
+  function renderKpis(summary, subs) {
+    var teams = Number(summary.teams || subs.length || 0);
+    var commits = Number(summary.commitments || 0);
+    var depts = {};
+    subs.forEach(function (s) { if (s.department) depts[s.department] = 1; });
+    var deptCount = Object.keys(depts).length;
+    var tiles = [
+      { n: num(teams), l: 'teams have connected their work to the strategy', c: '' },
+      { n: num(commits), l: 'commitments made across all pillars', c: 'k2' },
+      { n: num(deptCount), l: 'departments represented', c: 'k3' }
+    ];
+    el('kpis').innerHTML = tiles.map(function (t) {
+      return '<div class="kpi ' + t.c + '"><div class="n">' + t.n + '</div><div class="l">' + t.l + '</div></div>';
+    }).join('');
+  }
+
+  function renderPillarBars(byPillar, subs) {
+    var tp = teamsPerPillar(subs);
+    var total = 0;
+    PILLARS.forEach(function (p) { total += Number(byPillar[p.name] || 0); });
+    var max = 0;
+    PILLARS.forEach(function (p) { max = Math.max(max, Number(byPillar[p.name] || 0)); });
+    var html = PILLARS.map(function (p) {
+      var n = Number(byPillar[p.name] || 0);
+      var pct = total ? Math.round((n / total) * 100) : 0;
+      var w = max ? Math.round((n / max) * 100) : 0;
+      return '<div class="hbar">' +
+        '<div class="bl">' + esc(p.name) + '<small>' + num(tp[p.code] || 0) + ' teams committed</small></div>' +
+        '<div class="track"><div class="fill" style="width:' + w + '%;background:' + p.color + '"></div></div>' +
+        '<div class="bn">' + num(n) + '<small>' + pct + '%</small></div>' +
+        '</div>';
+    }).join('');
+    el('pillarBars').innerHTML = html || '<div class="empty">No commitments yet.</div>';
+  }
+
+  function renderDonut(byPillar) {
+    var total = 0;
+    PILLARS.forEach(function (p) { total += Number(byPillar[p.name] || 0); });
+    var size = 156, sw = 28, r = (size - sw) / 2, cx = size / 2, C = 2 * Math.PI * r;
+    var circles = '';
+    if (total > 0) {
+      var acc = 0;
+      PILLARS.forEach(function (p) {
+        var v = Number(byPillar[p.name] || 0);
+        if (v <= 0) return;
+        var len = (v / total) * C;
+        circles += '<circle cx="' + cx + '" cy="' + cx + '" r="' + r + '" fill="none" stroke="' + p.color +
+          '" stroke-width="' + sw + '" stroke-dasharray="' + len.toFixed(2) + ' ' + (C - len).toFixed(2) +
+          '" stroke-dashoffset="' + (-acc).toFixed(2) + '" transform="rotate(-90 ' + cx + ' ' + cx + ')"></circle>';
+        acc += len;
+      });
+    } else {
+      circles = '<circle cx="' + cx + '" cy="' + cx + '" r="' + r + '" fill="none" stroke="#e6eadf" stroke-width="' + sw + '"></circle>';
+    }
+    var svg = '<svg width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + ' ' + size + '" role="img" aria-label="Pillar mix">' +
+      circles +
+      '<text x="' + cx + '" y="' + (cx - 4) + '" text-anchor="middle" font-size="30" font-weight="800" fill="#1c2418">' + num(total) + '</text>' +
+      '<text x="' + cx + '" y="' + (cx + 16) + '" text-anchor="middle" font-size="11" fill="#5c665a">commitments</text>' +
+      '</svg>';
+    el('donut').innerHTML = svg;
+    var leg = PILLARS.map(function (p) {
+      var v = Number(byPillar[p.name] || 0);
+      var pct = total ? Math.round((v / total) * 100) : 0;
+      return '<div class="li"><span class="sw" style="background:' + p.color + '"></span>' +
+        '<span class="lt">' + esc(p.name) + '</span><span class="lv">' + pct + '%</span></div>';
+    }).join('');
+    el('donutLegend').innerHTML = leg;
+  }
+
+  function renderConnections(subs) {
+    var freq = {};
+    subs.forEach(function (s) {
+      (s.worksWith || []).forEach(function (w) {
+        var key = String(w || '').trim();
+        if (!key) return;
+        freq[key] = (freq[key] || 0) + 1;
+      });
+    });
+    var arr = Object.keys(freq).map(function (k) { return { name: k, n: freq[k] }; })
+      .sort(function (a, b) { return b.n - a.n; }).slice(0, 8);
+    if (!arr.length) { el('connections').innerHTML = '<div class="empty">No collaborators named yet.</div>'; return; }
+    var max = arr[0].n;
+    el('connections').innerHTML = arr.map(function (a) {
+      var w = max ? Math.round((a.n / max) * 100) : 0;
+      return '<div class="rank"><div class="rl">' + esc(a.name) + '</div>' +
+        '<div class="rt"><div class="rtrack"><div class="rfill" style="width:' + w + '%"></div></div>' +
+        '<div class="rn">' + num(a.n) + '</div></div></div>';
+    }).join('');
+  }
+
+  function renderDepartments(subs) {
+    var freq = {};
+    subs.forEach(function (s) { var d = String(s.department || '').trim(); if (d) freq[d] = (freq[d] || 0) + 1; });
+    var arr = Object.keys(freq).map(function (k) { return { name: k, n: freq[k] }; })
+      .sort(function (a, b) { return b.n - a.n; }).slice(0, 8);
+    if (!arr.length) { el('departments').innerHTML = '<div class="empty">No departments yet.</div>'; return; }
+    var max = arr[0].n;
+    el('departments').innerHTML = arr.map(function (a) {
+      var w = max ? Math.round((a.n / max) * 100) : 0;
+      return '<div class="rank"><div class="rl">' + esc(a.name) + '</div>' +
+        '<div class="rt"><div class="rtrack"><div class="rfill" style="width:' + w + '%;background:#4E8209"></div></div>' +
+        '<div class="rn">' + num(a.n) + '</div></div></div>';
+    }).join('');
+  }
+
+  /* ---------- participation over time ---------- */
+  function subDate(s) {
+    var d = s.submitted ? new Date(s.submitted) : (s.submittedLocal ? new Date(String(s.submittedLocal).replace(' CT', '')) : null);
+    return (d && !isNaN(d.getTime())) ? d : null;
+  }
+  function ctFmt(d, opts) { try { return new Intl.DateTimeFormat('en-US', Object.assign({ timeZone: 'America/Chicago' }, opts)).format(d); } catch (e) { return ''; } }
+  function dayKeyOf(d) { try { return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d); } catch (e) { return ''; } }
+  function hour24Of(d) { try { return parseInt(new Intl.DateTimeFormat('en-GB', { timeZone: 'America/Chicago', hour: '2-digit', hour12: false }).format(d), 10); } catch (e) { return 0; } }
+  function hourLabel(h) { var ap = h < 12 ? 'AM' : 'PM'; var hh = h % 12; if (hh === 0) hh = 12; return hh + ' ' + ap; }
+
+  function renderTimeline(subs) {
+    var host = el('timeline');
+    var dated = subs.map(subDate).filter(Boolean);
+    if (!dated.length) { host.innerHTML = '<div class="empty">No submissions yet.</div>'; el('timeNote').textContent = 'Teams connecting their work to the strategy, over time.'; return; }
+    var dayKeys = {};
+    dated.forEach(function (d) { dayKeys[dayKeyOf(d)] = 1; });
+    var uniqueDays = Object.keys(dayKeys).filter(Boolean).sort();
+    var buckets = []; // {label, sub, count}
+    var note = '';
+
+    if (uniqueDays.length <= 1) {
+      // single day → bucket by hour
+      var hours = dated.map(hour24Of);
+      var minH = Math.min.apply(null, hours), maxH = Math.max.apply(null, hours);
+      var counts = {};
+      hours.forEach(function (h) { counts[h] = (counts[h] || 0) + 1; });
+      for (var h = minH; h <= maxH; h += 1) buckets.push({ label: hourLabel(h), sub: '', count: counts[h] || 0 });
+      var dayLabel = ctFmt(dated[0], { month: 'long', day: 'numeric' });
+      note = 'Teams connecting by hour on ' + dayLabel + '.';
+    } else {
+      // multiple days → bucket by day (fill gaps when the span is reasonable)
+      var counts2 = {};
+      dated.forEach(function (d) { var k = dayKeyOf(d); counts2[k] = (counts2[k] || 0) + 1; });
+      var first = uniqueDays[0], last = uniqueDays[uniqueDays.length - 1];
+      function keyToUTC(k) { var p = k.split('-'); return Date.UTC(+p[0], +p[1] - 1, +p[2]); }
+      var spanDays = Math.round((keyToUTC(last) - keyToUTC(first)) / 86400000) + 1;
+      var keys;
+      if (spanDays <= 31) {
+        keys = []; for (var t = keyToUTC(first); t <= keyToUTC(last); t += 86400000) {
+          var dd = new Date(t);
+          keys.push(new Intl.DateTimeFormat('en-CA', { timeZone: 'UTC', year: 'numeric', month: '2-digit', day: '2-digit' }).format(dd));
+        }
+      } else { keys = uniqueDays; }
+      keys.forEach(function (k) {
+        var u = keyToUTC(k);
+        buckets.push({
+          label: new Intl.DateTimeFormat('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' }).format(new Date(u)),
+          sub: '', count: counts2[k] || 0
+        });
+      });
+      note = 'Teams connecting each day.';
+    }
+
+    var max = buckets.reduce(function (m, b) { return Math.max(m, b.count); }, 0) || 1;
+    var showEvery = buckets.length > 14 ? Math.ceil(buckets.length / 14) : 1;
+    var html = buckets.map(function (b, i) {
+      var hpx = Math.max(3, Math.round((b.count / max) * 132));
+      var showLabel = (i % showEvery === 0) || (i === buckets.length - 1);
+      return '<div class="tcol" title="' + esc(b.label) + ': ' + b.count + '">' +
+        '<div class="tv">' + (b.count ? num(b.count) : '') + '</div>' +
+        '<div class="tbar" style="height:' + hpx + 'px' + (b.count ? '' : ';opacity:.35') + '"></div>' +
+        '<div class="tx">' + (showLabel ? esc(b.label) : '') + '</div></div>';
+    }).join('');
+    host.innerHTML = '<div class="timeline">' + html + '</div>';
+    el('timeNote').textContent = note;
+  }
+
+  /* ---------- submissions browser (search / sort / page through all) ---------- */
+  var BR = { subs: [], page: 0, pageSize: 8, sort: 'newest', query: '', pillar: '' };
+
+  function browserView() {
+    var list = BR.subs.map(function (e, i) { return { e: e, i: i }; });
+    // pillar filter — keep teams with a matching commitment, showing only those commitments
+    if (BR.pillar) {
+      list = list.map(function (o) {
+        var cs = (o.e.commitments || []).filter(function (c) { return c.pillarCode === BR.pillar; });
+        return { e: o.e, i: o.i, only: cs };
+      }).filter(function (o) { return o.only.length; });
+    }
+    // text search across team, department, works-with, and commitment text
+    if (BR.query) {
+      var q = BR.query.toLowerCase();
+      list = list.filter(function (o) {
+        var hay = [o.e.team, o.e.department, (o.e.worksWith || []).join(' ')]
+          .concat((o.e.commitments || []).map(function (c) { return c.commitment; })).join(' ').toLowerCase();
+        return hay.indexOf(q) !== -1;
+      });
+    }
+    // sort
+    list.sort(function (a, b) {
+      if (BR.sort === 'oldest') return a.i - b.i;
+      if (BR.sort === 'team') return String(a.e.team || '').localeCompare(String(b.e.team || ''));
+      if (BR.sort === 'dept') return String(a.e.department || '').localeCompare(String(b.e.department || '')) ||
+        String(a.e.team || '').localeCompare(String(b.e.team || ''));
+      return b.i - a.i; // newest
+    });
+    return list;
+  }
+
+  function renderBrowser() {
+    var wrap = el('tablewrap');
+    var view = browserView();
+    var total = view.length;
+    var pages = Math.max(1, Math.ceil(total / BR.pageSize));
+    if (BR.page >= pages) BR.page = pages - 1;
+    if (BR.page < 0) BR.page = 0;
+    var start = BR.page * BR.pageSize;
+    var slice = view.slice(start, start + BR.pageSize);
+
+    if (!total) {
+      wrap.innerHTML = '<div class="empty">' + (BR.query || BR.pillar ? 'No submissions match your search.' : 'No commitments yet.') + '</div>';
+      el('pager').style.display = 'none';
+      return;
+    }
+    var html = '<table><thead><tr>' +
+      '<th>Team</th><th>Goal</th><th>Commitment</th><th>When &amp; who they work with</th>' +
+      '</tr></thead><tbody>';
+    slice.forEach(function (o) {
+      var e = o.e;
+      var list = o.only || ((e.commitments && e.commitments.length) ? e.commitments : [{ pillar: '', commitment: '' }]);
+      var rows = list.length;
+      var when = e.submittedLocal || e.submitted || '';
+      var works = (e.worksWith || []).join(', ');
+      var teamCell = '<div>' + esc(e.team || '') + '</div>' +
+        (e.department ? '<div class="meta">' + esc(e.department) + '</div>' : '');
+      var metaCell = '<div class="meta">' + esc(when) + '</div>' +
+        (works ? '<div class="meta" style="margin-top:4px">Works with: ' + esc(works) + '</div>' : '');
+      list.forEach(function (c, i) {
+        var goal = c.pillar || '';
+        html += '<tr' + (i === 0 ? ' class="teamsep"' : '') + '>';
+        if (i === 0) html += '<td class="team-cell" rowspan="' + rows + '">' + teamCell + '</td>';
+        html += '<td>' + (goal ? '<span class="pill ' + pillarClass(goal) + '">' + esc(goal) + '</span>' : '') + '</td>';
+        html += '<td class="stmt">' + esc(c.commitment || '') + '</td>';
+        if (i === 0) html += '<td rowspan="' + rows + '">' + metaCell + '</td>';
+        html += '</tr>';
+      });
+    });
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+
+    var from = start + 1, to = Math.min(start + BR.pageSize, total);
+    el('pinfo').textContent = 'Showing ' + from + '–' + to + ' of ' + num(total) + ' teams' +
+      (pages > 1 ? '   ·   page ' + (BR.page + 1) + ' of ' + pages : '');
+    el('prevPage').disabled = BR.page <= 0;
+    el('nextPage').disabled = BR.page >= pages - 1;
+    el('pager').style.display = 'flex';
+  }
+
+  function wireBrowser() {
+    el('tblSearch').addEventListener('input', function (e) { BR.query = e.target.value.trim(); BR.page = 0; renderBrowser(); });
+    el('tblPillar').addEventListener('change', function (e) { BR.pillar = e.target.value; BR.page = 0; renderBrowser(); });
+    el('tblSort').addEventListener('change', function (e) { BR.sort = e.target.value; BR.page = 0; renderBrowser(); });
+    el('prevPage').addEventListener('click', function () { if (BR.page > 0) { BR.page -= 1; renderBrowser(); scrollToTable(); } });
+    el('nextPage').addEventListener('click', function () { BR.page += 1; renderBrowser(); scrollToTable(); });
+  }
+  function scrollToTable() { try { el('tablewrap').scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* noop */ } }
+
+  function load() {
+    var k = keyInput.value.trim();
+    if (!k) { msg('Enter your export key to load the dashboard.'); return; }
+    setLinks(k);
+    msg('Loading…');
+    fetch('/export.json?key=' + encodeURIComponent(k)).then(function (r) {
+      if (r.status === 403) { msg('That key was not accepted. Double-check the EXPORT_KEY in your hosting settings.'); return null; }
+      if (!r.ok) { msg('Could not load data (error ' + r.status + ').'); return null; }
+      return r.json();
+    }).then(function (d) {
+      if (!d) return;
+      var summary = d.summary || { teams: 0, commitments: 0, byPillar: {} };
+      var subs = d.submissions || [];
+      var by = summary.byPillar || {};
+      el('dash').style.display = 'block';
+      el('refresh').style.display = 'inline-flex';
+      renderKpis(summary, subs);
+      renderTimeline(subs);
+      renderPillarBars(by, subs);
+      renderDonut(by);
+      renderConnections(subs);
+      renderDepartments(subs);
+      BR.subs = subs; BR.page = 0;
+      renderBrowser();
+      var gen = d.generatedAt ? new Date(d.generatedAt) : new Date();
+      el('asof').textContent = 'As of ' + gen.toLocaleString();
+      msg(num(summary.teams || subs.length) + ' teams captured.');
+    }).catch(function () { msg('Could not reach the server. Check your connection and try again.'); });
+  }
+
+  el('load').addEventListener('click', load);
+  el('refresh').addEventListener('click', load);
+  keyInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') load(); });
+  wireBrowser();
+
+  if (keyInput.value) load();
+})();
+</script><script>document.getElementById("key").value="preview";document.getElementById("load").click();</script>
+</body>
+</html>

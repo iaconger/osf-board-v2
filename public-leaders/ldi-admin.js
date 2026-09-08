@@ -13,6 +13,7 @@
     {name:'Drive Transformation',color:'#5B4B8A'}
   ];
   function compColor(n){for(var i=0;i<COMPS.length;i++)if(COMPS[i].name===n)return COMPS[i].color;return '#888';}
+  function esc(s){return String(s==null?'':s).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];});}
   var SKILLS=['Values-Driven Leadership','Purposeful Compassion','Ethical Stewardship','Operational Integrity','Emotional Intelligence: Self-Awareness','Emotional Intelligence: Self-Management','Feedback','Learning Agility','Active Listening','Clarity & Transparency','Constructive Communication','Strategic Alignment','Clear Expectations','Compassionate Accountability','Coaching for Growth','Performance Analytics','Continuous Improvement','Emotional Intelligence: Social Awareness','Emotional Intelligence: Relationship Management','Cross-Functional Collaboration','Diversity & Inclusion','Data-Informed Planning','Business Acumen','Process Optimization','Strategic Foresight','Cultivating Innovation','Inspires Change','Strategic Execution'];
   var DIVS=['Ambulatory','Acute Care','OSF Digital','Medical Group','Nursing','Foundation','Shared Services','Behavioral Health'];
   var ROLES=['Lead Physician / APP / APN','Supervisor','Manager','Director','Vice President','SVP and above'];
@@ -102,7 +103,7 @@
   function browserData(){
     var list=filtered().slice();
     if(BR.q){var q=BR.q.toLowerCase();list=list.filter(function(l){
-      var hay=[l.first,l.last,l.division,l.role].concat(l.comps).concat(l.skills).join(' ').toLowerCase();return hay.indexOf(q)>=0;});}
+      var hay=[l.first,l.last,l.division,l.role,l.approach].concat(l.comps).concat(l.skills).join(' ').toLowerCase();return hay.indexOf(q)>=0;});}
     if(BR.sort==='div')list.sort(function(a,b){return a.division.localeCompare(b.division);});
     else if(BR.sort==='role')list.sort(function(a,b){return ROLES.indexOf(a.role)-ROLES.indexOf(b.role);});
     else list.sort(function(a,b){return b.ts-a.ts;});
@@ -113,14 +114,15 @@
     if(BR.page>=pages)BR.page=pages-1;if(BR.page<0)BR.page=0;
     var start=BR.page*BR.size;var slice=list.slice(start,start+BR.size);
     if(!total){el('tablewrap').innerHTML='<div class="empty">No leaders match.</div>';el('pager').style.display='none';return;}
-    var h='<table class="subs"><thead><tr><th>Leader</th><th>Role &amp; experience</th><th>Competencies (ranked)</th><th>Skills to strengthen</th></tr></thead><tbody>';
+    var h='<table class="subs"><thead><tr><th>Leader</th><th>Role &amp; experience</th><th>Competencies (ranked)</th><th>Skills to strengthen</th><th>How they\'ll work on it</th></tr></thead><tbody>';
     slice.forEach(function(l){
       var who=(l.first||l.last)?((l.first+' '+l.last).trim()):'<span class="meta">(anonymous)</span>';
       var comps=l.comps.map(function(cn,idx){var col=compColor(cn);return '<span class="cchip"><span class="r" style="background:'+col+'">'+(idx+1)+'</span><span class="dot" style="background:'+col+'"></span>'+cn+'</span>';}).join('');
       var sks=l.skills.map(function(s){return '<span class="sktag">'+s+'</span>';}).join('');
+      var ap=l.approach?('<span class="approach">'+esc(l.approach)+'</span>'):'<span class="meta">—</span>';
       h+='<tr><td><div class="who">'+who+'</div><div class="meta">'+l.division+'</div></td>'+
          '<td>'+l.role+'<div class="meta">'+l.years+' yr'+(l.years===1?'':'s')+'</div></td>'+
-         '<td>'+comps+'</td><td>'+sks+'</td></tr>';
+         '<td>'+comps+'</td><td>'+sks+'</td><td>'+ap+'</td></tr>';
     });
     h+='</tbody></table>';el('tablewrap').innerHTML=h;
     el('pinfo').textContent='Showing '+(start+1)+'–'+Math.min(start+BR.size,total)+' of '+total+' leaders'+(pages>1?'   ·   page '+(BR.page+1)+' of '+pages:'');
@@ -157,7 +159,7 @@
       var comps=(s.comps||[]).slice().sort(function(a,b){return (a.rank||9)-(b.rank||9);}).map(function(c){return c.name;});
       return { first:s.first||'', last:s.last||'', division:s.division||'', role:s.role||'',
         years:(s.years===null||s.years===undefined)?0:Number(s.years),
-        comps:comps, skills:s.skills||[], ts:(new Date(s.submitted).getTime()||0) };
+        comps:comps, skills:s.skills||[], approach:s.approach||'', ts:(new Date(s.submitted).getTime()||0) };
     });
   }
   function qp(n){try{return new URLSearchParams(location.search).get(n)||'';}catch(e){return '';}}

@@ -42,7 +42,7 @@ const COMP_SET = new Set(COMPS);
 const SKILL_SET = new Set(SKILLS);
 
 const LIMITS = {
-  name: 60, division: 80, role: 60, comps: 2, skills: 3,
+  name: 60, division: 80, role: 60, comps: 2, skills: 3, approach: 280,
   captured: 200000, msgBytes: 8 * 1024,
   minIntervalMs: 400, windowMs: 10000, maxPerWindow: 6,
 };
@@ -112,7 +112,8 @@ function ensureId(e) { if (!e.id) e.id = 'L' + Date.now().toString(36) + (idSeq+
 function publicCard(e) {
   const rk = reactions[e.id] || { heart: 0, clap: 0 };
   return { id: e.id, first: e.first || '', division: e.division || '', role: e.role || '',
-    comps: e.comps || [], skills: e.skills || [], react: { heart: rk.heart || 0, clap: rk.clap || 0 } };
+    comps: e.comps || [], skills: e.skills || [], approach: e.approach || '',
+    react: { heart: rk.heart || 0, clap: rk.clap || 0 } };
 }
 function applyEntry() { state.count += 1; }
 
@@ -180,6 +181,7 @@ function subView(e) {
     years: (e.years === null || e.years === undefined) ? null : e.years,
     comps: (e.comps || []).map((c) => ({ name: c.name, rank: c.rank })),
     skills: e.skills || [],
+    approach: e.approach || '',
   };
 }
 
@@ -196,6 +198,7 @@ app.get('/export', (req, res) => {
   const rows = [[
     'Submitted (Central Time)', 'First Name', 'Last Name', 'Division', 'Leadership Role',
     'Years of Leadership Experience', 'Competency #1', 'Competency #2', 'Skills to Strengthen',
+    'How I\'ll Work On It',
   ].map(csvCell).join(',')];
   for (const e of captured) {
     if (!passesFilter(e, f)) continue;
@@ -204,6 +207,7 @@ app.get('/export', (req, res) => {
     rows.push([
       fmtCentral(e.ts), e.first || '', e.last || '', e.division || '', e.role || '',
       (e.years === null || e.years === undefined) ? '' : e.years, c1, c2, (e.skills || []).join('; '),
+      e.approach || '',
     ].map(csvCell).join(','));
   }
   const csv = `﻿${rows.join('\r\n')}\r\n`;
@@ -224,26 +228,26 @@ function buildWorkbook(f) {
 
   // Sheet 1: Leaders (one row per leader)
   const ws = wb.addWorksheet('Leaders', { views: [{ state: 'frozen', ySplit: 5 }] });
-  const widths = [22, 16, 16, 22, 20, 12, 26, 26, 50];
+  const widths = [22, 16, 16, 22, 20, 12, 26, 26, 40, 50];
   widths.forEach((w, i) => { ws.getColumn(i + 1).width = w; });
-  ws.mergeCells('A1:I1');
+  ws.mergeCells('A1:J1');
   const t = ws.getCell('A1'); t.value = 'OSF HealthCare  —  Leadership Development Institute';
   t.font = { name: 'Calibri', size: 16, bold: true, color: { argb: XL.white } };
   t.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: XL.brand } };
   t.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 }; ws.getRow(1).height = 30;
-  ws.mergeCells('A2:I2');
+  ws.mergeCells('A2:J2');
   const sub = ws.getCell('A2');
   const scope = [f.division && ('Division: ' + f.division), f.role && ('Role: ' + f.role), f.years && ('Experience: ' + f.years + ' yrs')].filter(Boolean).join('   ·   ') || 'All leaders';
   sub.value = `${scope}   ·   Generated ${fmtCentral(new Date().toISOString())}`;
   sub.font = { name: 'Calibri', size: 10, italic: true, color: { argb: XL.muted } };
   sub.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 }; ws.getRow(2).height = 18;
-  ws.mergeCells('A3:I3');
+  ws.mergeCells('A3:J3');
   ws.getCell('A3').value = `${list.length} leaders`;
   ws.getCell('A3').font = { name: 'Calibri', size: 10, bold: true, color: { argb: XL.ink } };
   ws.getCell('A3').alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
   ws.getRow(4).height = 6;
   const heads = ['Submitted (Central Time)', 'First Name', 'Last Name', 'Division', 'Leadership Role',
-    'Years', 'Competency #1', 'Competency #2', 'Skills to Strengthen'];
+    'Years', 'Competency #1', 'Competency #2', 'Skills to Strengthen', 'How I\'ll Work On It'];
   const hr = ws.getRow(5);
   heads.forEach((h, i) => {
     const c = hr.getCell(i + 1); c.value = h;
@@ -257,7 +261,8 @@ function buildWorkbook(f) {
     const row = ws.getRow(r);
     const vals = [fmtCentral(e.ts), e.first || '', e.last || '', e.division || '', e.role || '',
       (e.years === null || e.years === undefined) ? '' : e.years,
-      (e.comps[0] || {}).name || '', (e.comps[1] || {}).name || '', (e.skills || []).join(', ')];
+      (e.comps[0] || {}).name || '', (e.comps[1] || {}).name || '', (e.skills || []).join(', '),
+      e.approach || ''];
     vals.forEach((v, i) => {
       const c = row.getCell(i + 1); c.value = v; c.border = thinBorder();
       c.alignment = { vertical: 'top', horizontal: 'left', wrapText: true, indent: 1 };
@@ -266,8 +271,8 @@ function buildWorkbook(f) {
     });
     row.height = 26; r += 1; band = !band;
   });
-  if (!list.length) { ws.mergeCells('A6:I6'); ws.getCell('A6').value = 'No leaders captured yet.'; ws.getCell('A6').font = { italic: true, color: { argb: XL.muted } }; }
-  ws.autoFilter = { from: { row: 5, column: 1 }, to: { row: 5, column: 9 } };
+  if (!list.length) { ws.mergeCells('A6:J6'); ws.getCell('A6').value = 'No leaders captured yet.'; ws.getCell('A6').font = { italic: true, color: { argb: XL.muted } }; }
+  ws.autoFilter = { from: { row: 5, column: 1 }, to: { row: 5, column: 10 } };
 
   // Sheet 2: Competency summary (rank-weighted)
   const cs = wb.addWorksheet('Competency Summary');
@@ -387,6 +392,7 @@ wss.on('connection', (ws) => {
       role: cleanText(data.role, LIMITS.role),
       years: (function () { const n = Number(data.years); return Number.isFinite(n) && n >= 0 && n <= 80 ? n : null; })(),
       comps, skills,
+      approach: cleanText(data.approach, LIMITS.approach),
     };
     ensureId(entry); reactions[entry.id] = { heart: 0, clap: 0 };
     applyEntry();

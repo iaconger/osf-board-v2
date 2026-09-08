@@ -18,6 +18,8 @@
   .previewban{max-width:960px;margin:0 auto;padding:14px 20px 0}
   .previewban .b{background:#fff8e6;border:1px solid #f0e0a8;color:#7a5c00;border-radius:12px;padding:10px 16px;font-size:13px}
   .stage{max-width:960px;margin:0 auto;padding:22px 20px 70px}
+  .brandlogo{display:block;height:46px;width:auto;margin:6px auto 18px;filter:brightness(0) invert(1);opacity:.96}
+  @media(max-width:640px){.brandlogo{height:38px;margin-bottom:14px}}
   .card{background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:0 16px 40px rgba(60,70,50,.12);padding:34px 34px}
   .step{display:none} .step.on{display:block;animation:fade .35s ease}
   @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
@@ -32,8 +34,16 @@
   .progress i{height:5px;flex:1;border-radius:99px;background:#e6e0d0}
   .progress i.done{background:var(--green2)} .progress i.cur{background:var(--green)}
   label{display:block;font-size:12px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.6px;margin:14px 0 6px}
-  input,select{width:100%;padding:13px 14px;border:1.5px solid var(--line);border-radius:12px;font-size:15px;font-family:inherit;background:var(--soft)}
-  input:focus,select:focus{outline:none;border-color:var(--green2);background:#fff}
+  input,select,textarea{width:100%;padding:13px 14px;border:1.5px solid var(--line);border-radius:12px;font-size:15px;font-family:inherit;background:var(--soft)}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--green2);background:#fff}
+  textarea{resize:vertical;min-height:78px;line-height:1.5}
+  .approachbox{margin-top:22px;border-top:1px solid var(--line);padding-top:18px}
+  .approachbox .ah{font-size:15px;font-weight:700;color:var(--ink);margin:0 0 3px}
+  .approachbox .ap{font-size:13px;color:var(--muted);margin:0 0 10px}
+  .approachrow{display:flex;justify-content:flex-end;margin-top:6px}
+  /* focus card personal note */
+  .fcard .approach{background:var(--soft);border-left:4px solid var(--green);border-radius:0 10px 10px 0;padding:12px 15px;font-size:14.5px;line-height:1.55;color:var(--ink);margin-top:4px;font-style:italic}
+  .excard .eapproach{font-size:12.5px;color:var(--ink);line-height:1.5;background:var(--soft);border-left:3px solid var(--green);border-radius:0 8px 8px 0;padding:8px 11px;font-style:italic}
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
   @media(max-width:640px){.grid2{grid-template-columns:1fr}}
   .btnrow{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:26px}
@@ -116,6 +126,7 @@
 <body>
 <div class="topstrip"></div>
 <div class="stage">
+  <img class="brandlogo" src="/logo.png" alt="OSF HealthCare">
   <div class="card">
     <!-- 0 welcome -->
     <div class="step on" data-s="0">
@@ -167,6 +178,12 @@
       <h2>Which leadership skills will you strengthen?</h2>
       <p class="instr">Pick <b>up to 3</b> skills that connect to the competencies you chose.</p>
       <div class="skillscroll" id="skillList"></div>
+      <div class="approachbox">
+        <p class="ah">How will you work on it? <span style="font-weight:600;color:var(--muted)">(optional)</span></p>
+        <p class="ap">A sentence or two, in your own words — one thing you'll do to grow here this year.</p>
+        <textarea id="approach" maxlength="280" rows="2" placeholder="e.g. I'll ask for feedback from my team after each project and act on one thing each time."></textarea>
+        <div class="approachrow"><span class="counter" id="approachCount"><b>0</b> / 280</span></div>
+      </div>
       <div class="btnrow"><button class="btn ghost" data-go="2">← Back</button>
         <div style="display:flex;align-items:center;gap:14px"><span class="counter" id="skillCount">0 of 3 selected</span><button class="btn" data-go="4" id="skillNext" disabled>See my focus →</button></div></div>
     </div>
