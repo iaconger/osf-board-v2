@@ -136,6 +136,8 @@
     font-family:inherit;color:var(--ink);background:var(--soft);line-height:1.5;min-height:64px;resize:vertical;
     transition:border-color .18s,box-shadow .18s,background .18s}
   .commit-in:focus{outline:none;border-color:var(--green-lt);background:#fff;box-shadow:0 4px 14px rgba(78,130,9,.12)}
+  .commit-count{display:block;text-align:right;font-size:12px;color:var(--muted);margin-top:5px;font-variant-numeric:tabular-nums}
+  .commit-count.near{color:#b06a00} .commit-count.full{color:#b3261e;font-weight:600}
   .commit-extra{border-top:1px dashed var(--line);padding-top:6px}
   .commit-extra .choose{display:flex;align-items:center;gap:12px;margin:14px 0 8px}
   .commit-extra .choose select{flex:1;padding:12px 14px;border:1.5px solid var(--line);border-radius:10px;font-size:15px;
@@ -552,14 +554,17 @@
         <div class="commit-item" data-goal="g1">
           <label class="fld"><span class="pd" style="background:var(--g1)"></span>Excellence</label>
           <textarea class="commit-in" data-goal="g1" maxlength="200" placeholder="How will we raise the bar for the people we serve or each other?"></textarea>
+          <span class="commit-count" aria-live="polite">0 / 200</span>
         </div>
         <div class="commit-item" data-goal="g2">
           <label class="fld"><span class="pd" style="background:var(--g2)"></span>One OSF Team</label>
           <textarea class="commit-in" data-goal="g2" maxlength="200" placeholder="How will we work better with other teams across OSF?"></textarea>
+          <span class="commit-count" aria-live="polite">0 / 200</span>
         </div>
         <div class="commit-item" data-goal="g3">
           <label class="fld"><span class="pd" style="background:var(--g3)"></span>Destination OSF</label>
           <textarea class="commit-in" data-goal="g3" maxlength="200" placeholder="How will we help bring Destination OSF to life?"></textarea>
+          <span class="commit-count" aria-live="polite">0 / 200</span>
         </div>
       </div>
       <button class="addcommit" id="addCommit" type="button">+ Add another commitment</button>
@@ -833,6 +838,19 @@ window.OSF_ART = {
     });
     toFinish.disabled = !(baseOk && extrasOk);
   }
+  // ---- live character counters under each commitment ----
+  var COMMIT_MAX=200;
+  function setCommitCount(ta){
+    if(!ta) return;
+    var c=ta.parentNode.querySelector('.commit-count'); if(!c) return;
+    var n=ta.value.length;
+    c.textContent=n+' / '+COMMIT_MAX;
+    c.classList.toggle('near', n>=COMMIT_MAX-20 && n<COMMIT_MAX);
+    c.classList.toggle('full', n>=COMMIT_MAX);
+  }
+  commitList.addEventListener('input', function(e){ if(e.target && e.target.classList && e.target.classList.contains('commit-in')) setCommitCount(e.target); });
+  Array.prototype.slice.call(commitList.querySelectorAll('.commit-in')).forEach(setCommitCount);
+
   commitList.addEventListener('input', gateFinish);
   commitList.addEventListener('change', gateFinish);
   addCommitBtn.addEventListener('click', function(){
@@ -840,8 +858,10 @@ window.OSF_ART = {
     div.className='commit-item commit-extra'; div.setAttribute('data-goal','');
     div.innerHTML='<div class="choose"><span class="pilldot xdot"></span><select>'+pillarOptions('')+'</select>'+
       '<button type="button" class="rm">Remove</button></div>'+
-      '<textarea class="commit-in" maxlength="200" placeholder="Add another commitment"></textarea>';
+      '<textarea class="commit-in" maxlength="200" placeholder="Add another commitment"></textarea>'+
+      '<span class="commit-count" aria-live="polite">0 / '+COMMIT_MAX+'</span>';
     commitList.appendChild(div);
+    setCommitCount(div.querySelector('.commit-in'));
     var sel=div.querySelector('select'), dot=div.querySelector('.xdot');
     sel.addEventListener('change', function(){ dot.style.background = sel.value ? GOAL_COLORS[sel.value] : '#dfe4d7'; });
     div.querySelector('.rm').addEventListener('click', function(){ div.parentNode.removeChild(div); gateFinish(); });

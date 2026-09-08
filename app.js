@@ -1,4 +1,3 @@
-
 (function(){
   "use strict";
   var TOTAL = 8;
@@ -158,6 +157,19 @@
     });
     toFinish.disabled = !(baseOk && extrasOk);
   }
+  // ---- live character counters under each commitment ----
+  var COMMIT_MAX=200;
+  function setCommitCount(ta){
+    if(!ta) return;
+    var c=ta.parentNode.querySelector('.commit-count'); if(!c) return;
+    var n=ta.value.length;
+    c.textContent=n+' / '+COMMIT_MAX;
+    c.classList.toggle('near', n>=COMMIT_MAX-20 && n<COMMIT_MAX);
+    c.classList.toggle('full', n>=COMMIT_MAX);
+  }
+  commitList.addEventListener('input', function(e){ if(e.target && e.target.classList && e.target.classList.contains('commit-in')) setCommitCount(e.target); });
+  Array.prototype.slice.call(commitList.querySelectorAll('.commit-in')).forEach(setCommitCount);
+
   commitList.addEventListener('input', gateFinish);
   commitList.addEventListener('change', gateFinish);
   addCommitBtn.addEventListener('click', function(){
@@ -165,8 +177,10 @@
     div.className='commit-item commit-extra'; div.setAttribute('data-goal','');
     div.innerHTML='<div class="choose"><span class="pilldot xdot"></span><select>'+pillarOptions('')+'</select>'+
       '<button type="button" class="rm">Remove</button></div>'+
-      '<textarea class="commit-in" maxlength="200" placeholder="Add another commitment"></textarea>';
+      '<textarea class="commit-in" maxlength="200" placeholder="Add another commitment"></textarea>'+
+      '<span class="commit-count" aria-live="polite">0 / '+COMMIT_MAX+'</span>';
     commitList.appendChild(div);
+    setCommitCount(div.querySelector('.commit-in'));
     var sel=div.querySelector('select'), dot=div.querySelector('.xdot');
     sel.addEventListener('change', function(){ dot.style.background = sel.value ? GOAL_COLORS[sel.value] : '#dfe4d7'; });
     div.querySelector('.rm').addEventListener('click', function(){ div.parentNode.removeChild(div); gateFinish(); });
@@ -873,4 +887,3 @@
   boardConnect();
   show(0);
 })();
-
