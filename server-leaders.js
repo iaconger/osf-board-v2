@@ -48,8 +48,10 @@ const LIMITS = {
 };
 
 // ---- shared state ----
-const state = { count: 0, feed: [] };
+const state = { count: 0 };
 const captured = [];
+const reactions = Object.create(null); // id -> {heart,clap} (in-memory; resets on redeploy)
+let idSeq = 0;
 
 // ---- helpers ----
 function cleanText(value, max) {
@@ -105,11 +107,14 @@ function cleanSkills(value) {
   return out;
 }
 
-function applyEntry(e) {
-  state.count += 1;
-  state.feed.push({ comps: e.comps || [] });
-  if (state.feed.length > 400) state.feed.shift();
+function ensureId(e) { if (!e.id) e.id = 'L' + Date.now().toString(36) + (idSeq++).toString(36); return e.id; }
+// public, in-room-safe view of a leader's card (no last name)
+function publicCard(e) {
+  const rk = reactions[e.id] || { heart: 0, clap: 0 };
+  return { id: e.id, first: e.first || '', division: e.division || '', role: e.role || '',
+    comps: e.comps || [], skills: e.skills || [], react: { heart: rk.heart || 0, clap: rk.clap || 0 } };
 }
+function applyEntry() { state.count += 1; }
 
 // ---- exec filters (used by dashboard + downloads) ----
 function yearsBucket(y) {
@@ -331,6 +336,24 @@ function broadcastExcept(sender, payload) {
   const message = JSON.stringify(payload);
   for (const client of wss.clients) { if (client !== sender && client.readyState === 1) client.send(message); }
 }
+function broadcastAll(payload) {
+  const message = JSON.stringify(payload);
+  for (const client of wss.clients) { if (client.readyState === 1) client.send(message); }
+}
+function reactionLimited(ws) {
+  const now = Date.now();
+  if (now - (ws.reactWindowStart || 0) > 10000) { ws.reactWindowStart = now; ws.reactCount = 0; }
+  if ((ws.reactCount || 0) >= 40) return true;
+  ws.reactCount = (ws.reactCount || 0) + 1; return false;
+}
+function handleReact(ws, data) {
+  if (reactionLimited(ws)) return;
+  const id = String(data.id || '');
+  const kind = data.kind === 'clap' ? 'clap' : (data.kind === 'heart' ? 'heart' : null);
+  if (!kind || !reactions[id]) return;
+  reactions[id][kind] = (reactions[id][kind] || 0) + 1;
+  broadcastAll({ type: 'reactions', id, heart: reactions[id].heart, clap: reactions[id].clap });
+}
 function rateLimited(ws) {
   const now = Date.now();
   if (now - ws.lastMessageAt < LIMITS.minIntervalMs) return true;
@@ -338,7 +361,7 @@ function rateLimited(ws) {
   if (ws.windowCount >= LIMITS.maxPerWindow) return true;
   ws.windowCount += 1; ws.lastMessageAt = now; return false;
 }
-function feedForInit() { return state.feed.slice(-120).reverse().map((e) => ({ comps: e.comps || [] })); }
+function feedForInit() { return captured.slice(-200).reverse().map(publicCard); }
 
 wss.on('connection', (ws) => {
   ws.isAlive = true; ws.lastMessageAt = 0; ws.windowStartedAt = Date.now(); ws.windowCount = 0;
@@ -348,8 +371,9 @@ wss.on('connection', (ws) => {
 
   ws.on('message', (raw) => {
     if (raw.length > LIMITS.msgBytes) return;
-    if (rateLimited(ws)) return;
     let data; try { data = JSON.parse(raw); } catch { return; }
+    if (data && data.type === 'react') { handleReact(ws, data); return; } // own limiter
+    if (rateLimited(ws)) return;
     if (!data || data.type !== 'submit') return;
 
     const comps = cleanComps(data.comps);
@@ -364,12 +388,13 @@ wss.on('connection', (ws) => {
       years: (function () { const n = Number(data.years); return Number.isFinite(n) && n >= 0 && n <= 80 ? n : null; })(),
       comps, skills,
     };
-    applyEntry(entry);
+    ensureId(entry); reactions[entry.id] = { heart: 0, clap: 0 };
+    applyEntry();
     captured.push(entry);
     if (captured.length > LIMITS.captured) captured.shift();
     db.insert(entry);
 
-    const item = { comps: entry.comps };
+    const item = publicCard(entry);
     ws.send(JSON.stringify({ type: 'accepted', item, count: state.count }));
     broadcastExcept(ws, { type: 'add', item, count: state.count });
   });
@@ -389,7 +414,7 @@ if (SELF_URL && process.env.KEEPALIVE !== 'off' && typeof fetch === 'function') 
   try {
     await db.init();
     const rows = await db.loadAll();
-    for (const e of rows) { captured.push(e); applyEntry(e); }
+    for (const e of rows) { ensureId(e); reactions[e.id] = { heart: 0, clap: 0 }; captured.push(e); applyEntry(); }
     if (captured.length > LIMITS.captured) captured.splice(0, captured.length - LIMITS.captured);
     console.log(`LDI: loaded ${rows.length} leaders from ${db.mode} storage.`); // eslint-disable-line no-console
   } catch (err) {

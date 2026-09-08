@@ -101,21 +101,21 @@
   }
 
   function renderBoard(){
-    var all=boardData.slice(); if(mine)all.push(mine);
-    var mineIdx=mine?all.length-1:-1;
+    var all=boardData;
     var cv=el('canvas');cv.innerHTML='';
     var seed=99;function r(){seed=(seed*1103515245+12345)&0x7fffffff;return seed/0x7fffffff;}
-    all.forEach(function(comps,i){
-      var name=(comps&&comps[0])?comps[0].name:COMPS[0].name;
+    all.forEach(function(card){
+      var comps=card.comps||[];
+      var name=comps[0]?comps[0].name:COMPS[0].name;
       var c=compByName(name);var d=document.createElement('div');
-      var isMine=(i===mineIdx);var size=isMine?26:(11+r()*8);
+      var isMine=(mine&&card.id===mine.id);var size=isMine?26:(11+r()*8);
       d.className='bd'+(isMine?' mine':'');
       d.style.width=size+'px';d.style.height=size+'px';d.style.background=c.color;d.style.color=c.color;
       d.style.left=(8+r()*84)+'%';d.style.top=(10+r()*80)+'%';
       cv.appendChild(d);
     });
     var score={};COMPS.forEach(function(c){score[c.name]=0;});
-    all.forEach(function(comps){ (comps||[]).forEach(function(c){ if(score[c.name]!==undefined) score[c.name]+= (c.rank===1?2:1); }); });
+    all.forEach(function(card){ (card.comps||[]).forEach(function(c){ if(score[c.name]!==undefined) score[c.name]+= (c.rank===1?2:1); }); });
     var arr=COMPS.map(function(c){return {name:c.name,color:c.color,v:score[c.name]};}).sort(function(a,b){return b.v-a.v;});
     var max=arr[0].v||1;
     el('leaderboard').innerHTML=arr.map(function(a){
@@ -128,6 +128,40 @@
     el('kTop').textContent=arr[0].v?arr[0].name:'—';
   }
 
+  // ---- explore wall ----
+  function findCard(id){for(var i=0;i<boardData.length;i++)if(boardData[i].id===id)return boardData[i];return null;}
+  function renderExplore(){
+    var wall=el('exwall'); if(!wall) return;
+    var fc=el('exComp')?el('exComp').value:''; var q=(el('exSearch')?el('exSearch').value:'').trim().toLowerCase();
+    var list=boardData.filter(function(card){
+      if(fc && !(card.comps||[]).some(function(c){return c.name===fc;})) return false;
+      if(q){ var hay=[card.first,card.division,card.role].concat((card.comps||[]).map(function(c){return c.name;})).concat(card.skills||[]).join(' ').toLowerCase(); if(hay.indexOf(q)<0) return false; }
+      return true;
+    }).slice().reverse();
+    if(!list.length){ wall.innerHTML='<div class="exempty">No matches yet.</div>'; return; }
+    wall.innerHTML=list.map(function(card){
+      var who=card.first?esc(card.first):'A leader';
+      var rl=[card.role,card.division].filter(Boolean).map(esc).join(' · ');
+      var comps=(card.comps||[]).map(function(c){var col=compByName(c.name).color;return '<span class="ec"><span class="n" style="background:'+col+'">'+c.rank+'</span><span class="dot" style="background:'+col+'"></span>'+esc(c.name)+'</span>';}).join('');
+      var sk=(card.skills||[]).length?('<div class="esk">'+(card.skills||[]).map(esc).join('  ·  ')+'</div>'):'';
+      var rk=card.react||{heart:0,clap:0};
+      return '<div class="excard" data-id="'+esc(card.id)+'">'+
+        '<div class="eid"><b>'+who+'</b>'+(rl?' <span>· '+rl+'</span>':'')+'</div>'+
+        '<div class="ecomps">'+comps+'</div>'+sk+
+        '<div class="erow">'+
+          '<button class="react" data-react="heart" data-id="'+esc(card.id)+'">❤️ <span class="cnt">'+rk.heart+'</span></button>'+
+          '<button class="react" data-react="clap" data-id="'+esc(card.id)+'">👏 <span class="cnt">'+rk.clap+'</span></button>'+
+        '</div></div>';
+    }).join('');
+  }
+  function updateReactionCounts(id){
+    var card=findCard(id); var wall=el('exwall'); if(!card||!wall) return;
+    var cardEl=wall.querySelector('.excard[data-id="'+id+'"]'); if(!cardEl) return;
+    var hb=cardEl.querySelector('[data-react="heart"] .cnt'); var cb=cardEl.querySelector('[data-react="clap"] .cnt');
+    if(hb)hb.textContent=card.react.heart; if(cb)cb.textContent=card.react.clap;
+  }
+  function refreshBoardViews(){ if(isOn(5)){ renderBoard(); renderExplore(); } }
+
   // ---- WebSocket ----
   var ws=null, wsReady=false;
   function connect(){
@@ -138,9 +172,10 @@
     ws.onopen=function(){ wsReady=true; };
     ws.onmessage=function(ev){
       var d; try{d=JSON.parse(ev.data);}catch(e){return;}
-      if(d.type==='init'){ boardData=(d.feed||[]).map(function(f){return f.comps||[];}); if(isOn(5))renderBoard(); }
-      else if(d.type==='add'){ boardData.push((d.item&&d.item.comps)||[]); if(isOn(5))renderBoard(); }
-      else if(d.type==='accepted'){ mine=(d.item&&d.item.comps)||pickedComp.map(function(n,i){return {name:n,rank:i+1};}); submitted=true; if(isOn(5))renderBoard(); }
+      if(d.type==='init'){ boardData=(d.feed||[]).slice(); refreshBoardViews(); }
+      else if(d.type==='add'){ if(d.item) boardData.push(d.item); refreshBoardViews(); }
+      else if(d.type==='accepted'){ if(d.item){ mine=d.item; boardData.push(d.item); } submitted=true; refreshBoardViews(); }
+      else if(d.type==='reactions'){ var c=findCard(d.id); if(c){ c.react={heart:d.heart,clap:d.clap}; updateReactionCounts(d.id); } }
     };
     ws.onclose=function(){ wsReady=false; setTimeout(connect,2500); };
     ws.onerror=function(){ try{ws.close();}catch(e){} };
@@ -159,7 +194,7 @@
       // if it never connects, mine falls back locally on accepted-timeout below
     })();
     // local fallback so the board still shows the person even if the socket is slow
-    setTimeout(function(){ if(!submitted){ mine=pickedComp.map(function(n,i){return {name:n,rank:i+1};}); submitted=true; if(isOn(5))renderBoard(); } }, 3500);
+    setTimeout(function(){ if(!submitted){ mine={id:'local-'+Date.now(),first:el('fn').value.trim(),division:el('div').value.trim(),role:el('role').value,comps:pickedComp.map(function(n,i){return {name:n,rank:i+1};}),skills:pickedSkill.slice(),react:{heart:0,clap:0}}; boardData.push(mine); submitted=true; refreshBoardViews(); } }, 3500);
   }
 
   // ---- save card as image ----
@@ -192,7 +227,7 @@
     var n=String(s);
     [].forEach.call(document.querySelectorAll('.step'),function(st){st.classList.toggle('on',st.getAttribute('data-s')===n);});
     if(n==='4')renderFocus();
-    if(n==='5'){ sendSubmit(); renderBoard(); }
+    if(n==='5'){ sendSubmit(); renderBoard(); renderExplore(); }
     try{window.scrollTo({top:0,behavior:'smooth'});}catch(e){}
   }
   document.addEventListener('click',function(e){
@@ -201,6 +236,21 @@
     if(s==='0')resetAll();
     go(s);
   });
+
+  // ---- explore filters + reactions wiring ----
+  (function(){
+    var s=el('exComp');
+    if(s){ COMPS.forEach(function(c){ var o=document.createElement('option'); o.value=c.name; o.textContent=c.name; s.appendChild(o); }); s.addEventListener('change',renderExplore); }
+    var q=el('exSearch'); if(q) q.addEventListener('input',renderExplore);
+    var wall=el('exwall');
+    if(wall) wall.addEventListener('click',function(e){
+      var b=e.target.closest('.react'); if(!b) return;
+      var id=b.getAttribute('data-id'); var kind=b.getAttribute('data-react');
+      var card=findCard(id);
+      if(card){ card.react=card.react||{heart:0,clap:0}; card.react[kind]=(card.react[kind]||0)+1; updateReactionCounts(id); } // optimistic
+      if(ws&&ws.readyState===1) ws.send(JSON.stringify({type:'react',id:id,kind:kind}));
+    });
+  })();
 
   connect();
 })();
