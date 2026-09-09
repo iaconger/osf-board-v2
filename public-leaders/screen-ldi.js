@@ -124,6 +124,7 @@
     if(typeof n!=='number'||!isFinite(n))return;
     if(n>targetCount) checkMilestone(n);
     var was=targetCount;targetCount=n;
+    if(seeding){ shownCount=n; el('count').textContent=n.toLocaleString(); return; } // land on the real number instantly on load (no restart-from-0)
     if(was!==n) requestAnimationFrame(tickCounter);
   }
   function checkMilestone(n){
@@ -180,8 +181,9 @@
     var role=[card.role,card.division].filter(Boolean).map(esc).join(' · ');
     var comps=(card.comps||[]).map(function(c){var col=compColor(c.name);return '<div class="pc"><span class="r" style="background:'+col+'">'+c.rank+'</span>'+esc(c.name)+'</div>';}).join('');
     var sk=(card.skills&&card.skills.length)?('<div class="lb">Strengthening</div><div class="sk">'+card.skills.map(esc).join(' · ')+'</div>'):'';
+    var vv=card.value?('<div class="lb">OSF Value</div><span class="vv">'+esc(card.value)+'</span>'):'';
     var nt=card.approach?('<div class="nt">'+esc(card.approach)+'</div>'):'';
-    return '<div class="who">'+who+'</div>'+(role?'<div class="role">'+role+'</div>':'')+'<div class="lb">Focusing on</div>'+comps+sk+nt;
+    return '<div class="who">'+who+'</div>'+(role?'<div class="role">'+role+'</div>':'')+'<div class="lb">Focusing on</div>'+comps+sk+vv+nt;
   }
   function positionPop(d){
     var r=d.getBoundingClientRect();var pop=el('dotpop');
@@ -196,12 +198,14 @@
     var cv=el('canvas');if(!cv)return;
     cv.addEventListener('mousemove',function(e){if(pinnedId)return;var d=e.target.closest('.bd');if(d)showPop(d);else hidePop();});
     cv.addEventListener('mouseleave',function(){if(!pinnedId)hidePop();});
-    cv.addEventListener('click',function(e){var d=e.target.closest('.bd');if(!d)return;e.stopPropagation();
-      var id=d.getAttribute('data-id');clearActive();
-      if(pinnedId===id){pinnedId=null;hidePop();}
-      else{pinnedId=id;d.classList.add('active');showPop(d);}
+    // click a dot toggles its pinned popover; click anywhere else dismisses it
+    document.addEventListener('click',function(e){
+      var d=e.target.closest?e.target.closest('#canvas .bd'):null;
+      if(d){var id=d.getAttribute('data-id');clearActive();if(pinnedId===id){pinnedId=null;hidePop();}else{pinnedId=id;d.classList.add('active');showPop(d);}}
+      else{if(pinnedId){pinnedId=null;clearActive();}hidePop();}
     });
-    document.addEventListener('click',function(e){ if(pinnedId&&!e.target.closest('#canvas')){pinnedId=null;clearActive();hidePop();} });
+    // any scroll dismisses the popover (it would otherwise detach from the dot)
+    window.addEventListener('scroll',function(){if(pinnedId){pinnedId=null;clearActive();}hidePop();},true);
   })();
 
   // ---- join QR ----

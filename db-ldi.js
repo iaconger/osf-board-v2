@@ -35,11 +35,13 @@ async function init() {
       years     DOUBLE PRECISION,
       comps     JSONB DEFAULT '[]'::jsonb,
       skills    JSONB DEFAULT '[]'::jsonb,
-      approach  TEXT DEFAULT ''
+      approach  TEXT DEFAULT '',
+      value     TEXT DEFAULT ''
     )`);
-    // Existing (already-live) databases won't have the column from CREATE TABLE
-    // IF NOT EXISTS, so add it explicitly for a running deployment.
+    // Existing (already-live) databases won't have the columns from CREATE TABLE
+    // IF NOT EXISTS, so add them explicitly for a running deployment.
     await pool.query(`ALTER TABLE ldi_submissions ADD COLUMN IF NOT EXISTS approach TEXT DEFAULT ''`);
+    await pool.query(`ALTER TABLE ldi_submissions ADD COLUMN IF NOT EXISTS value TEXT DEFAULT ''`);
   } else {
     fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
   }
@@ -48,7 +50,7 @@ async function init() {
 async function loadAll() {
   if (mode === 'postgres') {
     const { rows } = await pool.query(
-      'SELECT ts, first, last, division, role, years, comps, skills, approach FROM ldi_submissions ORDER BY id ASC'
+      'SELECT ts, first, last, division, role, years, comps, skills, approach, value FROM ldi_submissions ORDER BY id ASC'
     );
     return rows.map((r) => ({
       ts: r.ts ? new Date(r.ts).toISOString() : '',
@@ -60,6 +62,7 @@ async function loadAll() {
       comps: Array.isArray(r.comps) ? r.comps : [],
       skills: Array.isArray(r.skills) ? r.skills : [],
       approach: r.approach || '',
+      value: r.value || '',
     }));
   }
   const out = [];
@@ -77,10 +80,10 @@ async function loadAll() {
 function insert(entry) {
   if (mode === 'postgres') {
     pool.query(
-      'INSERT INTO ldi_submissions (ts, first, last, division, role, years, comps, skills, approach) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)',
+      'INSERT INTO ldi_submissions (ts, first, last, division, role, years, comps, skills, approach, value) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)',
       [entry.ts, entry.first || '', entry.last || '', entry.division || '', entry.role || '',
         (entry.years === null || entry.years === undefined) ? null : entry.years,
-        JSON.stringify(entry.comps || []), JSON.stringify(entry.skills || []), entry.approach || '']
+        JSON.stringify(entry.comps || []), JSON.stringify(entry.skills || []), entry.approach || '', entry.value || '']
     ).catch((err) => { console.error('ldi db insert failed:', err.message); }); // eslint-disable-line no-console
   } else {
     try { fs.appendFile(DATA_FILE, `${JSON.stringify(entry)}\n`, () => {}); } catch { /* ignore */ }

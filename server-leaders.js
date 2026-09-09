@@ -38,8 +38,12 @@ const SKILLS = ['Values-Driven Leadership', 'Purposeful Compassion', 'Ethical St
   'Emotional Intelligence: Social Awareness', 'Emotional Intelligence: Relationship Management',
   'Cross-Functional Collaboration', 'Diversity & Inclusion', 'Data-Informed Planning', 'Business Acumen',
   'Process Optimization', 'Strategic Foresight', 'Cultivating Innovation', 'Inspires Change', 'Strategic Execution'];
+const VALUES = ['Justice', 'Compassion', 'Integrity', 'Teamwork', 'Employee well-being',
+  'Supportive work environment', 'Trust', 'Stewardship', 'Leadership'];
 const COMP_SET = new Set(COMPS);
 const SKILL_SET = new Set(SKILLS);
+const VALUE_SET = new Set(VALUES);
+function cleanValue(v) { return (typeof v === 'string' && VALUE_SET.has(v)) ? v : ''; }
 
 const LIMITS = {
   name: 60, division: 80, role: 60, comps: 2, skills: 3, approach: 280,
@@ -112,7 +116,7 @@ function ensureId(e) { if (!e.id) e.id = 'L' + Date.now().toString(36) + (idSeq+
 function publicCard(e) {
   const rk = reactions[e.id] || { heart: 0, clap: 0 };
   return { id: e.id, first: e.first || '', division: e.division || '', role: e.role || '',
-    comps: e.comps || [], skills: e.skills || [], approach: e.approach || '',
+    comps: e.comps || [], skills: e.skills || [], approach: e.approach || '', value: e.value || '',
     react: { heart: rk.heart || 0, clap: rk.clap || 0 } };
 }
 function applyEntry() { state.count += 1; }
@@ -181,6 +185,7 @@ function subView(e) {
     years: (e.years === null || e.years === undefined) ? null : e.years,
     comps: (e.comps || []).map((c) => ({ name: c.name, rank: c.rank })),
     skills: e.skills || [],
+    value: e.value || '',
     approach: e.approach || '',
   };
 }
@@ -198,7 +203,7 @@ app.get('/export', (req, res) => {
   const rows = [[
     'Submitted (Central Time)', 'First Name', 'Last Name', 'Division', 'Leadership Role',
     'Years of Leadership Experience', 'Competency #1', 'Competency #2', 'Skills to Strengthen',
-    'How I\'ll Work On It',
+    'OSF Value', 'How I\'ll Work On It',
   ].map(csvCell).join(',')];
   for (const e of captured) {
     if (!passesFilter(e, f)) continue;
@@ -207,7 +212,7 @@ app.get('/export', (req, res) => {
     rows.push([
       fmtCentral(e.ts), e.first || '', e.last || '', e.division || '', e.role || '',
       (e.years === null || e.years === undefined) ? '' : e.years, c1, c2, (e.skills || []).join('; '),
-      e.approach || '',
+      e.value || '', e.approach || '',
     ].map(csvCell).join(','));
   }
   const csv = `﻿${rows.join('\r\n')}\r\n`;
@@ -228,9 +233,9 @@ function buildWorkbook(f) {
 
   // Sheet 1: Leaders (one row per leader)
   const ws = wb.addWorksheet('Leaders', { views: [{ state: 'frozen', ySplit: 5 }] });
-  const widths = [22, 16, 16, 22, 20, 12, 26, 26, 40, 50];
+  const widths = [22, 16, 16, 22, 20, 12, 26, 26, 40, 22, 50];
   widths.forEach((w, i) => { ws.getColumn(i + 1).width = w; });
-  ws.mergeCells('A1:J1');
+  ws.mergeCells('A1:K1');
   const t = ws.getCell('A1'); t.value = 'OSF HealthCare  ·  Leadership Development Institute';
   t.font = { name: 'Calibri', size: 16, bold: true, color: { argb: XL.white } };
   t.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: XL.brand } };
@@ -241,13 +246,13 @@ function buildWorkbook(f) {
   sub.value = `${scope}   ·   Generated ${fmtCentral(new Date().toISOString())}`;
   sub.font = { name: 'Calibri', size: 10, italic: true, color: { argb: XL.muted } };
   sub.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 }; ws.getRow(2).height = 18;
-  ws.mergeCells('A3:J3');
+  ws.mergeCells('A3:K3');
   ws.getCell('A3').value = `${list.length} leaders`;
   ws.getCell('A3').font = { name: 'Calibri', size: 10, bold: true, color: { argb: XL.ink } };
   ws.getCell('A3').alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
   ws.getRow(4).height = 6;
   const heads = ['Submitted (Central Time)', 'First Name', 'Last Name', 'Division', 'Leadership Role',
-    'Years', 'Competency #1', 'Competency #2', 'Skills to Strengthen', 'How I\'ll Work On It'];
+    'Years', 'Competency #1', 'Competency #2', 'Skills to Strengthen', 'OSF Value', 'How I\'ll Work On It'];
   const hr = ws.getRow(5);
   heads.forEach((h, i) => {
     const c = hr.getCell(i + 1); c.value = h;
@@ -262,7 +267,7 @@ function buildWorkbook(f) {
     const vals = [fmtCentral(e.ts), e.first || '', e.last || '', e.division || '', e.role || '',
       (e.years === null || e.years === undefined) ? '' : e.years,
       (e.comps[0] || {}).name || '', (e.comps[1] || {}).name || '', (e.skills || []).join(', '),
-      e.approach || ''];
+      e.value || '', e.approach || ''];
     vals.forEach((v, i) => {
       const c = row.getCell(i + 1); c.value = v; c.border = thinBorder();
       c.alignment = { vertical: 'top', horizontal: 'left', wrapText: true, indent: 1 };
@@ -271,8 +276,8 @@ function buildWorkbook(f) {
     });
     row.height = 26; r += 1; band = !band;
   });
-  if (!list.length) { ws.mergeCells('A6:J6'); ws.getCell('A6').value = 'No leaders captured yet.'; ws.getCell('A6').font = { italic: true, color: { argb: XL.muted } }; }
-  ws.autoFilter = { from: { row: 5, column: 1 }, to: { row: 5, column: 10 } };
+  if (!list.length) { ws.mergeCells('A6:K6'); ws.getCell('A6').value = 'No leaders captured yet.'; ws.getCell('A6').font = { italic: true, color: { argb: XL.muted } }; }
+  ws.autoFilter = { from: { row: 5, column: 1 }, to: { row: 5, column: 11 } };
 
   // Sheet 2: Competency summary (rank-weighted)
   const cs = wb.addWorksheet('Competency Summary');
@@ -305,6 +310,20 @@ function buildWorkbook(f) {
   const skRanked = SKILLS.slice().filter((s) => sc[s] > 0).sort((a, b) => sc[b] - sc[a]);
   let sr = 2;
   skRanked.forEach((s) => { const row = sk.getRow(sr); [s, sc[s]].forEach((v, i) => { const c = row.getCell(i + 1); c.value = v; c.border = thinBorder(); c.font = { name: 'Calibri', size: 11, color: { argb: XL.ink } }; }); sr += 1; });
+
+  // Sheet 4: OSF Value summary
+  const vs = wb.addWorksheet('Value Summary');
+  vs.getColumn(1).width = 30; vs.getColumn(2).width = 14;
+  ['OSF Value', 'Times Chosen'].forEach((h, i) => {
+    const c = vs.getRow(1).getCell(i + 1); c.value = h;
+    c.font = { name: 'Calibri', size: 11, bold: true, color: { argb: XL.white } };
+    c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: XL.brand } }; c.border = thinBorder();
+  });
+  const vc = {}; VALUES.forEach((v) => { vc[v] = 0; });
+  list.forEach((e) => { if (e.value && vc[e.value] !== undefined) vc[e.value] += 1; });
+  const vRanked = VALUES.slice().filter((v) => vc[v] > 0).sort((a, b) => vc[b] - vc[a]);
+  let vr = 2;
+  vRanked.forEach((v) => { const row = vs.getRow(vr); [v, vc[v]].forEach((val, i) => { const c = row.getCell(i + 1); c.value = val; c.border = thinBorder(); c.font = { name: 'Calibri', size: 11, color: { argb: XL.ink } }; }); vr += 1; });
 
   return wb;
 }
@@ -399,6 +418,7 @@ wss.on('connection', (ws) => {
       role: cleanText(data.role, LIMITS.role),
       years: (function () { const n = Number(data.years); return Number.isFinite(n) && n >= 0 && n <= 80 ? n : null; })(),
       comps, skills,
+      value: cleanValue(data.value),
       approach: cleanText(data.approach, LIMITS.approach),
     };
     ensureId(entry); reactions[entry.id] = { heart: 0, clap: 0 };

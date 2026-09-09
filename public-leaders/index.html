@@ -14,7 +14,7 @@
   body{margin:0;font-family:"Montserrat",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;color:var(--ink);
     background:#2f7d16 url('/bg.jpg') center center/cover fixed;min-height:100vh}
   h1,h2,h3{font-family:"Bitter",Georgia,serif}
-  .topstrip{height:10px;background:linear-gradient(90deg,var(--green),var(--green2),var(--teal),var(--blue),var(--magenta),var(--orange))}
+  .topstrip{height:10px;background:linear-gradient(90deg,var(--green),var(--green2),var(--teal),var(--blue))}
   .previewban{max-width:960px;margin:0 auto;padding:14px 20px 0}
   .previewban .b{background:#fff8e6;border:1px solid #f0e0a8;color:#7a5c00;border-radius:12px;padding:10px 16px;font-size:13px}
   .stage{max-width:960px;margin:0 auto;padding:22px 20px 70px}
@@ -140,6 +140,16 @@
   .dotpop .pc .r{width:16px;height:16px;border-radius:50%;color:#fff;font-size:9px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
   .dotpop .sk{font-size:12.5px;color:#33402c;line-height:1.5}
   .dotpop .nt{font-size:12.5px;font-style:italic;color:#33402c;line-height:1.45;background:var(--soft);border-left:3px solid var(--green);border-radius:0 8px 8px 0;padding:7px 10px;margin-top:8px}
+  /* OSF Value single-select */
+  .vgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px}
+  @media(max-width:640px){.vgrid{grid-template-columns:1fr}}
+  .vopt{display:flex;align-items:center;gap:11px;border:2px solid var(--line);background:#fff;border-radius:14px;padding:15px 16px;cursor:pointer;font-size:15.5px;font-weight:600;color:var(--ink);transition:.15s}
+  .vopt:hover{border-color:#c9d3bd;transform:translateY(-1px)}
+  .vopt.sel{border-color:var(--green);background:var(--soft)}
+  .vopt .vck{width:20px;height:20px;border-radius:50%;border:2px solid #c9d3bd;flex:0 0 auto;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px}
+  .vopt.sel .vck{background:var(--green);border-color:var(--green)}
+  .fcard .fval{display:inline-flex;align-items:center;gap:8px;background:var(--soft);border-radius:99px;padding:7px 15px;font-weight:800;font-size:14.5px;color:var(--green)}
+  .dotpop .vv{display:inline-block;background:var(--soft);color:var(--green);border-radius:99px;padding:3px 11px;font-size:12.5px;font-weight:700}
 </style>
 </head>
 <body>
@@ -151,23 +161,23 @@
     <div class="step on" data-s="0">
       <p class="eyebrow">FY26 · Leadership Development Institute</p>
       <h1>Where will you grow as a leader this year?</h1>
-      <p class="lede">Take a few minutes to name the leader competencies and skills you'll focus on. Your responses join the room's shared view, and help us design the development roadmap for every leader group.</p>
+      <p class="lede">Please take a minute to share the leadership skills and values you will prioritize in FY26. This information will also be shared with LDI planning teams to tailor future sessions to the needs of the group.</p>
       <div class="btnrow"><span></span><button class="btn big" data-go="1">Begin →</button></div>
     </div>
 
     <!-- 1 demographics -->
     <div class="step" data-s="1">
-      <div class="progress"><i class="cur"></i><i></i><i></i></div>
-      <p class="eyebrow">About you</p>
-      <h2>A little about your role</h2>
-      <p class="note">Name is optional. The rest helps us group results by division and leadership level.</p>
+      <div class="progress"><i class="cur"></i><i></i><i></i><i></i></div>
+      <p class="eyebrow">Section 1 · Demographics</p>
+      <h2>A little about you</h2>
+      <p class="note">This information will help us look at the data in different ways. Name is optional.</p>
       <div class="grid2">
         <div><label>First name (optional)</label><input id="fn" placeholder="First name"></div>
         <div><label>Last name (optional)</label><input id="ln" placeholder="Last name"></div>
       </div>
-      <label>Your division</label><input id="div" placeholder="Type your division">
+      <label>Please specify your current division</label><input id="div" placeholder="Type your division">
       <div class="grid2">
-        <div><label>Leadership role</label>
+        <div><label>Your current leadership role</label>
           <select id="role">
             <option value="">Select…</option>
             <option>Lead Physician / APP / APN</option>
@@ -176,15 +186,17 @@
           </select></div>
         <div><label>Years of leadership experience</label><input id="yrs" type="number" min="0" step="0.5" placeholder="e.g. 0, 1.5, 5"></div>
       </div>
+      <p class="note" style="margin-top:10px">Years of experience can include time outside of OSF HealthCare. Enter 0 if this is your first leadership role.</p>
       <div class="btnrow"><button class="btn ghost" data-go="0">← Back</button><button class="btn" data-go="2">Next →</button></div>
     </div>
 
     <!-- 2 competencies -->
     <div class="step" data-s="2">
-      <div class="progress"><i class="done"></i><i class="cur"></i><i></i></div>
-      <p class="eyebrow">Your focus</p>
-      <h2>Which leader competencies will you focus on?</h2>
-      <p class="instr">Choose your <b>top 2</b> competencies, in priority order. Tap your <b>#1</b> priority first, then your <b>#2</b>.</p>
+      <div class="progress"><i class="done"></i><i class="cur"></i><i></i><i></i></div>
+      <p class="eyebrow">Section 2 · Skills &amp; Values</p>
+      <h2>Which leader competencies will you focus on to drive your efforts?</h2>
+      <p class="note" style="margin-bottom:12px">Given the strategic priority that you identified in your workbook, choose the competencies you'll focus on. Please select at most 2.</p>
+      <p class="instr">Choose in priority order. Tap your <b>#1</b> priority first, then your <b>#2</b>.</p>
       <div class="comp" id="compGrid"></div>
       <div class="btnrow"><button class="btn ghost" data-go="1">← Back</button>
         <div style="display:flex;align-items:center;gap:14px"><span class="counter" id="compCount">0 of 2 selected</span><button class="btn" data-go="3" id="compNext" disabled>Next →</button></div></div>
@@ -192,10 +204,10 @@
 
     <!-- 3 skills -->
     <div class="step" data-s="3">
-      <div class="progress"><i class="done"></i><i class="done"></i><i class="cur"></i></div>
-      <p class="eyebrow">Your focus</p>
-      <h2>Which leadership skills will you strengthen?</h2>
-      <p class="instr">Pick <b>up to 3</b> skills that connect to the competencies you chose.</p>
+      <div class="progress"><i class="done"></i><i class="done"></i><i class="cur"></i><i></i></div>
+      <p class="eyebrow">Section 2 · Skills &amp; Values</p>
+      <h2>Which leadership skills will you strengthen to lead this effort?</h2>
+      <p class="note" style="margin-bottom:12px">Given the competencies you selected, pick the skills you might strengthen to effectively lead this effort. Be sure they connect to the competencies you chose. Please select at most 3.</p>
       <div class="skillscroll" id="skillList"></div>
       <div class="approachbox">
         <p class="ah">How will you work on it? <span style="font-weight:600;color:var(--muted)">(optional)</span></p>
@@ -204,20 +216,31 @@
         <div class="approachrow"><span class="counter" id="approachCount"><b>0</b> / 280</span></div>
       </div>
       <div class="btnrow"><button class="btn ghost" data-go="2">← Back</button>
-        <div style="display:flex;align-items:center;gap:14px"><span class="counter" id="skillCount">0 of 3 selected</span><button class="btn" data-go="4" id="skillNext" disabled>See my focus →</button></div></div>
+        <div style="display:flex;align-items:center;gap:14px"><span class="counter" id="skillCount">0 of 3 selected</span><button class="btn" data-go="4" id="skillNext" disabled>Next →</button></div></div>
     </div>
 
-    <!-- 4 focus card -->
+    <!-- 4 OSF Value -->
     <div class="step" data-s="4">
+      <div class="progress"><i class="done"></i><i class="done"></i><i class="done"></i><i class="cur"></i></div>
+      <p class="eyebrow">Section 2 · Skills &amp; Values</p>
+      <h2>Which OSF Value will you lean into this year?</h2>
+      <p class="note" style="margin-bottom:14px">Choose the one Value you'll lean into to shape your leadership behaviors this year. Choose 1.</p>
+      <div class="vgrid" id="valueGrid"></div>
+      <div class="btnrow"><button class="btn ghost" data-go="3">← Back</button>
+        <div style="display:flex;align-items:center;gap:14px"><span class="counter" id="valueCount">Choose 1</span><button class="btn" data-go="5" id="valueNext" disabled>See my focus →</button></div></div>
+    </div>
+
+    <!-- 5 focus card -->
+    <div class="step" data-s="5">
       <p class="eyebrow">Your leadership focus</p>
       <h2 style="margin-bottom:16px">Here's what you'll grow this year</h2>
       <div class="fcard" id="focusCard"></div>
       <div style="text-align:center;margin-top:16px"><button class="btn ghost" id="saveImg" type="button">⬇ Save my card as an image</button></div>
-      <div class="btnrow"><button class="btn ghost" data-go="3">← Back</button><button class="btn big" data-go="5">Add me to the board →</button></div>
+      <div class="btnrow"><button class="btn ghost" data-go="4">← Back</button><button class="btn big" data-go="6">Add me to the board →</button></div>
     </div>
 
-    <!-- 5 board -->
-    <div class="step" data-s="5">
+    <!-- 6 board -->
+    <div class="step" data-s="6">
       <p class="eyebrow">FY26 · Leadership Development Institute</p>
       <h2 style="margin-bottom:4px">Where our leaders are focusing</h2>
       <p class="note">Each dot is a leader, colored by their #1 competency. Hover or tap a dot to see that leader's focus. As more leaders add theirs, the picture of where development energy is concentrated comes to life.</p>

@@ -16,7 +16,7 @@
   body{margin:0;font-family:"Montserrat",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;color:var(--ink);
     background:linear-gradient(180deg,#eef2e6 0%,#e9eee1 100%);background-attachment:fixed;min-height:100vh}
   h1,h2,h3{font-family:"Bitter",Georgia,serif}
-  .topstrip{height:6px;background:linear-gradient(90deg,var(--green),var(--green2),var(--teal),var(--blue),var(--magenta),var(--orange))}
+  .topstrip{height:6px;background:linear-gradient(90deg,var(--green),var(--green2),var(--teal),var(--blue))}
 
   /* hero */
   .hero{background:linear-gradient(115deg,#2c5807 0%,#4E8209 44%,#0c6f88 100%);color:#fff;position:relative;overflow:hidden}
@@ -105,6 +105,7 @@
   .cchip .dot{width:10px;height:10px;border-radius:50%}
   .cchip .r{color:#fff;border-radius:50%;width:17px;height:17px;font-size:10px;display:inline-flex;align-items:center;justify-content:center;font-weight:800}
   .sktag{display:inline-block;background:#eaf6fa;color:#036178;border-radius:99px;padding:3px 10px;font-size:12px;font-weight:600;margin:2px 4px 2px 0}
+  .vtag{display:inline-block;background:#f6e6f2;color:#8f1f7c;border-radius:99px;padding:3px 10px;font-size:12px;font-weight:700}
   table.subs .approach{display:block;max-width:260px;font-size:12.5px;color:var(--ink);line-height:1.45;font-style:italic;opacity:.9}
   .pager{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:16px}
   .pinfo{font-size:13px;color:var(--muted)}
@@ -176,6 +177,12 @@
     <p class="cardnote">Where each leadership level is concentrating. Read down a column to see who prioritizes a competency, across a row to see a level's focus. Darker means more leaders.</p>
     <div class="heat" id="heat"></div>
     <div class="hmlegend" id="heatlegend"></div>
+  </div>
+
+  <div class="card">
+    <h2>OSF Values leaders are leaning into</h2>
+    <p class="cardnote">The one Value each leader chose to shape their leadership behaviors this year.</p>
+    <div id="valueBars"></div>
   </div>
 
   <div class="grid2">

@@ -41,9 +41,10 @@
     ['Inspires Change','Communicating a compelling vision, motivating others to embrace new ways of working, and guiding them through transitions with confidence and clarity.'],
     ['Strategic Execution','Turning vision and strategy into actionable plans that deliver results through disciplined implementation.']
   ];
+  var VALUES=['Justice','Compassion','Integrity','Teamwork','Employee well-being','Supportive work environment','Trust','Stewardship','Leadership'];
   function compByName(n){for(var i=0;i<COMPS.length;i++)if(COMPS[i].name===n)return COMPS[i];return COMPS[0];}
   var el=function(id){return document.getElementById(id);};
-  var pickedComp=[], pickedSkill=[];
+  var pickedComp=[], pickedSkill=[], pickedValue='';
   var boardData=[];      // array of comps arrays from other leaders (via WS)
   var mine=null;         // this leader's comps once accepted
   var submitted=false;
@@ -85,6 +86,23 @@
     el('skillNext').disabled=pickedSkill.length===0;
   }
 
+  // ---- OSF Value (single select) ----
+  var vg=el('valueGrid');
+  if(vg){
+    VALUES.forEach(function(v){
+      var d=document.createElement('div');d.className='vopt';d.setAttribute('data-name',v);
+      d.innerHTML='<span class="vck">✓</span>'+v;
+      d.addEventListener('click',function(){pickValue(v);});
+      vg.appendChild(d);
+    });
+  }
+  function pickValue(v){
+    pickedValue=(pickedValue===v)?'':v;
+    if(vg){[].forEach.call(vg.children,function(ch){ch.classList.toggle('sel',ch.getAttribute('data-name')===pickedValue);});}
+    if(el('valueCount'))el('valueCount').textContent=pickedValue?'1 selected':'Choose 1';
+    if(el('valueNext'))el('valueNext').disabled=!pickedValue;
+  }
+
   function esc(s){return String(s==null?'':s).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];});}
 
   function renderFocus(){
@@ -97,10 +115,11 @@
     var sk=pickedSkill.map(function(n){return '<span class="sktag">'+esc(n)+'</span>';}).join('');
     var ap=(el('approach')?el('approach').value.trim():'');
     var apBlock=ap?('<div class="lbl">How I\'ll work on it</div><div class="approach">'+esc(ap)+'</div>'):'';
+    var valBlock=pickedValue?('<div class="lbl">OSF Value I\'ll lean into</div><div class="fval">'+esc(pickedValue)+'</div>'):'';
     el('focusCard').innerHTML=
       '<div class="top"><div class="who">'+who+'</div><div class="role">'+(roleLine||'Leader')+'</div></div>'+
       '<div class="body"><div class="lbl">Competencies I\'m focusing on</div><div class="prio">'+(prio||'<span class="note">None selected</span>')+'</div>'+
-      '<div class="lbl">Skills I\'ll strengthen</div><div class="sklist">'+(sk||'<span class="note">None selected</span>')+'</div>'+apBlock+'</div>';
+      '<div class="lbl">Skills I\'ll strengthen</div><div class="sklist">'+(sk||'<span class="note">None selected</span>')+'</div>'+valBlock+apBlock+'</div>';
   }
 
   function renderBoard(){
@@ -166,7 +185,7 @@
     var hb=cardEl.querySelector('[data-react="heart"] .cnt'); var cb=cardEl.querySelector('[data-react="clap"] .cnt');
     if(hb)hb.textContent=card.react.heart; if(cb)cb.textContent=card.react.clap;
   }
-  function refreshBoardViews(){ if(isOn(5)){ renderBoard(); renderExplore(); } }
+  function refreshBoardViews(){ if(isOn(6)){ renderBoard(); renderExplore(); } }
 
   // ---- WebSocket ----
   var ws=null, wsReady=false;
@@ -193,6 +212,7 @@
       first:el('fn').value.trim(), last:el('ln').value.trim(),
       division:el('div').value.trim(), role:el('role').value, years:el('yrs').value,
       comps:pickedComp.map(function(n){return {name:n};}), skills:pickedSkill.slice(),
+      value:pickedValue,
       approach:(el('approach')?el('approach').value.trim():'') };
     var attempts=0;
     (function trySend(){
@@ -201,7 +221,7 @@
       // if it never connects, mine falls back locally on accepted-timeout below
     })();
     // local fallback so the board still shows the person even if the socket is slow
-    setTimeout(function(){ if(!submitted){ mine={id:'local-'+Date.now(),first:el('fn').value.trim(),division:el('div').value.trim(),role:el('role').value,comps:pickedComp.map(function(n,i){return {name:n,rank:i+1};}),skills:pickedSkill.slice(),approach:(el('approach')?el('approach').value.trim():''),react:{heart:0,clap:0}}; boardData.push(mine); submitted=true; refreshBoardViews(); } }, 3500);
+    setTimeout(function(){ if(!submitted){ mine={id:'local-'+Date.now(),first:el('fn').value.trim(),division:el('div').value.trim(),role:el('role').value,comps:pickedComp.map(function(n,i){return {name:n,rank:i+1};}),skills:pickedSkill.slice(),value:pickedValue,approach:(el('approach')?el('approach').value.trim():''),react:{heart:0,clap:0}}; boardData.push(mine); submitted=true; refreshBoardViews(); } }, 3500);
   }
 
   // ---- save card as image ----
@@ -223,11 +243,14 @@
 
   // ---- navigation ----
   function resetAll(){
-    pickedComp=[];pickedSkill=[];mine=null;submitted=false;reacted={};
+    pickedComp=[];pickedSkill=[];pickedValue='';mine=null;submitted=false;reacted={};
     [].forEach.call(cg.children,function(ch){ch.classList.remove('sel');ch.querySelector('.rank').textContent='';});
     [].forEach.call(sl.children,function(ch){ch.classList.remove('sel');});
+    if(vg){[].forEach.call(vg.children,function(ch){ch.classList.remove('sel');});}
     el('compCount').textContent='0 of 2 selected';el('skillCount').textContent='0 of 3 selected';
+    if(el('valueCount'))el('valueCount').textContent='Choose 1';
     el('compNext').disabled=true;el('skillNext').disabled=true;
+    if(el('valueNext'))el('valueNext').disabled=true;
     el('fn').value='';el('ln').value='';el('div').value='';el('role').value='';el('yrs').value='';
     if(el('approach')){el('approach').value='';}
     if(el('approachCount')){el('approachCount').innerHTML='<b>0</b> / 280';}
@@ -235,8 +258,8 @@
   function go(s){
     var n=String(s);
     [].forEach.call(document.querySelectorAll('.step'),function(st){st.classList.toggle('on',st.getAttribute('data-s')===n);});
-    if(n==='4')renderFocus();
-    if(n==='5'){ sendSubmit(); renderBoard(); renderExplore(); }
+    if(n==='5')renderFocus();
+    if(n==='6'){ sendSubmit(); renderBoard(); renderExplore(); }
     try{window.scrollTo({top:0,behavior:'smooth'});}catch(e){}
   }
   document.addEventListener('click',function(e){
@@ -255,8 +278,9 @@
       var role=[card.role,card.division].filter(Boolean).map(esc).join(' · ');
       var comps=(card.comps||[]).map(function(c){var col=compByName(c.name).color;return '<div class="pc"><span class="r" style="background:'+col+'">'+c.rank+'</span>'+esc(c.name)+'</div>';}).join('');
       var sk=(card.skills&&card.skills.length)?('<div class="lb">Strengthening</div><div class="sk">'+card.skills.map(esc).join(' · ')+'</div>'):'';
+      var vv=card.value?('<div class="lb">OSF Value</div><span class="vv">'+esc(card.value)+'</span>'):'';
       var nt=card.approach?('<div class="nt">'+esc(card.approach)+'</div>'):'';
-      return '<div class="who">'+who+'</div>'+(role?'<div class="prole">'+role+'</div>':'')+'<div class="lb">Focusing on</div>'+comps+sk+nt;
+      return '<div class="who">'+who+'</div>'+(role?'<div class="prole">'+role+'</div>':'')+'<div class="lb">Focusing on</div>'+comps+sk+vv+nt;
     }
     function positionPop(d){
       var rr=d.getBoundingClientRect();
@@ -269,11 +293,14 @@
     function clearActive(){var a=cv.querySelector('.bd.active');if(a)a.classList.remove('active');}
     cv.addEventListener('mousemove',function(e){if(pinnedId)return;var d=e.target.closest('.bd');if(d)showPop(d);else hidePop();});
     cv.addEventListener('mouseleave',function(){if(!pinnedId)hidePop();});
-    cv.addEventListener('click',function(e){var d=e.target.closest('.bd');if(!d)return;e.stopPropagation();
-      var id=d.getAttribute('data-id');clearActive();
-      if(pinnedId===id){pinnedId=null;hidePop();}else{pinnedId=id;d.classList.add('active');showPop(d);}
+    // click a dot toggles its pinned popover; click anywhere else dismisses it
+    document.addEventListener('click',function(e){
+      var d=e.target.closest?e.target.closest('#canvas .bd'):null;
+      if(d){var id=d.getAttribute('data-id');clearActive();if(pinnedId===id){pinnedId=null;hidePop();}else{pinnedId=id;d.classList.add('active');showPop(d);}}
+      else{if(pinnedId){pinnedId=null;clearActive();}hidePop();}
     });
-    document.addEventListener('click',function(e){if(pinnedId&&!e.target.closest('#canvas')){pinnedId=null;clearActive();hidePop();}});
+    // scrolling the page dismisses the popover (it would otherwise detach from the dot)
+    window.addEventListener('scroll',function(){if(pinnedId){pinnedId=null;clearActive();}hidePop();},true);
   }());
 
   // ---- personal-note counter ----

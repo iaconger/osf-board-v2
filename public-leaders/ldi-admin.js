@@ -17,6 +17,7 @@
   var SKILLS=['Values-Driven Leadership','Purposeful Compassion','Ethical Stewardship','Operational Integrity','Emotional Intelligence: Self-Awareness','Emotional Intelligence: Self-Management','Feedback','Learning Agility','Active Listening','Clarity & Transparency','Constructive Communication','Strategic Alignment','Clear Expectations','Compassionate Accountability','Coaching for Growth','Performance Analytics','Continuous Improvement','Emotional Intelligence: Social Awareness','Emotional Intelligence: Relationship Management','Cross-Functional Collaboration','Diversity & Inclusion','Data-Informed Planning','Business Acumen','Process Optimization','Strategic Foresight','Cultivating Innovation','Inspires Change','Strategic Execution'];
   var DIVS=['Ambulatory','Acute Care','OSF Digital','Medical Group','Nursing','Foundation','Shared Services','Behavioral Health'];
   var ROLES=['Lead Physician / APP / APN','Supervisor','Manager','Director','Vice President','SVP and above'];
+  var VALUES=['Justice','Compassion','Integrity','Teamwork','Employee well-being','Supportive work environment','Trust','Stewardship','Leadership'];
 
   // ---- data (loaded from server) ----
   var LEADERS=[];
@@ -88,6 +89,18 @@
   }
   function hexA(hex,a){var n=parseInt(hex.slice(1),16);var r=(n>>16)&255,g=(n>>8)&255,b=n&255;return 'rgba('+r+','+g+','+b+','+a.toFixed(2)+')';}
 
+  function renderValueBars(data){
+    if(!el('valueBars'))return;
+    var f={};VALUES.forEach(function(v){f[v]=0;});
+    data.forEach(function(l){if(l.value&&f[l.value]!==undefined)f[l.value]++;});
+    var arr=VALUES.map(function(v){return {name:v,n:f[v]};}).filter(function(x){return x.n>0;}).sort(function(a,b){return b.n-a.n;});
+    var max=arr.length?arr[0].n:1;
+    el('valueBars').innerHTML=arr.map(function(a){
+      var w=Math.round(a.n/max*100);
+      return '<div class="skillbar"><div class="sl">'+a.name+'</div><div class="track"><div class="fill" style="width:'+w+'%;background:#A5228E"></div></div><div class="sn">'+a.n+'</div></div>';
+    }).join('') || '<div class="empty">No values yet.</div>';
+  }
+
   function renderDivBars(data){
     var f={};data.forEach(function(l){f[l.division]=(f[l.division]||0)+1;});
     var arr=Object.keys(f).map(function(k){return {name:k,n:f[k]};}).sort(function(a,b){return b.n-a.n;});
@@ -103,7 +116,7 @@
   function browserData(){
     var list=filtered().slice();
     if(BR.q){var q=BR.q.toLowerCase();list=list.filter(function(l){
-      var hay=[l.first,l.last,l.division,l.role,l.approach].concat(l.comps).concat(l.skills).join(' ').toLowerCase();return hay.indexOf(q)>=0;});}
+      var hay=[l.first,l.last,l.division,l.role,l.approach,l.value].concat(l.comps).concat(l.skills).join(' ').toLowerCase();return hay.indexOf(q)>=0;});}
     if(BR.sort==='div')list.sort(function(a,b){return a.division.localeCompare(b.division);});
     else if(BR.sort==='role')list.sort(function(a,b){return ROLES.indexOf(a.role)-ROLES.indexOf(b.role);});
     else list.sort(function(a,b){return b.ts-a.ts;});
@@ -114,15 +127,16 @@
     if(BR.page>=pages)BR.page=pages-1;if(BR.page<0)BR.page=0;
     var start=BR.page*BR.size;var slice=list.slice(start,start+BR.size);
     if(!total){el('tablewrap').innerHTML='<div class="empty">No leaders match.</div>';el('pager').style.display='none';return;}
-    var h='<table class="subs"><thead><tr><th>Leader</th><th>Role &amp; experience</th><th>Competencies (ranked)</th><th>Skills to strengthen</th><th>How they\'ll work on it</th></tr></thead><tbody>';
+    var h='<table class="subs"><thead><tr><th>Leader</th><th>Role &amp; experience</th><th>Competencies (ranked)</th><th>Skills to strengthen</th><th>OSF Value</th><th>How they\'ll work on it</th></tr></thead><tbody>';
     slice.forEach(function(l){
       var who=(l.first||l.last)?((l.first+' '+l.last).trim()):'<span class="meta">(anonymous)</span>';
       var comps=l.comps.map(function(cn,idx){var col=compColor(cn);return '<span class="cchip"><span class="r" style="background:'+col+'">'+(idx+1)+'</span><span class="dot" style="background:'+col+'"></span>'+cn+'</span>';}).join('');
       var sks=l.skills.map(function(s){return '<span class="sktag">'+s+'</span>';}).join('');
+      var vv=l.value?('<span class="vtag">'+esc(l.value)+'</span>'):'<span class="meta">None</span>';
       var ap=l.approach?('<span class="approach">'+esc(l.approach)+'</span>'):'<span class="meta">None</span>';
       h+='<tr><td><div class="who">'+who+'</div><div class="meta">'+l.division+'</div></td>'+
          '<td>'+l.role+'<div class="meta">'+l.years+' yr'+(l.years===1?'':'s')+'</div></td>'+
-         '<td>'+comps+'</td><td>'+sks+'</td><td>'+ap+'</td></tr>';
+         '<td>'+comps+'</td><td>'+sks+'</td><td>'+vv+'</td><td>'+ap+'</td></tr>';
     });
     h+='</tbody></table>';el('tablewrap').innerHTML=h;
     el('pinfo').textContent='Showing '+(start+1)+' to '+Math.min(start+BR.size,total)+' of '+total+' leaders'+(pages>1?'   ·   page '+(BR.page+1)+' of '+pages:'');
@@ -131,7 +145,7 @@
 
   function renderAll(){
     var data=filtered();
-    renderKpis(data);renderCompBars(data);renderSkillBars(data);renderHeat(data);renderDivBars(data);
+    renderKpis(data);renderCompBars(data);renderSkillBars(data);renderHeat(data);renderDivBars(data);renderValueBars(data);
     BR.page=0;renderBrowser();
     setDownloads();
     el('asof').textContent='As of '+new Date().toLocaleString();
@@ -159,7 +173,7 @@
       var comps=(s.comps||[]).slice().sort(function(a,b){return (a.rank||9)-(b.rank||9);}).map(function(c){return c.name;});
       return { first:s.first||'', last:s.last||'', division:s.division||'', role:s.role||'',
         years:(s.years===null||s.years===undefined)?0:Number(s.years),
-        comps:comps, skills:s.skills||[], approach:s.approach||'', ts:(new Date(s.submitted).getTime()||0) };
+        comps:comps, skills:s.skills||[], value:s.value||'', approach:s.approach||'', ts:(new Date(s.submitted).getTime()||0) };
     });
   }
   function qp(n){try{return new URLSearchParams(location.search).get(n)||'';}catch(e){return '';}}
