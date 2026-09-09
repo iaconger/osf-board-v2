@@ -231,7 +231,7 @@ function buildWorkbook(f) {
   const widths = [22, 16, 16, 22, 20, 12, 26, 26, 40, 50];
   widths.forEach((w, i) => { ws.getColumn(i + 1).width = w; });
   ws.mergeCells('A1:J1');
-  const t = ws.getCell('A1'); t.value = 'OSF HealthCare  —  Leadership Development Institute';
+  const t = ws.getCell('A1'); t.value = 'OSF HealthCare  ·  Leadership Development Institute';
   t.font = { name: 'Calibri', size: 16, bold: true, color: { argb: XL.white } };
   t.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: XL.brand } };
   t.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 }; ws.getRow(1).height = 30;

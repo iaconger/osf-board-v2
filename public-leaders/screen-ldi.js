@@ -1,4 +1,4 @@
-/* OSF LDI — big-screen room mode. Read-only, live over WebSocket. No inline scripts (CSP). */
+/* OSF LDI big-screen room mode. Read-only, live over WebSocket. No inline scripts (CSP). */
 (function(){
   'use strict';
   var COMPS=[

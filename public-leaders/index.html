@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OSF LDI — Leadership Focus</title>
+<title>OSF LDI Leadership Focus</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bitter:wght@400;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -112,6 +112,11 @@
   .react:hover{border-color:#c9d3bd;transform:translateY(-1px)}
   .react:active{transform:scale(.94)}
   .react .cnt{font-weight:800;font-size:13px;color:var(--ink)}
+  .react:disabled{cursor:default;transform:none}
+  .react[disabled]:hover{border-color:var(--line)}
+  .erow.reacted .react:not(.chosen){opacity:.5}
+  .react.chosen{border-color:var(--green);background:var(--soft)}
+  .react.chosen .cnt{color:var(--green)}
   .exempty{color:var(--muted);font-size:14px;padding:16px 2px;grid-column:1/-1}
   .rk{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin-bottom:11px}
   .rk .rl{display:flex;align-items:center;gap:9px;font-size:13.5px;font-weight:600}
@@ -132,7 +137,7 @@
     <div class="step on" data-s="0">
       <p class="eyebrow">FY26 · Leadership Development Institute</p>
       <h1>Where will you grow as a leader this year?</h1>
-      <p class="lede">Take a few minutes to name the leader competencies and skills you'll focus on. Your responses join the room's shared view — and help us design the development roadmap for every leader group.</p>
+      <p class="lede">Take a few minutes to name the leader competencies and skills you'll focus on. Your responses join the room's shared view, and help us design the development roadmap for every leader group.</p>
       <div class="btnrow"><span></span><button class="btn big" data-go="1">Begin →</button></div>
     </div>
 
@@ -165,7 +170,7 @@
       <div class="progress"><i class="done"></i><i class="cur"></i><i></i></div>
       <p class="eyebrow">Your focus</p>
       <h2>Which leader competencies will you focus on?</h2>
-      <p class="instr">Choose your <b>top 2</b> competencies, in priority order — tap your <b>#1</b> priority first, then your <b>#2</b>.</p>
+      <p class="instr">Choose your <b>top 2</b> competencies, in priority order. Tap your <b>#1</b> priority first, then your <b>#2</b>.</p>
       <div class="comp" id="compGrid"></div>
       <div class="btnrow"><button class="btn ghost" data-go="1">← Back</button>
         <div style="display:flex;align-items:center;gap:14px"><span class="counter" id="compCount">0 of 2 selected</span><button class="btn" data-go="3" id="compNext" disabled>Next →</button></div></div>
@@ -180,7 +185,7 @@
       <div class="skillscroll" id="skillList"></div>
       <div class="approachbox">
         <p class="ah">How will you work on it? <span style="font-weight:600;color:var(--muted)">(optional)</span></p>
-        <p class="ap">A sentence or two, in your own words — one thing you'll do to grow here this year.</p>
+        <p class="ap">A sentence or two, in your own words, on one thing you'll do to grow here this year.</p>
         <textarea id="approach" maxlength="280" rows="2" placeholder="e.g. I'll ask for feedback from my team after each project and act on one thing each time."></textarea>
         <div class="approachrow"><span class="counter" id="approachCount"><b>0</b> / 280</span></div>
       </div>
@@ -203,7 +208,7 @@
       <h2 style="margin-bottom:4px">Where our leaders are focusing</h2>
       <p class="note">Each dot is a leader, colored by their #1 competency. As more leaders add theirs, the picture of where development energy is concentrated comes to life.</p>
       <div class="kpi"><div><div class="n" id="kLeaders" style="color:var(--green)">0</div><div class="l">leaders on the board</div></div>
-        <div><div class="n" id="kTop" style="color:var(--teal);font-size:20px;font-family:Bitter,serif;padding-top:8px">—</div><div class="l">top competency right now</div></div></div>
+        <div><div class="n" id="kTop" style="color:var(--teal);font-size:20px;font-family:Bitter,serif;padding-top:8px">…</div><div class="l">top competency right now</div></div></div>
       <div class="boardwrap">
         <div class="canvas" id="canvas"></div>
         <div class="leader">

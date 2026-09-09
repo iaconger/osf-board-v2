@@ -331,7 +331,7 @@ function buildWorkbook(pillar) {
   // Title
   ws.mergeCells('A1:H1');
   const t = ws.getCell('A1');
-  t.value = 'OSF HealthCare  —  FY27 Strategy Commitments';
+  t.value = 'OSF HealthCare  ·  FY27 Strategy Commitments';
   t.font = { name: 'Calibri', size: 16, bold: true, color: { argb: XL.white } };
   t.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: XL.brand } };
   t.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };

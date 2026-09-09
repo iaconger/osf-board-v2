@@ -2,99 +2,137 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OSF LDI — Leadership Dashboard</title>
+<title>OSF LDI Leadership Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bitter:wght@400;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bitter:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
     --green:#4E8209;--green2:#64A70B;--teal:#007F9B;--blue:#00A9CE;--magenta:#A5228E;--orange:#E57200;--violet:#5B4B8A;
-    --ink:#1c2418;--muted:#5c665a;--faint:#8a938260;--line:#e6eadf;--soft:#f6f8f1;
+    --ink:#18220f;--muted:#5c665a;--line:#e6eadf;--soft:#f4f7ee;--soft2:#eef2e6;
+    --shadow:0 8px 24px rgba(60,70,50,.07);
+    --shadow-lg:0 16px 40px rgba(40,60,25,.13);
   }
   *{box-sizing:border-box}
   body{margin:0;font-family:"Montserrat",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;color:var(--ink);
-    background:linear-gradient(180deg,#f2f5ec 0%,#eef1e9 100%);background-attachment:fixed;min-height:100vh}
+    background:linear-gradient(180deg,#eef2e6 0%,#e9eee1 100%);background-attachment:fixed;min-height:100vh}
   h1,h2,h3{font-family:"Bitter",Georgia,serif}
-  .topstrip{height:10px;background:linear-gradient(90deg,var(--green),var(--teal),var(--magenta))}
-  .previewban{max-width:1180px;margin:0 auto;padding:16px 20px 0}
-  .previewban .b{background:#fff8e6;border:1px solid #f0e0a8;color:#7a5c00;border-radius:12px;padding:11px 16px;font-size:13px;line-height:1.5}
-  .wrap{max-width:1180px;margin:0 auto;padding:24px 20px 70px}
-  .head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:0 0 20px}
-  .headlogo{height:40px;width:auto;margin:0 0 12px;display:block}
-  .eyebrow{font-size:12px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--green);margin:0 0 4px}
-  h1{font-size:30px;margin:0;line-height:1.05}
-  .as-of{font-size:12.5px;color:var(--muted);text-align:right}
-  .card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:22px 24px;box-shadow:0 10px 30px rgba(60,70,50,.08);margin-bottom:20px}
-  h2{font-size:19px;margin:0 0 3px}
-  .cardnote{font-size:12.5px;color:var(--muted);margin:0 0 18px}
+  .topstrip{height:6px;background:linear-gradient(90deg,var(--green),var(--green2),var(--teal),var(--blue),var(--magenta),var(--orange))}
+
+  /* hero */
+  .hero{background:linear-gradient(115deg,#2c5807 0%,#4E8209 44%,#0c6f88 100%);color:#fff;position:relative;overflow:hidden}
+  .hero::after{content:"";position:absolute;right:-120px;top:-140px;width:420px;height:420px;border-radius:50%;background:rgba(255,255,255,.06)}
+  .hero .inner{max-width:1180px;margin:0 auto;padding:26px 20px 30px;display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;position:relative;z-index:1}
+  .hero .logo{height:38px;width:auto;filter:brightness(0) invert(1);opacity:.97;display:block;margin:0 0 16px}
+  .hero .eyebrow{font-size:12px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:rgba(255,255,255,.82);margin:0 0 6px}
+  .hero h1{font-size:34px;line-height:1.04;margin:0;color:#fff;font-weight:700}
+  .hero .as-of{font-size:12.5px;color:rgba(255,255,255,.85);text-align:right;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:99px;padding:7px 15px;white-space:nowrap}
+
+  .wrap{max-width:1180px;margin:0 auto;padding:24px 20px 72px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:24px 26px;box-shadow:var(--shadow);margin-bottom:20px}
+  h2{font-size:18px;margin:0 0 4px;position:relative;padding-left:15px}
+  h2::before{content:"";position:absolute;left:0;top:3px;bottom:3px;width:5px;border-radius:3px;background:linear-gradient(var(--green),var(--green2))}
+  .cardnote{font-size:12.5px;color:var(--muted);margin:0 0 20px;line-height:1.5;padding-left:15px}
+
+  /* gate */
+  #gate .cardnote{padding-left:0}
+  #gate label{padding-left:0}
+
   /* filters */
-  .filters{display:flex;gap:12px;flex-wrap:wrap;align-items:center;background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px 18px;box-shadow:0 10px 30px rgba(60,70,50,.08);margin-bottom:20px}
-  .filters .fl{font-size:12px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.6px}
-  .filters select{padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;background:var(--soft);color:var(--ink);cursor:pointer}
+  .filters{display:flex;gap:12px;flex-wrap:wrap;align-items:center;background:#fff;border:1px solid var(--line);border-radius:14px;padding:13px 18px;box-shadow:var(--shadow);margin-bottom:20px}
+  .filters .fl{font-size:11px;font-weight:800;color:var(--green);text-transform:uppercase;letter-spacing:1px;display:flex;align-items:center;gap:7px}
+  .filters .fl::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--green2)}
+  .filters select{padding:9px 13px;border:1.5px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;background:var(--soft);color:var(--ink);cursor:pointer;transition:.15s}
+  .filters select:hover{border-color:#cdd8c1}
   .filters select:focus{outline:none;border-color:var(--green2);background:#fff}
   .filters .reset{margin-left:auto;border:0;background:none;color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;text-decoration:underline;font-family:inherit}
+  .filters .reset:hover{color:var(--green)}
+
   /* kpis */
   .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:20px}
-  .kpi{background:#fff;border:1px solid var(--line);border-radius:18px;padding:20px 22px;box-shadow:0 10px 30px rgba(60,70,50,.08);position:relative;overflow:hidden}
-  .kpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--green2)}
-  .kpi.k2::before{background:var(--blue)} .kpi.k3::before{background:var(--magenta)} .kpi.k4::before{background:var(--orange)}
-  .kpi .n{font-size:40px;font-weight:800;line-height:1;letter-spacing:-1px}
-  .kpi .l{color:var(--muted);font-size:13px;margin-top:8px;line-height:1.35}
+  .kpi{background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px 22px 20px;box-shadow:var(--shadow);position:relative;overflow:hidden;transition:transform .15s,box-shadow .15s}
+  .kpi:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+  .kpi::before{content:"";position:absolute;left:0;right:0;top:0;height:4px;background:var(--green2)}
+  .kpi.k2::before{background:var(--teal)} .kpi.k3::before{background:var(--magenta)} .kpi.k4::before{background:var(--orange)}
+  .kpi .n{font-size:44px;font-weight:800;line-height:1;letter-spacing:-1.5px;color:var(--green);font-variant-numeric:tabular-nums}
+  .kpi.k2 .n{color:var(--teal)} .kpi.k3 .n{color:var(--magenta)} .kpi.k4 .n{color:var(--orange)}
+  .kpi .l{color:var(--muted);font-size:12.5px;margin-top:9px;line-height:1.35;font-weight:500}
+
   .grid2{display:grid;grid-template-columns:1.3fr 1fr;gap:20px}
   @media(max-width:860px){.grid2{grid-template-columns:1fr}}
+
   /* bars */
-  .hbar{display:grid;grid-template-columns:210px 1fr auto;align-items:center;gap:14px;margin-bottom:14px}
+  .hbar{display:grid;grid-template-columns:200px 1fr 46px;align-items:center;gap:14px;margin-bottom:15px}
   .hbar:last-child{margin-bottom:2px}
   .hbar .bl{font-size:14px;font-weight:600;display:flex;align-items:center;gap:9px}
   .hbar .bl .dot{width:12px;height:12px;border-radius:50%;flex:0 0 auto}
-  .hbar .bl small{display:block;font-weight:500;color:var(--muted);font-size:11px}
-  .hbar .track{background:var(--soft);border-radius:999px;height:18px;overflow:hidden}
-  .hbar .fill{height:100%;border-radius:999px;transition:width .5s;min-width:3px}
-  .hbar .bn{font-size:15px;font-weight:800;min-width:30px;text-align:right}
-  .skillbar{display:grid;grid-template-columns:230px 1fr auto;align-items:center;gap:12px;margin-bottom:11px}
+  .hbar .bl small{display:block;font-weight:500;color:var(--muted);font-size:10.5px;margin-top:1px}
+  .hbar .track{background:var(--soft2);border-radius:999px;height:20px;overflow:hidden}
+  .hbar .fill{height:100%;border-radius:999px;transition:width .6s cubic-bezier(.2,.8,.2,1);min-width:4px;box-shadow:inset 0 -2px 4px rgba(0,0,0,.08)}
+  .hbar .bn{font-size:16px;font-weight:800;text-align:right;color:var(--ink);font-variant-numeric:tabular-nums}
+  .skillbar{display:grid;grid-template-columns:230px 1fr auto;align-items:center;gap:12px;margin-bottom:12px}
   .skillbar .sl{font-size:13.5px;font-weight:600}
-  .skillbar .track{background:var(--soft);border-radius:999px;height:12px;overflow:hidden}
-  .skillbar .fill{height:100%;background:var(--teal);border-radius:999px}
-  .skillbar .sn{font-size:13px;font-weight:700;color:var(--muted);min-width:22px;text-align:right}
+  .skillbar .track{background:var(--soft2);border-radius:999px;height:13px;overflow:hidden}
+  .skillbar .fill{height:100%;background:linear-gradient(90deg,var(--teal),var(--blue));border-radius:999px;transition:width .6s cubic-bezier(.2,.8,.2,1);min-width:4px}
+  .skillbar .sn{font-size:13px;font-weight:800;color:var(--muted);min-width:22px;text-align:right;font-variant-numeric:tabular-nums}
+
   /* heatmap */
-  .heat{overflow-x:auto}
-  table.hm{border-collapse:separate;border-spacing:3px;font-size:12.5px}
-  table.hm th{font-weight:700;color:var(--muted);text-align:center;padding:4px 6px;font-family:inherit;vertical-align:bottom}
-  table.hm th.role{text-align:left;color:var(--ink)}
-  table.hm td{width:66px;height:40px;text-align:center;border-radius:8px;font-weight:700;color:#1c2418}
-  table.hm td.rl{width:auto;text-align:left;font-weight:700;color:var(--ink);background:none;padding-right:10px;white-space:nowrap}
-  .hmlegend{font-size:12px;color:var(--muted);margin-top:10px}
+  .heat{overflow-x:auto;padding-bottom:4px}
+  table.hm{border-collapse:separate;border-spacing:5px;font-size:12.5px;margin:0 auto}
+  table.hm th{width:88px;font-weight:600;color:var(--muted);text-align:center;padding:2px 4px 6px;font-family:inherit;vertical-align:bottom;line-height:1.2}
+  table.hm th.role{width:auto;text-align:left;color:var(--ink);font-weight:700;padding-right:12px}
+  table.hm th .cdot{width:11px;height:11px;border-radius:50%;display:block;margin:0 auto 6px}
+  table.hm th .ct{display:block}
+  table.hm td{width:88px;height:46px;text-align:center;border-radius:10px;font-weight:800;font-size:14px;color:#18220f;background:#f3f6ee;font-variant-numeric:tabular-nums}
+  table.hm td.rl{width:auto;text-align:left;font-weight:700;color:var(--ink);background:none;padding-right:12px;white-space:nowrap;font-size:13.5px}
+  .hmlegend{font-size:12px;color:var(--muted);margin-top:14px;padding-left:2px}
+
   /* browser */
-  .controls{display:flex;gap:10px;flex-wrap:wrap;margin:2px 0 14px}
-  .controls .search{flex:1;min-width:220px;padding:10px 13px;border:1.5px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;background:var(--soft)}
-  .controls select{padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;background:#fff;cursor:pointer}
-  .tablewrap{overflow-x:auto}
+  .controls{display:flex;gap:10px;flex-wrap:wrap;margin:2px 0 16px}
+  .controls .search{flex:1;min-width:220px;padding:11px 14px;border:1.5px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;background:var(--soft);transition:.15s}
+  .controls .search:focus{outline:none;border-color:var(--green2);background:#fff}
+  .controls select{padding:11px 13px;border:1.5px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;background:#fff;cursor:pointer}
+  .controls select:focus{outline:none;border-color:var(--green2)}
+  .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
   table.subs{width:100%;border-collapse:collapse;font-size:14px}
-  table.subs thead th{text-align:left;padding:11px 12px;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);border-bottom:2px solid var(--line);background:var(--soft)}
-  table.subs tbody td{padding:12px;border-bottom:1px solid var(--line);vertical-align:top}
+  table.subs thead th{text-align:left;padding:12px 14px;font-size:10.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);background:var(--soft);border-bottom:1px solid var(--line);font-weight:800;position:sticky;top:0}
+  table.subs tbody td{padding:13px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+  table.subs tbody tr:last-child td{border-bottom:0}
+  table.subs tbody tr:nth-child(even){background:#fbfcf8}
+  table.subs tbody tr:hover{background:#f3f7ec}
   .who{font-weight:700}
-  .meta{color:var(--muted);font-size:12.5px}
-  .cchip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:99px;padding:3px 10px 3px 8px;font-size:12.5px;font-weight:700;margin:2px 4px 2px 0}
+  .meta{color:var(--muted);font-size:12.5px;margin-top:2px}
+  .cchip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:99px;padding:3px 11px 3px 8px;font-size:12.5px;font-weight:700;margin:2px 4px 2px 0;background:#fff}
   .cchip .dot{width:10px;height:10px;border-radius:50%}
-  .cchip .r{color:#fff;border-radius:50%;width:16px;height:16px;font-size:10px;display:inline-flex;align-items:center;justify-content:center}
-  .sktag{display:inline-block;background:#eef8fb;color:#036178;border-radius:99px;padding:3px 9px;font-size:12px;font-weight:600;margin:2px 4px 2px 0}
-  table.subs .approach{display:block;max-width:260px;font-size:13px;color:var(--ink);line-height:1.45;font-style:italic}
-  .pager{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:14px}
+  .cchip .r{color:#fff;border-radius:50%;width:17px;height:17px;font-size:10px;display:inline-flex;align-items:center;justify-content:center;font-weight:800}
+  .sktag{display:inline-block;background:#eaf6fa;color:#036178;border-radius:99px;padding:3px 10px;font-size:12px;font-weight:600;margin:2px 4px 2px 0}
+  table.subs .approach{display:block;max-width:260px;font-size:12.5px;color:var(--ink);line-height:1.45;font-style:italic;opacity:.9}
+  .pager{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:16px}
   .pinfo{font-size:13px;color:var(--muted)}
-  .pbtn{border:1.5px solid var(--green);background:#fff;color:var(--green);padding:8px 16px;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+  .pbtn{border:1.5px solid var(--green);background:#fff;color:var(--green);padding:8px 16px;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:.15s}
+  .pbtn:hover:not(:disabled){background:var(--green);color:#fff}
   .pbtn:disabled{opacity:.4;cursor:default;border-color:var(--line);color:var(--muted)}
   .btns{display:flex;gap:10px;flex-wrap:wrap}
-  .btn{border:0;background:var(--green);color:#fff;padding:11px 20px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:8px}
+  .btn{border:0;background:var(--green);color:#fff;padding:11px 20px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:8px;transition:.15s}
+  .btn:hover{background:var(--green2)}
   .btn.ghost{background:#fff;color:var(--green);border:1.5px solid var(--green)}
+  .btn.ghost:hover{background:var(--soft)}
+  .dlnote{display:flex;align-items:flex-start;gap:9px;font-size:12.5px;color:var(--muted);line-height:1.5;margin-top:16px;background:var(--soft);border-radius:10px;padding:11px 14px}
   .empty{color:var(--muted);font-size:14px;padding:16px 0}
 </style>
 </head>
 <body>
 <div class="topstrip"></div>
-<div class="wrap">
-  <div class="head">
-    <div><img class="headlogo" src="/logo.png" alt="OSF HealthCare"><p class="eyebrow">FY26 · Leadership Development Institute</p><h1>Leadership Dashboard</h1></div>
+<div class="hero">
+  <div class="inner">
+    <div>
+      <img class="logo" src="/logo.png" alt="OSF HealthCare">
+      <p class="eyebrow">FY26 · Leadership Development Institute</p>
+      <h1>Leadership Dashboard</h1>
+    </div>
     <div class="as-of" id="asof"></div>
   </div>
+</div>
+<div class="wrap">
   <div class="card" id="gate">
     <p class="cardnote" style="font-size:14px;margin-bottom:14px">Enter your export key to open the leadership dashboard and download the data. No names are required of leaders; anything entered is kept private to this dashboard.</p>
     <label style="display:block;font-size:12px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.6px;margin:0 0 6px" for="key">Export key</label>
@@ -112,8 +150,8 @@
     <select id="fRole"><option value="">All roles</option></select>
     <select id="fYears">
       <option value="">All experience</option>
-      <option value="0-2">0–2 years</option><option value="3-5">3–5 years</option>
-      <option value="6-10">6–10 years</option><option value="11+">11+ years</option>
+      <option value="0-2">0 to 2 years</option><option value="3-5">3 to 5 years</option>
+      <option value="6-10">6 to 10 years</option><option value="11+">11+ years</option>
     </select>
     <button class="reset" id="reset">Reset</button>
   </div>
@@ -123,7 +161,7 @@
   <div class="grid2">
     <div class="card">
       <h2>Top leader competencies</h2>
-      <p class="cardnote">Rank-weighted across leaders — a #1 priority counts double a #2. This is the headline for where to invest development.</p>
+      <p class="cardnote">Rank-weighted across leaders. A #1 priority counts double a #2. This is the headline for where to invest development.</p>
       <div id="compBars"></div>
     </div>
     <div class="card">
@@ -135,7 +173,7 @@
 
   <div class="card">
     <h2>Competency focus by leadership role</h2>
-    <p class="cardnote">Where each leadership level is concentrating — read down a column to see who prioritizes a competency, across a row to see a level's focus. Darker = more leaders.</p>
+    <p class="cardnote">Where each leadership level is concentrating. Read down a column to see who prioritizes a competency, across a row to see a level's focus. Darker means more leaders.</p>
     <div class="heat" id="heat"></div>
     <div class="hmlegend" id="heatlegend"></div>
   </div>
@@ -148,13 +186,13 @@
     </div>
     <div class="card">
       <h2>Download the data</h2>
-      <p class="cardnote">Excel opens as a polished, ready-to-share workbook; each pillar of the data is included. (Buttons are inactive in this preview.)</p>
-      <div class="btns" style="margin-bottom:10px">
-        <a class="btn" id="dlxlsx" href="#">Download Excel</a>
+      <p class="cardnote">Excel opens as a polished, ready-to-share workbook, with a summary of every competency and skill alongside the full leader list.</p>
+      <div class="btns" style="margin-bottom:2px">
+        <a class="btn" id="dlxlsx" href="#">⬇ Download Excel</a>
         <a class="btn ghost" id="dlcsv" href="#">CSV</a>
         <a class="btn ghost" id="dljson" href="#">JSON</a>
       </div>
-      <p class="cardnote" style="margin-top:14px">The live version also mirrors the current filter — e.g. download just Directors, or just one division.</p>
+      <div class="dlnote"><span>↳</span><span>Downloads mirror the filters above. Set them to export just Directors, one division, or a single experience band.</span></div>
     </div>
   </div>
 
@@ -163,7 +201,7 @@
     <p class="cardnote">Every leader who submitted. Search, sort, and page through them.</p>
     <div class="controls">
       <input class="search" id="tSearch" placeholder="Search name, division, competency, or skill…">
-      <select id="tSort"><option value="recent">Most recent</option><option value="div">Division A–Z</option><option value="role">Role</option></select>
+      <select id="tSort"><option value="recent">Most recent</option><option value="div">Division A to Z</option><option value="role">Role</option></select>
     </div>
     <div class="tablewrap" id="tablewrap"></div>
     <div class="pager" id="pager" style="display:none">

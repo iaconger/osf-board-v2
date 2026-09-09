@@ -1,4 +1,4 @@
-/* OSF LDI Leaders' app — participant experience.
+/* OSF LDI Leaders' app. Participant experience.
  * Guided flow → live shared board over WebSocket. No inline scripts (CSP). */
 (function(){
   'use strict';
@@ -33,7 +33,7 @@
     ['Emotional Intelligence: Relationship Management','Building, maintaining, and strengthening positive connections with others by fostering alignment, resolving conflict constructively and inspiring shared success.'],
     ['Cross-Functional Collaboration','Convening individuals and/or teams from different departments, backgrounds, or areas of expertise to work toward shared goals.'],
     ['Diversity & Inclusion','Actively creates an environment where diverse perspectives are valued, respected, and leveraged for collaborative solutions.'],
-    ['Data-Informed Planning','Leveraging relevant data and insights—alongside experience and judgment—to guide choices and strategies.'],
+    ['Data-Informed Planning','Leveraging relevant data and insights, alongside experience and judgment, to guide choices and strategies.'],
     ['Business Acumen',"Understanding the Ministry's financial, operational, and strategic drivers and how they are interconnected."],
     ['Process Optimization','Analyzing workflows, identifying inefficiencies, and implementing improvements that enhance quality, speed, and effectiveness across functions.'],
     ['Strategic Foresight','Anticipating future trends, challenges, and opportunities and preparing proactive strategies to address them.'],
@@ -47,6 +47,7 @@
   var boardData=[];      // array of comps arrays from other leaders (via WS)
   var mine=null;         // this leader's comps once accepted
   var submitted=false;
+  var reacted={};        // cardId -> kind this viewer already reacted with (one per card)
 
   // ---- competency chips ----
   var cg=el('compGrid');
@@ -127,7 +128,7 @@
         '<div class="track"><div class="fill" style="width:'+w+'%;background:'+a.color+'"></div></div></div>';
     }).join('');
     el('kLeaders').textContent=all.length;
-    el('kTop').textContent=arr[0].v?arr[0].name:'—';
+    el('kTop').textContent=arr[0].v?arr[0].name:'…';
   }
 
   // ---- explore wall ----
@@ -148,12 +149,13 @@
       var sk=(card.skills||[]).length?('<div class="esk">'+(card.skills||[]).map(esc).join('  ·  ')+'</div>'):'';
       var ap=card.approach?('<div class="eapproach">'+esc(card.approach)+'</div>'):'';
       var rk=card.react||{heart:0,clap:0};
+      var done=reacted[card.id]; var dis=done?' disabled':'';
       return '<div class="excard" data-id="'+esc(card.id)+'">'+
         '<div class="eid"><b>'+who+'</b>'+(rl?' <span>· '+rl+'</span>':'')+'</div>'+
         '<div class="ecomps">'+comps+'</div>'+sk+ap+
-        '<div class="erow">'+
-          '<button class="react" data-react="heart" data-id="'+esc(card.id)+'">❤️ <span class="cnt">'+rk.heart+'</span></button>'+
-          '<button class="react" data-react="clap" data-id="'+esc(card.id)+'">👏 <span class="cnt">'+rk.clap+'</span></button>'+
+        '<div class="erow'+(done?' reacted':'')+'">'+
+          '<button class="react'+(done==='heart'?' chosen':'')+'" data-react="heart" data-id="'+esc(card.id)+'"'+dis+'>❤️ <span class="cnt">'+rk.heart+'</span></button>'+
+          '<button class="react'+(done==='clap'?' chosen':'')+'" data-react="clap" data-id="'+esc(card.id)+'"'+dis+'>👏 <span class="cnt">'+rk.clap+'</span></button>'+
         '</div></div>';
     }).join('');
   }
@@ -220,7 +222,7 @@
 
   // ---- navigation ----
   function resetAll(){
-    pickedComp=[];pickedSkill=[];mine=null;submitted=false;
+    pickedComp=[];pickedSkill=[];mine=null;submitted=false;reacted={};
     [].forEach.call(cg.children,function(ch){ch.classList.remove('sel');ch.querySelector('.rank').textContent='';});
     [].forEach.call(sl.children,function(ch){ch.classList.remove('sel');});
     el('compCount').textContent='0 of 2 selected';el('skillCount').textContent='0 of 3 selected';
@@ -258,8 +260,14 @@
     if(wall) wall.addEventListener('click',function(e){
       var b=e.target.closest('.react'); if(!b) return;
       var id=b.getAttribute('data-id'); var kind=b.getAttribute('data-react');
+      if(reacted[id]) return;                 // one reaction per card, per viewer
+      reacted[id]=kind;
       var card=findCard(id);
       if(card){ card.react=card.react||{heart:0,clap:0}; card.react[kind]=(card.react[kind]||0)+1; updateReactionCounts(id); } // optimistic
+      // lock both buttons on this card and mark the chosen one
+      var cardEl=wall.querySelector('.excard[data-id="'+id+'"]');
+      if(cardEl){ var erow=cardEl.querySelector('.erow'); if(erow) erow.classList.add('reacted');
+        [].forEach.call(cardEl.querySelectorAll('.react'),function(btn){ btn.disabled=true; if(btn.getAttribute('data-react')===kind) btn.classList.add('chosen'); }); }
       if(ws&&ws.readyState===1) ws.send(JSON.stringify({type:'react',id:id,kind:kind}));
     });
   })();

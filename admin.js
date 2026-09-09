@@ -290,7 +290,7 @@
     wrap.innerHTML = html;
 
     var from = start + 1, to = Math.min(start + BR.pageSize, total);
-    el('pinfo').textContent = 'Showing ' + from + '–' + to + ' of ' + num(total) + ' teams' +
+    el('pinfo').textContent = 'Showing ' + from + ' to ' + to + ' of ' + num(total) + ' teams' +
       (pages > 1 ? '   ·   page ' + (BR.page + 1) + ' of ' + pages : '');
     el('prevPage').disabled = BR.page <= 0;
     el('nextPage').disabled = BR.page >= pages - 1;

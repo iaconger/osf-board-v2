@@ -1,4 +1,4 @@
-/* OSF LDI Leaders' dashboard — key-gated, live from /export.json. No inline scripts (CSP). */
+/* OSF LDI Leaders' dashboard. Key-gated, live from /export.json. No inline scripts (CSP). */
 
 (function(){
   'use strict';
@@ -75,7 +75,7 @@
     var rolePresent={};
     data.forEach(function(l){rolePresent[l.role]=1;l.comps.forEach(function(cn){if(counts[l.role])counts[l.role][cn]++;});});
     var max=1;ROLES.forEach(function(ro){COMPS.forEach(function(c){max=Math.max(max,counts[ro][c.name]);});});
-    var head='<tr><th class="role">Role</th>'+COMPS.map(function(c){return '<th><span style="display:inline-block;writing-mode:horizontal-tb;max-width:64px;line-height:1.1">'+c.name+'</span></th>';}).join('')+'</tr>';
+    var head='<tr><th class="role">Role</th>'+COMPS.map(function(c){return '<th><span class="cdot" style="background:'+c.color+'"></span><span class="ct">'+c.name+'</span></th>';}).join('')+'</tr>';
     var rows=ROLES.filter(function(ro){return rolePresent[ro];}).map(function(ro){
       return '<tr><td class="rl">'+ro+'</td>'+COMPS.map(function(c){
         var v=counts[ro][c.name];var alpha=v?(0.15+0.85*(v/max)):0;
@@ -119,13 +119,13 @@
       var who=(l.first||l.last)?((l.first+' '+l.last).trim()):'<span class="meta">(anonymous)</span>';
       var comps=l.comps.map(function(cn,idx){var col=compColor(cn);return '<span class="cchip"><span class="r" style="background:'+col+'">'+(idx+1)+'</span><span class="dot" style="background:'+col+'"></span>'+cn+'</span>';}).join('');
       var sks=l.skills.map(function(s){return '<span class="sktag">'+s+'</span>';}).join('');
-      var ap=l.approach?('<span class="approach">'+esc(l.approach)+'</span>'):'<span class="meta">—</span>';
+      var ap=l.approach?('<span class="approach">'+esc(l.approach)+'</span>'):'<span class="meta">None</span>';
       h+='<tr><td><div class="who">'+who+'</div><div class="meta">'+l.division+'</div></td>'+
          '<td>'+l.role+'<div class="meta">'+l.years+' yr'+(l.years===1?'':'s')+'</div></td>'+
          '<td>'+comps+'</td><td>'+sks+'</td><td>'+ap+'</td></tr>';
     });
     h+='</tbody></table>';el('tablewrap').innerHTML=h;
-    el('pinfo').textContent='Showing '+(start+1)+'–'+Math.min(start+BR.size,total)+' of '+total+' leaders'+(pages>1?'   ·   page '+(BR.page+1)+' of '+pages:'');
+    el('pinfo').textContent='Showing '+(start+1)+' to '+Math.min(start+BR.size,total)+' of '+total+' leaders'+(pages>1?'   ·   page '+(BR.page+1)+' of '+pages:'');
     el('prev').disabled=BR.page<=0;el('next').disabled=BR.page>=pages-1;el('pager').style.display='flex';
   }
 
