@@ -52,7 +52,7 @@
     var deptCount = Object.keys(depts).length;
     var tiles = [
       { n: num(teams), l: 'teams have connected their work to the strategy', c: '' },
-      { n: num(commits), l: 'commitments made across all pillars', c: 'k2' },
+      { n: num(commits), l: 'commitments made across all strategic goals', c: 'k2' },
       { n: num(deptCount), l: 'departments represented', c: 'k3' }
     ];
     el('kpis').innerHTML = tiles.map(function (t) {
@@ -98,7 +98,7 @@
     } else {
       circles = '<circle cx="' + cx + '" cy="' + cx + '" r="' + r + '" fill="none" stroke="#e6eadf" stroke-width="' + sw + '"></circle>';
     }
-    var svg = '<svg width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + ' ' + size + '" role="img" aria-label="Pillar mix">' +
+    var svg = '<svg width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + ' ' + size + '" role="img" aria-label="Strategic goal mix">' +
       circles +
       '<text x="' + cx + '" y="' + (cx - 4) + '" text-anchor="middle" font-size="30" font-weight="800" fill="#1c2418">' + num(total) + '</text>' +
       '<text x="' + cx + '" y="' + (cx + 16) + '" text-anchor="middle" font-size="11" fill="#5c665a">commitments</text>' +
