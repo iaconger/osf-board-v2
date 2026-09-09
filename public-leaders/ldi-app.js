@@ -113,6 +113,7 @@
       var c=compByName(name);var d=document.createElement('div');
       var isMine=(mine&&card.id===mine.id);var size=isMine?26:(11+r()*8);
       d.className='bd'+(isMine?' mine':'');
+      d.setAttribute('data-id',card.id);
       d.style.width=size+'px';d.style.height=size+'px';d.style.background=c.color;d.style.color=c.color;
       d.style.left=(8+r()*84)+'%';d.style.top=(10+r()*80)+'%';
       cv.appendChild(d);
@@ -244,6 +245,36 @@
     if(s==='0')resetAll();
     go(s);
   });
+
+  // ---- board dot detail popover (hover to preview, tap to pin) ----
+  (function(){
+    var cv=el('canvas'); var pop=el('dotpop'); if(!cv||!pop) return;
+    var pinnedId=null;
+    function popHTML(card){
+      var who=card.first?esc(card.first):'A leader';
+      var role=[card.role,card.division].filter(Boolean).map(esc).join(' · ');
+      var comps=(card.comps||[]).map(function(c){var col=compByName(c.name).color;return '<div class="pc"><span class="r" style="background:'+col+'">'+c.rank+'</span>'+esc(c.name)+'</div>';}).join('');
+      var sk=(card.skills&&card.skills.length)?('<div class="lb">Strengthening</div><div class="sk">'+card.skills.map(esc).join(' · ')+'</div>'):'';
+      var nt=card.approach?('<div class="nt">'+esc(card.approach)+'</div>'):'';
+      return '<div class="who">'+who+'</div>'+(role?'<div class="prole">'+role+'</div>':'')+'<div class="lb">Focusing on</div>'+comps+sk+nt;
+    }
+    function positionPop(d){
+      var rr=d.getBoundingClientRect();
+      pop.style.left=Math.min(Math.max(rr.left+rr.width/2,150),window.innerWidth-150)+'px';
+      if(rr.top<200){pop.classList.add('below');pop.style.top=rr.bottom+'px';}
+      else{pop.classList.remove('below');pop.style.top=rr.top+'px';}
+    }
+    function showPop(d){var card=findCard(d.getAttribute('data-id'));if(!card)return;pop.innerHTML=popHTML(card);positionPop(d);pop.classList.add('show');}
+    function hidePop(){pop.classList.remove('show');}
+    function clearActive(){var a=cv.querySelector('.bd.active');if(a)a.classList.remove('active');}
+    cv.addEventListener('mousemove',function(e){if(pinnedId)return;var d=e.target.closest('.bd');if(d)showPop(d);else hidePop();});
+    cv.addEventListener('mouseleave',function(){if(!pinnedId)hidePop();});
+    cv.addEventListener('click',function(e){var d=e.target.closest('.bd');if(!d)return;e.stopPropagation();
+      var id=d.getAttribute('data-id');clearActive();
+      if(pinnedId===id){pinnedId=null;hidePop();}else{pinnedId=id;d.classList.add('active');showPop(d);}
+    });
+    document.addEventListener('click',function(e){if(pinnedId&&!e.target.closest('#canvas')){pinnedId=null;clearActive();hidePop();}});
+  }());
 
   // ---- personal-note counter ----
   (function(){

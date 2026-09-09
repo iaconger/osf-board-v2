@@ -86,7 +86,8 @@
   .boardwrap{display:grid;grid-template-columns:1.4fr 1fr;gap:22px}
   @media(max-width:760px){.boardwrap{grid-template-columns:1fr}}
   .canvas{position:relative;background:linear-gradient(160deg,#fbfdf7,#f2f6ea);border:1px solid var(--line);border-radius:18px;height:420px;overflow:hidden}
-  .bd{position:absolute;border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 2px 6px rgba(0,0,0,.12)}
+  .bd{position:absolute;border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 2px 6px rgba(0,0,0,.12);cursor:pointer;transition:box-shadow .15s}
+  .bd:hover,.bd.active{box-shadow:0 0 0 3px #fff,0 0 0 5px currentColor,0 4px 12px rgba(0,0,0,.28);z-index:6}
   .bd.mine{box-shadow:0 0 0 4px #fff,0 0 0 6px currentColor,0 4px 14px rgba(0,0,0,.25);z-index:5}
   .leader h3{font-size:16px;margin:0 0 3px}
   .rank2{margin-top:10px}
@@ -126,6 +127,19 @@
   .kpi{display:flex;gap:26px;margin:2px 0 16px}
   .kpi .n{font-size:34px;font-weight:800;line-height:1}
   .kpi .l{font-size:12px;color:var(--muted)}
+  a.btn{text-decoration:none;display:inline-flex;align-items:center;gap:8px}
+  /* dot detail popover (participant board) */
+  .dotpop{position:fixed;z-index:60;min-width:200px;max-width:290px;background:#fff;color:var(--ink);border-radius:15px;
+    padding:14px 16px;box-shadow:0 18px 46px rgba(40,50,30,.28);border:1px solid var(--line);transform:translate(-50%,-116%);
+    pointer-events:none;opacity:0;transition:opacity .12s ease;font-size:14px}
+  .dotpop.show{opacity:1} .dotpop.below{transform:translate(-50%,24px)}
+  .dotpop .who{font-family:"Bitter",Georgia,serif;font-size:18px;font-weight:800;line-height:1.15}
+  .dotpop .prole{font-size:12.5px;color:var(--muted);margin:2px 0 10px}
+  .dotpop .lb{font-size:10px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:var(--green);margin:8px 0 5px}
+  .dotpop .pc{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;margin:3px 0}
+  .dotpop .pc .r{width:16px;height:16px;border-radius:50%;color:#fff;font-size:9px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .dotpop .sk{font-size:12.5px;color:#33402c;line-height:1.5}
+  .dotpop .nt{font-size:12.5px;font-style:italic;color:#33402c;line-height:1.45;background:var(--soft);border-left:3px solid var(--green);border-radius:0 8px 8px 0;padding:7px 10px;margin-top:8px}
 </style>
 </head>
 <body>
@@ -206,7 +220,8 @@
     <div class="step" data-s="5">
       <p class="eyebrow">FY26 · Leadership Development Institute</p>
       <h2 style="margin-bottom:4px">Where our leaders are focusing</h2>
-      <p class="note">Each dot is a leader, colored by their #1 competency. As more leaders add theirs, the picture of where development energy is concentrated comes to life.</p>
+      <p class="note">Each dot is a leader, colored by their #1 competency. Hover or tap a dot to see that leader's focus. As more leaders add theirs, the picture of where development energy is concentrated comes to life.</p>
+      <div style="margin:0 0 16px"><a class="btn ghost" href="/screen.html" target="_blank" rel="noopener">⛶ Open live room view</a></div>
       <div class="kpi"><div><div class="n" id="kLeaders" style="color:var(--green)">0</div><div class="l">leaders on the board</div></div>
         <div><div class="n" id="kTop" style="color:var(--teal);font-size:20px;font-family:Bitter,serif;padding-top:8px">…</div><div class="l">top competency right now</div></div></div>
       <div class="boardwrap">
@@ -230,6 +245,7 @@
 
   </div>
 </div>
+<div class="dotpop" id="dotpop"></div>
 <script src="html2canvas.min.js"></script>
 <script src="ldi-app.js"></script>
 </body>
