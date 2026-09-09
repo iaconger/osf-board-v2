@@ -4,44 +4,88 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>OSF LDI Room Screen</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bitter:wght@400;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bitter:wght@400;600;700&family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{--green:#4E8209;--green2:#64A70B;--teal:#007F9B;--blue:#00A9CE;--magenta:#A5228E;--orange:#E57200;--violet:#5B4B8A;--ink:#12220a;}
   *{box-sizing:border-box}
   html,body{height:100%}
   body{margin:0;font-family:"Montserrat",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;color:#fff;
-    background:radial-gradient(1400px 800px at 50% -20%,#3f7a12,#1f3d0a 70%);overflow:hidden}
+    background:radial-gradient(1500px 900px at 50% -25%,#3f7a12,#173107 72%);overflow:hidden}
   h1,h2,h3{font-family:"Bitter",Georgia,serif}
-  .top{height:12px;background:linear-gradient(90deg,var(--green2),var(--teal),var(--magenta))}
-  .wrap{height:calc(100% - 12px);display:flex;flex-direction:column;padding:30px 40px 0}
-  header{display:flex;justify-content:space-between;align-items:flex-end;gap:20px}
-  .screenlogo{height:44px;width:auto;margin:0 0 14px;display:block;filter:brightness(0) invert(1);opacity:.96}
-  .eyebrow{font-size:15px;font-weight:700;letter-spacing:2px;text-transform:uppercase;opacity:.85;margin:0 0 6px;color:#dbead0}
-  header h1{font-size:44px;margin:0;line-height:1}
-  .count{text-align:right}
-  .count .n{font-size:72px;font-weight:800;line-height:1;letter-spacing:-2px}
-  .count .l{font-size:16px;opacity:.85;margin-top:4px}
-  main{flex:1;display:grid;grid-template-columns:1.5fr 1fr;gap:34px;padding:26px 0 10px;min-height:0}
-  .boardpanel{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:24px;position:relative;overflow:hidden}
+  /* OSF gradient bar */
+  .top{height:12px;background:linear-gradient(90deg,var(--green),var(--green2),var(--teal),var(--blue),var(--magenta),var(--orange))}
+  .wrap{height:calc(100% - 12px);display:flex;flex-direction:column;padding:26px 40px 0}
+
+  header{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex:0 0 auto}
+  .screenlogo{height:42px;width:auto;margin:0 0 12px;display:block;filter:brightness(0) invert(1);opacity:.96}
+  .eyebrow{font-size:15px;font-weight:700;letter-spacing:2px;text-transform:uppercase;opacity:.85;margin:0 0 6px;color:#dcecd0}
+  header h1{font-size:42px;margin:0;line-height:1.02}
+  .countwrap{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+  .count .n{font-size:78px;font-weight:800;line-height:.9;letter-spacing:-3px;font-variant-numeric:tabular-nums}
+  .count .l{font-size:15px;opacity:.85;margin-top:2px}
+  .live{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;
+    background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);border-radius:99px;padding:5px 13px}
+  .live .pip{width:9px;height:9px;border-radius:50%;background:#7CFC58;box-shadow:0 0 0 0 rgba(124,252,88,.7);animation:pulse 1.8s infinite}
+  .live.off{color:#ffd9a0} .live.off .pip{background:#ffb43d;animation:none;box-shadow:none}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(124,252,88,.6)}70%{box-shadow:0 0 0 11px rgba(124,252,88,0)}100%{box-shadow:0 0 0 0 rgba(124,252,88,0)}}
+
+  main{flex:1 1 auto;display:grid;grid-template-columns:1.55fr 1fr;gap:30px;padding:22px 0 8px;min-height:0}
+  .boardpanel{background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.14);border-radius:26px;position:relative;overflow:hidden}
+  .ranklabel{position:absolute;left:24px;top:20px;font-size:13px;letter-spacing:1.6px;text-transform:uppercase;opacity:.65;z-index:2}
   .canvas{position:absolute;inset:0}
-  .bd{position:absolute;border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 3px 10px rgba(0,0,0,.35);transition:opacity .5s}
-  .bd.new{animation:pop 1.2s ease}
-  @keyframes pop{0%{transform:translate(-50%,-50%) scale(0);}55%{transform:translate(-50%,-50%) scale(1.5);}100%{transform:translate(-50%,-50%) scale(1);}}
-  .ranklabel{position:absolute;left:22px;top:18px;font-size:14px;letter-spacing:1.5px;text-transform:uppercase;opacity:.7}
-  .rankpanel h2{font-size:24px;margin:0 0 18px;letter-spacing:.3px}
-  .rk{margin-bottom:16px}
-  .rk .rl{display:flex;align-items:center;gap:12px;font-size:20px;font-weight:600;margin-bottom:7px}
-  .rk .rl .dot{width:16px;height:16px;border-radius:50%;flex:0 0 auto}
-  .rk .rl .v{margin-left:auto;font-weight:800}
-  .rk .track{background:rgba(255,255,255,.14);border-radius:999px;height:14px;overflow:hidden}
-  .rk .fill{height:100%;border-radius:999px;transition:width .8s cubic-bezier(.3,0,.2,1)}
-  .ticker{height:64px;display:flex;align-items:center;gap:16px;border-top:1px solid rgba(255,255,255,.15);font-size:20px;overflow:hidden;white-space:nowrap}
-  .ticker .tk{opacity:.55;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;font-size:13px;flex:0 0 auto}
-  .ticker .flow{display:flex;gap:30px;animation:none}
-  .ticker .item{display:inline-flex;align-items:center;gap:10px}
+  .bd{position:absolute;transform:translate(-50%,-50%)}
+  .bd .core{display:block;width:var(--sz);height:var(--sz);border-radius:50%;background:var(--c);
+    box-shadow:0 0 10px 1px color-mix(in srgb,var(--c) 65%,transparent),0 2px 8px rgba(0,0,0,.35);
+    opacity:.94;animation:float var(--dur,7s) ease-in-out var(--delay,0s) infinite}
+  .bd.spawn .core{animation:float var(--dur,7s) ease-in-out var(--delay,0s) infinite,glow 1.1s ease-out}
+  .bd .ring{position:absolute;left:50%;top:50%;width:var(--sz);height:var(--sz);border-radius:50%;
+    border:2px solid var(--c);transform:translate(-50%,-50%) scale(1);opacity:0;pointer-events:none}
+  .bd.spawn .ring{animation:ripple 1.1s ease-out forwards}
+  @keyframes float{0%,100%{transform:translate(0,0)}25%{transform:translate(3px,-6px)}50%{transform:translate(-3px,4px)}75%{transform:translate(5px,2px)}}
+  @keyframes glow{0%{box-shadow:0 0 0 0 #fff,0 0 22px 6px var(--c)}100%{box-shadow:0 0 10px 1px color-mix(in srgb,var(--c) 65%,transparent),0 2px 8px rgba(0,0,0,.35)}}
+  @keyframes ripple{0%{opacity:.85;transform:translate(-50%,-50%) scale(.6)}100%{opacity:0;transform:translate(-50%,-50%) scale(6)}}
+  /* transient spawn callout */
+  .callout{position:absolute;transform:translate(-50%,-140%);background:rgba(20,34,10,.86);border:1px solid rgba(255,255,255,.2);
+    border-radius:11px;padding:7px 12px;font-size:15px;font-weight:600;white-space:nowrap;pointer-events:none;
+    display:flex;align-items:center;gap:9px;animation:callout 4s ease forwards;z-index:5}
+  .callout .cdot{width:11px;height:11px;border-radius:50%;flex:0 0 auto}
+  .callout b{font-weight:800}
+  @keyframes callout{0%{opacity:0;transform:translate(-50%,-110%) scale(.9)}10%{opacity:1;transform:translate(-50%,-140%) scale(1)}80%{opacity:1;transform:translate(-50%,-140%) scale(1)}100%{opacity:0;transform:translate(-50%,-160%) scale(1)}}
+  .empty{opacity:.85;position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px;gap:6px}
+  .empty .big{font-size:26px;font-family:"Bitter",serif} .empty .sub{font-size:17px;opacity:.75}
+
+  .side{display:flex;flex-direction:column;gap:22px;min-height:0}
+  .rankpanel{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
+  .rankpanel h2{font-size:23px;margin:0 0 16px;letter-spacing:.3px}
+  .rk{margin-bottom:15px}
+  .rk .rl{display:flex;align-items:center;gap:12px;font-size:19px;font-weight:600;margin-bottom:7px}
+  .rk .rl .dot{width:15px;height:15px;border-radius:50%;flex:0 0 auto}
+  .rk .rl .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .rk .rl .v{margin-left:auto;font-weight:800;font-variant-numeric:tabular-nums}
+  .rk .track{background:rgba(255,255,255,.13);border-radius:999px;height:13px;overflow:hidden}
+  .rk .fill{height:100%;border-radius:999px;width:0;transition:width .9s cubic-bezier(.3,0,.2,1)}
+  /* join card */
+  .join{flex:0 0 auto;background:rgba(255,255,255,.95);color:var(--ink);border-radius:20px;padding:18px 20px;display:flex;align-items:center;gap:18px}
+  .join .qr{width:118px;height:118px;flex:0 0 auto;background:#fff;border-radius:12px;padding:7px;display:flex;align-items:center;justify-content:center}
+  .join .qr svg{width:100%;height:100%;display:block}
+  .join .jt .k{font-size:13px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--green)}
+  .join .jt .h{font-family:"Bitter",serif;font-size:21px;margin:3px 0 5px;line-height:1.1}
+  .join .jt .u{font-size:15px;font-weight:700;color:var(--teal);word-break:break-all}
+
+  .ticker{flex:0 0 auto;height:62px;display:flex;align-items:center;gap:16px;border-top:1px solid rgba(255,255,255,.15);font-size:19px;overflow:hidden;white-space:nowrap}
+  .ticker .tk{opacity:.55;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;font-size:12px;flex:0 0 auto}
+  .ticker .flow{display:flex;gap:28px;overflow:hidden}
+  .ticker .item{display:inline-flex;align-items:center;gap:9px;color:#e7f0dd;opacity:.9;animation:slidein .5s ease}
+  .ticker .item.newest{color:#fff;opacity:1;font-weight:600}
   .ticker .item .dot{width:12px;height:12px;border-radius:50%}
-  .ticker .item.newest{color:#fff} .ticker .item{color:#e7f0dd;opacity:.9}
-  .empty{opacity:.7;font-size:22px;position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:30px}
+  @keyframes slidein{0%{opacity:0;transform:translateX(-14px)}100%{opacity:.9;transform:none}}
+  /* milestone flash */
+  .milestone{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:40;opacity:0}
+  .milestone.show{animation:ms 4s ease forwards}
+  .milestone .card{background:linear-gradient(120deg,var(--green),var(--teal));border-radius:24px;padding:26px 46px;text-align:center;box-shadow:0 24px 70px rgba(0,0,0,.4)}
+  .milestone .card .big{font-family:"Bitter",serif;font-size:54px;font-weight:800;line-height:1}
+  .milestone .card .sub{font-size:19px;opacity:.92;margin-top:6px;letter-spacing:.5px}
+  @keyframes ms{0%{opacity:0;transform:scale(.8)}12%{opacity:1;transform:scale(1)}80%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.05)}}
 </style>
 </head>
 <body>
@@ -49,14 +93,33 @@
 <div class="wrap">
   <header>
     <div><img class="screenlogo" src="/logo.png" alt="OSF HealthCare"><p class="eyebrow">FY26 · Leadership Development Institute</p><h1>Where our leaders are focusing</h1></div>
-    <div class="count"><div class="n" id="count">0</div><div class="l">leaders have shared their focus</div></div>
+    <div class="countwrap">
+      <span class="live off" id="live"><span class="pip"></span><span id="livetext">Connecting…</span></span>
+      <div class="count"><div class="n" id="count">0</div><div class="l">leaders have shared their focus</div></div>
+    </div>
   </header>
   <main>
-    <div class="boardpanel"><div class="ranklabel">The room</div><div class="canvas" id="canvas"></div><div class="empty" id="empty">Waiting for the first leader to add their focus…</div></div>
-    <div class="rankpanel"><h2>Top competencies</h2><div id="ranking"></div></div>
+    <div class="boardpanel">
+      <div class="ranklabel">The room</div>
+      <div class="canvas" id="canvas"></div>
+      <div class="empty" id="empty"><div class="big">Waiting for the first leader…</div><div class="sub">Scan the code to add your focus</div></div>
+    </div>
+    <div class="side">
+      <div class="rankpanel"><h2>Top competencies</h2><div id="ranking" style="flex:1"></div></div>
+      <div class="join">
+        <div class="qr" id="qr"></div>
+        <div class="jt">
+          <div class="k">Add your focus</div>
+          <div class="h">Scan to join</div>
+          <div class="u" id="joinurl"></div>
+        </div>
+      </div>
+    </div>
   </main>
   <div class="ticker"><span class="tk">Just in</span><div class="flow" id="ticker"></div></div>
 </div>
+<div class="milestone" id="milestone"><div class="card"><div class="big" id="msbig"></div><div class="sub" id="mssub"></div></div></div>
+<script src="qrcode.js"></script>
 <script src="screen-ldi.js"></script>
 </body>
 </html>

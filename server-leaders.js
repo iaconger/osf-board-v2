@@ -378,6 +378,13 @@ wss.on('connection', (ws) => {
     if (raw.length > LIMITS.msgBytes) return;
     let data; try { data = JSON.parse(raw); } catch { return; }
     if (data && data.type === 'react') { handleReact(ws, data); return; } // own limiter
+    if (data && data.type === 'sync') { // read-only self-heal for the live screen; lightly throttled
+      const now = Date.now();
+      if (now - (ws.lastSyncAt || 0) < 5000) return;
+      ws.lastSyncAt = now;
+      ws.send(JSON.stringify({ type: 'init', count: state.count, feed: feedForInit() }));
+      return;
+    }
     if (rateLimited(ws)) return;
     if (!data || data.type !== 'submit') return;
 
