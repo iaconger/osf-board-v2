@@ -167,12 +167,13 @@
       var rl=[card.role,card.division].filter(Boolean).map(esc).join(' · ');
       var comps=(card.comps||[]).map(function(c){var col=compByName(c.name).color;return '<span class="ec"><span class="n" style="background:'+col+'">'+c.rank+'</span><span class="dot" style="background:'+col+'"></span>'+esc(c.name)+'</span>';}).join('');
       var sk=(card.skills||[]).length?('<div class="esk">'+(card.skills||[]).map(esc).join('  ·  ')+'</div>'):'';
+      var vv=card.value?('<div class="evalue">Leaning into '+esc(card.value)+'</div>'):'';
       var ap=card.approach?('<div class="eapproach">'+esc(card.approach)+'</div>'):'';
       var rk=card.react||{heart:0,clap:0};
       var done=reacted[card.id]; var dis=done?' disabled':'';
       return '<div class="excard" data-id="'+esc(card.id)+'">'+
         '<div class="eid"><b>'+who+'</b>'+(rl?' <span>· '+rl+'</span>':'')+'</div>'+
-        '<div class="ecomps">'+comps+'</div>'+sk+ap+
+        '<div class="ecomps">'+comps+'</div>'+sk+vv+ap+
         '<div class="erow'+(done?' reacted':'')+'">'+
           '<button class="react'+(done==='heart'?' chosen':'')+'" data-react="heart" data-id="'+esc(card.id)+'"'+dis+'>❤️ <span class="cnt">'+rk.heart+'</span></button>'+
           '<button class="react'+(done==='clap'?' chosen':'')+'" data-react="clap" data-id="'+esc(card.id)+'"'+dis+'>👏 <span class="cnt">'+rk.clap+'</span></button>'+
