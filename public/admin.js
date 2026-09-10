@@ -308,11 +308,10 @@
 
   function load() {
     var k = keyInput.value.trim();
-    if (!k) { msg('Enter your export key to load the dashboard.'); return; }
     setLinks(k);
     msg('Loading…');
-    fetch('/export.json?key=' + encodeURIComponent(k)).then(function (r) {
-      if (r.status === 403) { msg('That key was not accepted. Double-check the EXPORT_KEY in your hosting settings.'); return null; }
+    fetch('/export.json' + (k ? ('?key=' + encodeURIComponent(k)) : '')).then(function (r) {
+      if (r.status === 403) { msg('Enter your export key to load the dashboard.'); return null; }
       if (!r.ok) { msg('Could not load data (error ' + r.status + ').'); return null; }
       return r.json();
     }).then(function (d) {
@@ -321,6 +320,7 @@
       var subs = d.submissions || [];
       var by = summary.byPillar || {};
       el('dash').style.display = 'block';
+      var g = el('gate'); if (g) g.style.display = 'none';
       el('refresh').style.display = 'inline-flex';
       renderKpis(summary, subs);
       renderTimeline(subs);
@@ -341,5 +341,5 @@
   keyInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') load(); });
   wireBrowser();
 
-  if (keyInput.value) load();
+  load(); // auto-load (open); if the server is re-secured, the key gate shows on 403
 })();

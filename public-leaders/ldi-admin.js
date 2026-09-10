@@ -179,10 +179,9 @@
   function qp(n){try{return new URLSearchParams(location.search).get(n)||'';}catch(e){return '';}}
   function msg(t){var m=el('msg');if(m)m.textContent=t||'';}
   function load(){
-    var k=el('key').value.trim(); if(!k){msg('Enter your export key to load the dashboard.');return;}
-    KEY=k; msg('Loading…');
-    fetch('/export.json?key='+encodeURIComponent(k)).then(function(r){
-      if(r.status===403){msg('That key was not accepted. Check the EXPORT_KEY in your hosting settings.');return null;}
+    var k=el('key').value.trim(); KEY=k; msg('Loading…');
+    fetch('/export.json'+(k?('?key='+encodeURIComponent(k)):'')).then(function(r){
+      if(r.status===403){msg('Enter your export key to load the dashboard.');return null;}
       if(!r.ok){msg('Could not load data (error '+r.status+').');return null;}
       return r.json();
     }).then(function(d){ if(!d)return;
@@ -197,6 +196,6 @@
   el('load').addEventListener('click',load);
   el('key').addEventListener('keydown',function(e){if(e.key==='Enter')load();});
   var rf=el('refresh'); if(rf)rf.addEventListener('click',load);
-  el('key').value=qp('key'); if(el('key').value) load();
+  el('key').value=qp('key'); load(); // auto-load (open); if the server is re-secured, the key gate shows on 403
 })();
 

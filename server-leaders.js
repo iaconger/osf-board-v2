@@ -26,6 +26,7 @@ const PORT = Number(process.env.PORT) || 3000;
 const MAX_CLIENTS = Number(process.env.MAX_CLIENTS) || 20000;
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '').split(',').map((s) => s.trim()).filter(Boolean);
 const EXPORT_KEY = process.env.EXPORT_KEY || '';
+const REQUIRE_KEY = process.env.REQUIRE_EXPORT_KEY === '1'; // OFF by default = dashboard + exports open (no password); set REQUIRE_EXPORT_KEY=1 in Render to re-secure
 const SELF_URL = process.env.RENDER_EXTERNAL_URL || process.env.SELF_URL || '';
 
 // ---- the leadership framework (server-side allow-lists) ----
@@ -191,14 +192,14 @@ function subView(e) {
 }
 
 app.get('/export.json', (req, res) => {
-  if (!EXPORT_KEY || req.query.key !== EXPORT_KEY) return res.status(403).json({ error: 'Forbidden' });
+  if (REQUIRE_KEY && (!EXPORT_KEY || req.query.key !== EXPORT_KEY)) return res.status(403).json({ error: 'Forbidden' });
   const f = readFilter(req.query);
   const subs = captured.filter((e) => passesFilter(e, f)).map(subView);
   res.json({ generatedAt: new Date().toISOString(), app: 'ldi-leaders', filter: f, count: subs.length, submissions: subs });
 });
 
 app.get('/export', (req, res) => {
-  if (!EXPORT_KEY || req.query.key !== EXPORT_KEY) return res.status(403).type('text/plain').send('Forbidden');
+  if (REQUIRE_KEY && (!EXPORT_KEY || req.query.key !== EXPORT_KEY)) return res.status(403).type('text/plain').send('Forbidden');
   const f = readFilter(req.query);
   const rows = [[
     'Submitted (Central Time)', 'First Name', 'Last Name', 'Division', 'Leadership Role',
@@ -329,7 +330,7 @@ function buildWorkbook(f) {
 }
 
 app.get('/export.xlsx', async (req, res) => {
-  if (!EXPORT_KEY || req.query.key !== EXPORT_KEY) return res.status(403).type('text/plain').send('Forbidden');
+  if (REQUIRE_KEY && (!EXPORT_KEY || req.query.key !== EXPORT_KEY)) return res.status(403).type('text/plain').send('Forbidden');
   const f = readFilter(req.query);
   try {
     const wb = buildWorkbook(f);
@@ -344,6 +345,8 @@ app.get('/export.xlsx', async (req, res) => {
 });
 
 app.get('/favicon.ico', (_req, res) => res.status(204).end());
+// Leadership dashboard lives at /insights (also /admin.html for back-compat)
+app.get(['/insights', '/insights.html'], (_req, res) => res.sendFile(`${__dirname}/public-leaders/admin.html`));
 app.use(express.static(`${__dirname}/public-leaders`, { maxAge: 0, etag: true, index: ['index.html'], dotfiles: 'ignore' }));
 
 const server = http.createServer(app);

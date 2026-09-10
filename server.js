@@ -34,6 +34,7 @@ const MAX_CLIENTS = Number(process.env.MAX_CLIENTS) || 20000;
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
   .split(',').map((s) => s.trim()).filter(Boolean);
 const EXPORT_KEY = process.env.EXPORT_KEY || '';                 // required to download captured data
+const REQUIRE_KEY = process.env.REQUIRE_EXPORT_KEY === '1';      // OFF by default = dashboard + exports open (no password); set REQUIRE_EXPORT_KEY=1 in Render to re-secure
 const SELF_URL = process.env.RENDER_EXTERNAL_URL || process.env.SELF_URL || '';
 
 const GOALS = ['g1', 'g2', 'g3']; // Excellence / One OSF Team / Destination OSF
@@ -227,7 +228,7 @@ app.get('/status', (_req, res) => {
 });
 
 app.get('/export', (req, res) => {
-  if (!EXPORT_KEY || req.query.key !== EXPORT_KEY) return res.status(403).type('text/plain').send('Forbidden');
+  if (REQUIRE_KEY && (!EXPORT_KEY || req.query.key !== EXPORT_KEY)) return res.status(403).type('text/plain').send('Forbidden');
   const pillar = pillarCode(req.query.pillar);   // optional: pull just one pillar's commitments
   const rows = [[
     'Submitted (Central Time)', 'Department', 'Team', 'Strategic Goal',
@@ -255,7 +256,7 @@ app.get('/export', (req, res) => {
   res.type('text/csv; charset=utf-8').send(csv);
 });
 app.get('/export.json', (req, res) => {
-  if (!EXPORT_KEY || req.query.key !== EXPORT_KEY) return res.status(403).json({ error: 'Forbidden' });
+  if (REQUIRE_KEY && (!EXPORT_KEY || req.query.key !== EXPORT_KEY)) return res.status(403).json({ error: 'Forbidden' });
   const pillar = pillarCode(req.query.pillar);
   const subs = [];
   for (const e of captured) {
@@ -453,7 +454,7 @@ function buildWorkbook(pillar) {
 }
 
 app.get('/export.xlsx', async (req, res) => {
-  if (!EXPORT_KEY || req.query.key !== EXPORT_KEY) return res.status(403).type('text/plain').send('Forbidden');
+  if (REQUIRE_KEY && (!EXPORT_KEY || req.query.key !== EXPORT_KEY)) return res.status(403).type('text/plain').send('Forbidden');
   const pillar = pillarCode(req.query.pillar);
   try {
     const wb = buildWorkbook(pillar);
@@ -469,6 +470,8 @@ app.get('/export.xlsx', async (req, res) => {
 });
 
 app.get('/favicon.ico', (_req, res) => res.status(204).end());
+// Leadership dashboard lives at /insights (also /admin.html for back-compat)
+app.get(['/insights', '/insights.html'], (_req, res) => res.sendFile(`${__dirname}/public/admin.html`));
 app.use(express.static(`${__dirname}/public`, { maxAge: 0, etag: true, index: ['index.html'], dotfiles: 'ignore' }));
 
 const server = http.createServer(app);
