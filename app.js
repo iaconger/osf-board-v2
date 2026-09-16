@@ -348,6 +348,7 @@
     var mark = A ? '<div class="mtc-mark"><svg viewBox="'+A.vb+'" aria-hidden="true">'+
       A.lobes.g1+A.lobes.g2+A.lobes.g3+A.ink+'</svg></div>' : '';
     var html = '<div class="mtc-top">'+mark+'<div class="mk">OSF Strategy Commitment Card · FY27</div><h3>'+esc(name)+'</h3></div>'+
+      '<div class="mtc-vision"><span class="vk">Vision</span><p>Inspired by God\'s love for each person, we are One OSF team, providing compassionate, innovative, exceptional health care.</p></div>'+
       '<div class="mtc-body">';
     if(work){ html += field('Our role in Destination OSF', esc(work)); }
     html += '<div class="mtc-field"><div class="lb">Who we\'re connected to</div><div class="conn-list">'+

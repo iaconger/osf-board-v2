@@ -204,6 +204,10 @@
     background:#fff;border-radius:50%;padding:13px;box-shadow:0 5px 14px rgba(0,0,0,.22)}
   .mtc-mark svg{width:100%;height:100%;display:block}
   @media print{.mtc-mark{-webkit-print-color-adjust:exact;print-color-adjust:exact;box-shadow:none;border:1px solid #e3e7dd}}
+  .mtc-vision{margin:16px 26px 0;padding:15px 20px;background:#fff;border:2px solid var(--green);border-radius:14px;text-align:center}
+  .mtc-vision .vk{display:block;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1.6px;color:var(--green);margin-bottom:6px}
+  .mtc-vision p{margin:0 auto;max-width:48ch;font-size:14px;font-style:italic;font-weight:600;line-height:1.55;color:var(--ink)}
+  @media print{.mtc-vision{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
   .mtc-body{padding:24px 26px 8px}
   .mtc-field{margin-bottom:20px}
   .mtc-field .lb{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.9px;color:var(--link);margin-bottom:6px}
@@ -1029,6 +1033,7 @@ window.OSF_ART = {
     var mark = A ? '<div class="mtc-mark"><svg viewBox="'+A.vb+'" aria-hidden="true">'+
       A.lobes.g1+A.lobes.g2+A.lobes.g3+A.ink+'</svg></div>' : '';
     var html = '<div class="mtc-top">'+mark+'<div class="mk">OSF Strategy Commitment Card · FY27</div><h3>'+esc(name)+'</h3></div>'+
+      '<div class="mtc-vision"><span class="vk">Vision</span><p>Inspired by God\'s love for each person, we are One OSF team, providing compassionate, innovative, exceptional health care.</p></div>'+
       '<div class="mtc-body">';
     if(work){ html += field('Our role in Destination OSF', esc(work)); }
     html += '<div class="mtc-field"><div class="lb">Who we\'re connected to</div><div class="conn-list">'+
