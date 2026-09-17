@@ -86,6 +86,17 @@
   table.hm td.rl{width:auto;text-align:left;font-weight:700;color:var(--ink);background:none;padding-right:12px;white-space:nowrap;font-size:13.5px}
   .hmlegend{font-size:12px;color:var(--muted);margin-top:14px;padding-left:2px}
 
+  /* strategic goal commitments */
+  .goalcols{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  @media(max-width:860px){.goalcols{grid-template-columns:1fr}}
+  .goalcol{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff;display:flex;flex-direction:column}
+  .goalcol .gch{padding:11px 14px;color:#fff;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .goalcol .gch .gn{background:rgba(255,255,255,.28);border-radius:99px;padding:1px 10px;font-size:12px}
+  .goalcol .glist{padding:10px 13px;max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
+  .goalcol .gact{font-size:12.5px;line-height:1.5;color:var(--ink);border-bottom:1px solid var(--soft2);padding-bottom:9px}
+  .goalcol .gact:last-child{border-bottom:0;padding-bottom:0}
+  .goalcol .gact .gwho{display:block;font-size:11px;color:var(--muted);font-weight:700;margin-top:3px}
+  .goalcol .gempty{padding:14px;color:var(--muted);font-size:13px}
   /* browser */
   .controls{display:flex;gap:10px;flex-wrap:wrap;margin:2px 0 16px}
   .controls .search{flex:1;min-width:220px;padding:11px 14px;border:1.5px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;background:var(--soft);transition:.15s}
@@ -107,6 +118,8 @@
   .sktag{display:inline-block;background:#eaf6fa;color:#036178;border-radius:99px;padding:3px 10px;font-size:12px;font-weight:600;margin:2px 4px 2px 0}
   .vtag{display:inline-block;background:#f6e6f2;color:#8f1f7c;border-radius:99px;padding:3px 10px;font-size:12px;font-weight:700}
   table.subs .approach{display:block;max-width:260px;font-size:12.5px;color:var(--ink);line-height:1.45;font-style:italic;opacity:.9}
+  table.subs .gcommit{display:block;max-width:280px;font-size:12.5px;color:var(--ink);line-height:1.45;margin-bottom:6px}
+  table.subs .gcommit:last-child{margin-bottom:0}
   .pager{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:16px}
   .pinfo{font-size:13px;color:var(--muted)}
   .pbtn{border:1.5px solid var(--green);background:#fff;color:var(--green);padding:8px 16px;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:.15s}
@@ -127,7 +140,7 @@
   <div class="inner">
     <div>
       <img class="logo" src="/logo.png" alt="OSF HealthCare">
-      <p class="eyebrow">FY26 · Leadership Development Institute</p>
+      <p class="eyebrow">FY27 Q1 · Leadership Development Institute</p>
       <h1>Leadership Dashboard</h1>
     </div>
     <div class="as-of" id="asof"></div>
@@ -180,9 +193,9 @@
   </div>
 
   <div class="card">
-    <h2>OSF Values leaders are leaning into</h2>
-    <p class="cardnote">The one Value each leader chose to shape their leadership behaviors this year.</p>
-    <div id="valueBars"></div>
+    <h2>Strategic goal commitments</h2>
+    <p class="cardnote">The specific action each leader is prioritizing to advance each FY27 strategic goal. Filters above apply.</p>
+    <div class="goalcols" id="goalCommit"></div>
   </div>
 
   <div class="grid2">
@@ -218,6 +231,6 @@
   </div>
   </div>
 </div>
-<script src="ldi-admin.js?v=20260910"></script>
+<script src="ldi-admin.js?v=20260917"></script>
 </body>
 </html>

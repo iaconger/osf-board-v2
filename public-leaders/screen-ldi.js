@@ -13,6 +13,11 @@
     {name:'System Thinking',color:'#E57200'},
     {name:'Drive Transformation',color:'#5B4B8A'}
   ];
+  var GOALS=[
+    {key:'g1',name:'Excellence',color:'#4E8209'},
+    {key:'g2',name:'One OSF Team',color:'#00A9CE'},
+    {key:'g3',name:'Destination OSF',color:'#A5228E'}
+  ];
   function compColor(n){for(var i=0;i<COMPS.length;i++)if(COMPS[i].name===n)return COMPS[i].color;return '#9aa';}
   var el=function(id){return document.getElementById(id);};
   function esc(s){return String(s==null?'':s).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];});}
@@ -181,9 +186,13 @@
     var role=[card.role,card.division].filter(Boolean).map(esc).join(' · ');
     var comps=(card.comps||[]).map(function(c){var col=compColor(c.name);return '<div class="pc"><span class="r" style="background:'+col+'">'+c.rank+'</span>'+esc(c.name)+'</div>';}).join('');
     var sk=(card.skills&&card.skills.length)?('<div class="lb">Strengthening</div><div class="sk">'+card.skills.map(esc).join(' · ')+'</div>'):'';
-    var vv=card.value?('<div class="lb">OSF Value</div><span class="vv">'+esc(card.value)+'</span>'):'';
+    var gg=card.goals||{};
+    var gl=GOALS.filter(function(g){return gg[g.key];}).map(function(g){
+      return '<div class="gl"><b style="color:'+g.color+'">'+esc(g.name)+':</b> '+esc(gg[g.key])+'</div>';
+    }).join('');
+    var goalsBlock=gl?('<div class="lb">Advancing the goals</div>'+gl):'';
     var nt=card.approach?('<div class="nt">'+esc(card.approach)+'</div>'):'';
-    return '<div class="who">'+who+'</div>'+(role?'<div class="role">'+role+'</div>':'')+'<div class="lb">Focusing on</div>'+comps+sk+vv+nt;
+    return '<div class="who">'+who+'</div>'+(role?'<div class="role">'+role+'</div>':'')+'<div class="lb">Focusing on</div>'+comps+sk+goalsBlock+nt;
   }
   function positionPop(d){
     var r=d.getBoundingClientRect();var pop=el('dotpop');

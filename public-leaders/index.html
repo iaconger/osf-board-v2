@@ -142,16 +142,23 @@
   .dotpop .pc .r{width:16px;height:16px;border-radius:50%;color:#fff;font-size:9px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
   .dotpop .sk{font-size:12.5px;color:#33402c;line-height:1.5}
   .dotpop .nt{font-size:12.5px;font-style:italic;color:#33402c;line-height:1.45;background:var(--soft);border-left:3px solid var(--green);border-radius:0 8px 8px 0;padding:7px 10px;margin-top:8px}
-  /* OSF Value single-select */
-  .vgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px}
-  @media(max-width:640px){.vgrid{grid-template-columns:1fr}}
-  .vopt{display:flex;align-items:center;gap:11px;border:2px solid var(--line);background:#fff;border-radius:14px;padding:15px 16px;cursor:pointer;font-size:15.5px;font-weight:600;color:var(--ink);transition:.15s}
-  .vopt:hover{border-color:#c9d3bd;transform:translateY(-1px)}
-  .vopt.sel{border-color:var(--green);background:var(--soft)}
-  .vopt .vck{width:20px;height:20px;border-radius:50%;border:2px solid #c9d3bd;flex:0 0 auto;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px}
-  .vopt.sel .vck{background:var(--green);border-color:var(--green)}
-  .fcard .fval{display:inline-flex;align-items:center;gap:8px;background:var(--soft);border-radius:99px;padding:7px 15px;font-weight:800;font-size:14.5px;color:var(--green)}
-  .dotpop .vv{display:inline-block;background:var(--soft);color:var(--green);border-radius:99px;padding:3px 11px;font-size:12.5px;font-weight:700}
+  /* strategic goal commitments */
+  .goalfield{margin-bottom:18px}
+  .goalfield .gh{display:flex;align-items:center;gap:9px;font-size:15px;font-weight:700;color:var(--ink);margin:0 0 7px}
+  .goalfield .gh .gdot{width:13px;height:13px;border-radius:50%;flex:0 0 auto}
+  .goalfield textarea{min-height:60px}
+  .goalfield .gc{font-size:12px;color:var(--muted);font-weight:600;text-align:right;margin-top:4px}
+  /* focus card goals block */
+  .fcard .goals{display:flex;flex-direction:column;gap:10px;margin-top:4px}
+  .fcard .gitem{border-left:4px solid var(--green);background:var(--soft);border-radius:0 10px 10px 0;padding:9px 13px}
+  .fcard .gitem .gt{font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;margin-bottom:3px}
+  .fcard .gitem .gv{font-size:14px;line-height:1.5;color:var(--ink)}
+  /* explore card + popover goals */
+  .excard .egoals{display:flex;flex-direction:column;gap:6px}
+  .excard .eg{font-size:12px;color:var(--ink);line-height:1.45}
+  .excard .eg b{font-weight:800}
+  .dotpop .gl{font-size:12.5px;color:#33402c;line-height:1.45;margin:4px 0}
+  .dotpop .gl b{font-weight:800}
 </style>
 </head>
 <body>
@@ -161,9 +168,9 @@
   <div class="card">
     <!-- 0 welcome -->
     <div class="step on" data-s="0">
-      <p class="eyebrow">FY26 · Leadership Development Institute</p>
+      <p class="eyebrow">FY27 Q1 · Leadership Development Institute</p>
       <h1>Where will you grow as a leader this year?</h1>
-      <p class="lede">Please take a minute to share the leadership skills and values you will prioritize in FY26. This information will also be shared with LDI planning teams to tailor future sessions to the needs of the group.</p>
+      <p class="lede">Please take a minute to share the actions and leadership competencies you will prioritize in FY27. This information will also be shared with LDI planning teams to tailor future sessions to the needs of the group.</p>
       <div class="btnrow"><span></span><button class="btn big" data-go="1">Begin →</button></div>
     </div>
 
@@ -192,22 +199,32 @@
       <div class="btnrow"><button class="btn ghost" data-go="0">← Back</button><button class="btn" data-go="2">Next →</button></div>
     </div>
 
-    <!-- 2 competencies -->
+    <!-- 2 strategic goal commitments -->
     <div class="step" data-s="2">
       <div class="progress"><i class="done"></i><i class="cur"></i><i></i><i></i></div>
-      <p class="eyebrow">Section 2 · Skills &amp; Values</p>
-      <h2>Which leader competencies will you focus on to drive your efforts?</h2>
-      <p class="note" style="margin-bottom:12px">Given the strategic priority that you identified in your workbook, choose the competencies you'll focus on. Please select at most 2.</p>
-      <p class="instr">Choose in priority order. Tap your <b>#1</b> priority first, then your <b>#2</b>.</p>
-      <div class="comp" id="compGrid"></div>
-      <div class="btnrow"><button class="btn ghost" data-go="1">← Back</button>
-        <div style="display:flex;align-items:center;gap:14px"><span class="counter" id="compCount">0 of 2 selected</span><button class="btn" data-go="3" id="compNext" disabled>Next →</button></div></div>
+      <p class="eyebrow">Section 2 · Strategic Goal Commitments</p>
+      <h2>How will you advance each strategic goal?</h2>
+      <p class="note" style="margin-bottom:16px">For each strategic goal, name one action you will prioritize this year to advance it. A phrase or a sentence is perfect. All three are optional.</p>
+      <div class="goalfields" id="goalFields"></div>
+      <div class="btnrow"><button class="btn ghost" data-go="1">← Back</button><button class="btn" data-go="3">Next →</button></div>
     </div>
 
-    <!-- 3 skills -->
+    <!-- 3 competencies -->
     <div class="step" data-s="3">
       <div class="progress"><i class="done"></i><i class="done"></i><i class="cur"></i><i></i></div>
-      <p class="eyebrow">Section 2 · Skills &amp; Values</p>
+      <p class="eyebrow">Section 3 · Leader Competencies</p>
+      <h2>Which leader competencies will you focus on to drive your efforts?</h2>
+      <p class="note" style="margin-bottom:12px">Given the strategic work you are focused on with your team, choose the competencies it will require you to sharpen this year. Please select at most 2.</p>
+      <p class="instr">Choose in priority order. Tap your <b>#1</b> priority first, then your <b>#2</b>.</p>
+      <div class="comp" id="compGrid"></div>
+      <div class="btnrow"><button class="btn ghost" data-go="2">← Back</button>
+        <div style="display:flex;align-items:center;gap:14px"><span class="counter" id="compCount">0 of 2 selected</span><button class="btn" data-go="4" id="compNext" disabled>Next →</button></div></div>
+    </div>
+
+    <!-- 4 skills -->
+    <div class="step" data-s="4">
+      <div class="progress"><i class="done"></i><i class="done"></i><i class="done"></i><i class="cur"></i></div>
+      <p class="eyebrow">Section 3 · Leader Competencies</p>
       <h2>Which leadership skills will you strengthen to lead this effort?</h2>
       <p class="note" style="margin-bottom:12px">Given the competencies you selected, pick the skills you might strengthen to effectively lead this effort. Be sure they connect to the competencies you chose. Please select at most 3.</p>
       <div class="skillscroll" id="skillList"></div>
@@ -217,24 +234,13 @@
         <textarea id="approach" maxlength="280" rows="2" placeholder="e.g. I'll ask for feedback from my team after each project and act on one thing each time."></textarea>
         <div class="approachrow"><span class="counter" id="approachCount"><b>0</b> / 280</span></div>
       </div>
-      <div class="btnrow"><button class="btn ghost" data-go="2">← Back</button>
-        <div style="display:flex;align-items:center;gap:14px"><span class="counter" id="skillCount">0 of 3 selected</span><button class="btn" data-go="4" id="skillNext" disabled>Next →</button></div></div>
-    </div>
-
-    <!-- 4 OSF Value -->
-    <div class="step" data-s="4">
-      <div class="progress"><i class="done"></i><i class="done"></i><i class="done"></i><i class="cur"></i></div>
-      <p class="eyebrow">Section 2 · Skills &amp; Values</p>
-      <h2>Which OSF Value will you lean into this year?</h2>
-      <p class="note" style="margin-bottom:14px">Choose the one Value you'll lean into to shape your leadership behaviors this year. Choose 1.</p>
-      <div class="vgrid" id="valueGrid"></div>
       <div class="btnrow"><button class="btn ghost" data-go="3">← Back</button>
-        <div style="display:flex;align-items:center;gap:14px"><span class="counter" id="valueCount">Choose 1</span><button class="btn" data-go="5" id="valueNext" disabled>See my focus →</button></div></div>
+        <div style="display:flex;align-items:center;gap:14px"><span class="counter" id="skillCount">0 of 3 selected</span><button class="btn" data-go="5" id="skillNext" disabled>See my focus →</button></div></div>
     </div>
 
     <!-- 5 focus card -->
     <div class="step" data-s="5">
-      <p class="eyebrow">Your leadership focus</p>
+      <p class="eyebrow">FY27 Q1 · Your leadership focus</p>
       <h2 style="margin-bottom:16px">Here's what you'll grow this year</h2>
       <div class="fcard" id="focusCard"></div>
       <div style="text-align:center;margin-top:16px"><button class="btn ghost" id="saveImg" type="button">⬇ Save my card as an image</button></div>
@@ -243,7 +249,7 @@
 
     <!-- 6 board -->
     <div class="step" data-s="6">
-      <p class="eyebrow">FY26 · Leadership Development Institute</p>
+      <p class="eyebrow">FY27 Q1 · Leadership Development Institute</p>
       <h2 style="margin-bottom:4px">Where our leaders are focusing</h2>
       <p class="note">Each dot is a leader, colored by their #1 competency. Hover or tap a dot to see that leader's focus. As more leaders add theirs, the picture of where development energy is concentrated comes to life.</p>
       <div style="margin:0 0 16px"><a class="btn ghost" href="/screen.html" target="_blank" rel="noopener">⛶ Open live room view</a></div>
@@ -272,6 +278,6 @@
 </div>
 <div class="dotpop" id="dotpop"></div>
 <script src="html2canvas.min.js?v=20260909b"></script>
-<script src="ldi-app.js?v=20260909c"></script>
+<script src="ldi-app.js?v=20260917"></script>
 </body>
 </html>

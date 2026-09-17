@@ -41,10 +41,15 @@
     ['Inspires Change','Communicating a compelling vision, motivating others to embrace new ways of working, and guiding them through transitions with confidence and clarity.'],
     ['Strategic Execution','Turning vision and strategy into actionable plans that deliver results through disciplined implementation.']
   ];
-  var VALUES=['Justice','Compassion','Integrity','Teamwork','Employee well-being','Supportive work environment','Trust','Stewardship','Leadership'];
+  var GOALS=[
+    {key:'g1',name:'Excellence',color:'#4E8209'},
+    {key:'g2',name:'One OSF Team',color:'#00A9CE'},
+    {key:'g3',name:'Destination OSF',color:'#A5228E'}
+  ];
+  var GOAL_MAX=200;
   function compByName(n){for(var i=0;i<COMPS.length;i++)if(COMPS[i].name===n)return COMPS[i];return COMPS[0];}
   var el=function(id){return document.getElementById(id);};
-  var pickedComp=[], pickedSkill=[], pickedValue='';
+  var pickedComp=[], pickedSkill=[];
   var boardData=[];      // array of comps arrays from other leaders (via WS)
   var mine=null;         // this leader's comps once accepted
   var submitted=false;
@@ -86,21 +91,23 @@
     el('skillNext').disabled=pickedSkill.length===0;
   }
 
-  // ---- OSF Value (single select) ----
-  var vg=el('valueGrid');
-  if(vg){
-    VALUES.forEach(function(v){
-      var d=document.createElement('div');d.className='vopt';d.setAttribute('data-name',v);
-      d.innerHTML='<span class="vck">✓</span>'+v;
-      d.addEventListener('click',function(){pickValue(v);});
-      vg.appendChild(d);
+  // ---- strategic goal commitments (one action per goal) ----
+  var gf=el('goalFields');
+  if(gf){
+    GOALS.forEach(function(g){
+      var wrap=document.createElement('div');wrap.className='goalfield';
+      wrap.innerHTML='<div class="gh"><span class="gdot" style="background:'+g.color+'"></span>'+g.name+'</div>'+
+        '<textarea id="goal_'+g.key+'" maxlength="'+GOAL_MAX+'" rows="2" placeholder="One action you will prioritize to advance '+g.name+'…"></textarea>'+
+        '<div class="gc" id="gc_'+g.key+'"><b>0</b> / '+GOAL_MAX+'</div>';
+      gf.appendChild(wrap);
+      var ta=wrap.querySelector('textarea'), cc=wrap.querySelector('.gc');
+      ta.addEventListener('input',function(){cc.innerHTML='<b>'+ta.value.length+'</b> / '+GOAL_MAX;});
     });
   }
-  function pickValue(v){
-    pickedValue=(pickedValue===v)?'':v;
-    if(vg){[].forEach.call(vg.children,function(ch){ch.classList.toggle('sel',ch.getAttribute('data-name')===pickedValue);});}
-    if(el('valueCount'))el('valueCount').textContent=pickedValue?'1 selected':'Choose 1';
-    if(el('valueNext'))el('valueNext').disabled=!pickedValue;
+  function collectGoals(){
+    var out={};
+    GOALS.forEach(function(g){var ta=el('goal_'+g.key);out[g.key]=ta?ta.value.trim():'';});
+    return out;
   }
 
   function esc(s){return String(s==null?'':s).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];});}
@@ -115,11 +122,15 @@
     var sk=pickedSkill.map(function(n){return '<span class="sktag">'+esc(n)+'</span>';}).join('');
     var ap=(el('approach')?el('approach').value.trim():'');
     var apBlock=ap?('<div class="lbl">How I\'ll work on it</div><div class="approach">'+esc(ap)+'</div>'):'';
-    var valBlock=pickedValue?('<div class="lbl">OSF Value I\'ll lean into</div><div class="fval">'+esc(pickedValue)+'</div>'):'';
+    var goals=collectGoals();
+    var gitems=GOALS.filter(function(g){return goals[g.key];}).map(function(g){
+      return '<div class="gitem" style="border-left-color:'+g.color+'"><div class="gt" style="color:'+g.color+'">'+esc(g.name)+'</div><div class="gv">'+esc(goals[g.key])+'</div></div>';
+    }).join('');
+    var goalBlock=gitems?('<div class="lbl">My commitments to the strategic goals</div><div class="goals">'+gitems+'</div>'):'';
     el('focusCard').innerHTML=
       '<div class="top"><div class="who">'+who+'</div><div class="role">'+(roleLine||'Leader')+'</div></div>'+
-      '<div class="body"><div class="lbl">Competencies I\'m focusing on</div><div class="prio">'+(prio||'<span class="note">None selected</span>')+'</div>'+
-      '<div class="lbl">Skills I\'ll strengthen</div><div class="sklist">'+(sk||'<span class="note">None selected</span>')+'</div>'+valBlock+apBlock+'</div>';
+      '<div class="body">'+goalBlock+'<div class="lbl">Competencies I\'m focusing on</div><div class="prio">'+(prio||'<span class="note">None selected</span>')+'</div>'+
+      '<div class="lbl">Skills I\'ll strengthen</div><div class="sklist">'+(sk||'<span class="note">None selected</span>')+'</div>'+apBlock+'</div>';
   }
 
   function renderBoard(){
@@ -167,13 +178,17 @@
       var rl=[card.role,card.division].filter(Boolean).map(esc).join(' · ');
       var comps=(card.comps||[]).map(function(c){var col=compByName(c.name).color;return '<span class="ec"><span class="n" style="background:'+col+'">'+c.rank+'</span><span class="dot" style="background:'+col+'"></span>'+esc(c.name)+'</span>';}).join('');
       var sk=(card.skills||[]).length?('<div class="esk">'+(card.skills||[]).map(esc).join('  ·  ')+'</div>'):'';
-      var vv=card.value?('<div class="evalue">Leaning into '+esc(card.value)+'</div>'):'';
+      var gg=card.goals||{};
+      var egoals=GOALS.filter(function(g){return gg[g.key];}).map(function(g){
+        return '<div class="eg"><b style="color:'+g.color+'">'+esc(g.name)+':</b> '+esc(gg[g.key])+'</div>';
+      }).join('');
+      var goalsBlock=egoals?('<div class="egoals">'+egoals+'</div>'):'';
       var ap=card.approach?('<div class="eapproach">'+esc(card.approach)+'</div>'):'';
       var rk=card.react||{heart:0,clap:0};
       var done=reacted[card.id]; var dis=done?' disabled':'';
       return '<div class="excard" data-id="'+esc(card.id)+'">'+
         '<div class="eid"><b>'+who+'</b>'+(rl?' <span>· '+rl+'</span>':'')+'</div>'+
-        '<div class="ecomps">'+comps+'</div>'+sk+vv+ap+
+        '<div class="ecomps">'+comps+'</div>'+sk+goalsBlock+ap+
         '<div class="erow'+(done?' reacted':'')+'">'+
           '<button class="react'+(done==='heart'?' chosen':'')+'" data-react="heart" data-id="'+esc(card.id)+'"'+dis+'>❤️ <span class="cnt">'+rk.heart+'</span></button>'+
           '<button class="react'+(done==='clap'?' chosen':'')+'" data-react="clap" data-id="'+esc(card.id)+'"'+dis+'>👏 <span class="cnt">'+rk.clap+'</span></button>'+
@@ -213,7 +228,7 @@
       first:el('fn').value.trim(), last:el('ln').value.trim(),
       division:el('div').value.trim(), role:el('role').value, years:el('yrs').value,
       comps:pickedComp.map(function(n){return {name:n};}), skills:pickedSkill.slice(),
-      value:pickedValue,
+      goals:collectGoals(),
       approach:(el('approach')?el('approach').value.trim():'') };
     var attempts=0;
     (function trySend(){
@@ -222,7 +237,7 @@
       // if it never connects, mine falls back locally on accepted-timeout below
     })();
     // local fallback so the board still shows the person even if the socket is slow
-    setTimeout(function(){ if(!submitted){ mine={id:'local-'+Date.now(),first:el('fn').value.trim(),division:el('div').value.trim(),role:el('role').value,comps:pickedComp.map(function(n,i){return {name:n,rank:i+1};}),skills:pickedSkill.slice(),value:pickedValue,approach:(el('approach')?el('approach').value.trim():''),react:{heart:0,clap:0}}; boardData.push(mine); submitted=true; refreshBoardViews(); } }, 3500);
+    setTimeout(function(){ if(!submitted){ mine={id:'local-'+Date.now(),first:el('fn').value.trim(),division:el('div').value.trim(),role:el('role').value,comps:pickedComp.map(function(n,i){return {name:n,rank:i+1};}),skills:pickedSkill.slice(),goals:collectGoals(),approach:(el('approach')?el('approach').value.trim():''),react:{heart:0,clap:0}}; boardData.push(mine); submitted=true; refreshBoardViews(); } }, 3500);
   }
 
   // ---- save card as image ----
@@ -244,14 +259,12 @@
 
   // ---- navigation ----
   function resetAll(){
-    pickedComp=[];pickedSkill=[];pickedValue='';mine=null;submitted=false;reacted={};
+    pickedComp=[];pickedSkill=[];mine=null;submitted=false;reacted={};
     [].forEach.call(cg.children,function(ch){ch.classList.remove('sel');ch.querySelector('.rank').textContent='';});
     [].forEach.call(sl.children,function(ch){ch.classList.remove('sel');});
-    if(vg){[].forEach.call(vg.children,function(ch){ch.classList.remove('sel');});}
     el('compCount').textContent='0 of 2 selected';el('skillCount').textContent='0 of 3 selected';
-    if(el('valueCount'))el('valueCount').textContent='Choose 1';
     el('compNext').disabled=true;el('skillNext').disabled=true;
-    if(el('valueNext'))el('valueNext').disabled=true;
+    GOALS.forEach(function(g){var ta=el('goal_'+g.key);if(ta)ta.value='';var cc=el('gc_'+g.key);if(cc)cc.innerHTML='<b>0</b> / '+GOAL_MAX;});
     el('fn').value='';el('ln').value='';el('div').value='';el('role').value='';el('yrs').value='';
     if(el('approach')){el('approach').value='';}
     if(el('approachCount')){el('approachCount').innerHTML='<b>0</b> / 280';}
@@ -279,9 +292,13 @@
       var role=[card.role,card.division].filter(Boolean).map(esc).join(' · ');
       var comps=(card.comps||[]).map(function(c){var col=compByName(c.name).color;return '<div class="pc"><span class="r" style="background:'+col+'">'+c.rank+'</span>'+esc(c.name)+'</div>';}).join('');
       var sk=(card.skills&&card.skills.length)?('<div class="lb">Strengthening</div><div class="sk">'+card.skills.map(esc).join(' · ')+'</div>'):'';
-      var vv=card.value?('<div class="lb">OSF Value</div><span class="vv">'+esc(card.value)+'</span>'):'';
+      var gg=card.goals||{};
+      var gl=GOALS.filter(function(g){return gg[g.key];}).map(function(g){
+        return '<div class="gl"><b style="color:'+g.color+'">'+esc(g.name)+':</b> '+esc(gg[g.key])+'</div>';
+      }).join('');
+      var goalsBlock=gl?('<div class="lb">Advancing the goals</div>'+gl):'';
       var nt=card.approach?('<div class="nt">'+esc(card.approach)+'</div>'):'';
-      return '<div class="who">'+who+'</div>'+(role?'<div class="prole">'+role+'</div>':'')+'<div class="lb">Focusing on</div>'+comps+sk+vv+nt;
+      return '<div class="who">'+who+'</div>'+(role?'<div class="prole">'+role+'</div>':'')+'<div class="lb">Focusing on</div>'+comps+sk+goalsBlock+nt;
     }
     function positionPop(d){
       var rr=d.getBoundingClientRect();

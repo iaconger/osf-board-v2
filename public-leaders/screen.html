@@ -58,8 +58,10 @@
 
   .side{display:flex;flex-direction:column;gap:22px;min-height:0}
   .rankpanel{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
-  .rankpanel h2{font-size:23px;margin:0 0 16px;letter-spacing:.3px}
-  .rk{margin-bottom:15px}
+  .rankpanel h2{font-size:23px;margin:0 0 14px;letter-spacing:.3px;flex:0 0 auto}
+  #ranking{flex:1 1 auto;min-height:0;overflow-y:auto;padding-right:4px}
+  .rk{margin-bottom:12px}
+  .rk:last-child{margin-bottom:2px}
   .rk .rl{display:flex;align-items:center;gap:12px;font-size:19px;font-weight:600;margin-bottom:7px}
   .rk .rl .dot{width:15px;height:15px;border-radius:50%;flex:0 0 auto}
   .rk .rl .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -67,8 +69,8 @@
   .rk .track{background:rgba(255,255,255,.13);border-radius:999px;height:13px;overflow:hidden}
   .rk .fill{height:100%;border-radius:999px;width:0;transition:width .9s cubic-bezier(.3,0,.2,1)}
   /* join card */
-  .join{flex:0 0 auto;background:rgba(255,255,255,.95);color:var(--ink);border-radius:20px;padding:18px 20px;display:flex;align-items:center;gap:18px}
-  .join .qr{width:118px;height:118px;flex:0 0 auto;background:#fff;border-radius:12px;padding:7px;display:flex;align-items:center;justify-content:center}
+  .join{flex:0 0 auto;background:rgba(255,255,255,.95);color:var(--ink);border-radius:20px;padding:16px 18px;display:flex;align-items:center;gap:16px}
+  .join .qr{width:104px;height:104px;flex:0 0 auto;background:#fff;border-radius:12px;padding:6px;display:flex;align-items:center;justify-content:center}
   .join .qr svg{width:100%;height:100%;display:block}
   .join .jt .k{font-size:13px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--green)}
   .join .jt .h{font-family:"Bitter",serif;font-size:21px;margin:3px 0 5px;line-height:1.1}
@@ -94,6 +96,8 @@
   .dotpop .pc .r{width:16px;height:16px;border-radius:50%;color:#fff;font-size:9px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
   .dotpop .sk{font-size:12.5px;color:#33402c;line-height:1.5}
   .dotpop .vv{display:inline-block;background:#eef3e6;color:var(--green);border-radius:99px;padding:3px 11px;font-size:12.5px;font-weight:700}
+  .dotpop .gl{font-size:12.5px;color:#33402c;line-height:1.45;margin:4px 0}
+  .dotpop .gl b{font-weight:800}
   .dotpop .nt{font-size:12.5px;font-style:italic;color:#33402c;line-height:1.45;background:#f4f7ee;border-left:3px solid var(--green);border-radius:0 8px 8px 0;padding:7px 10px;margin-top:8px}
   /* milestone flash */
   .milestone{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:40;opacity:0}
@@ -108,7 +112,7 @@
 <div class="top"></div>
 <div class="wrap">
   <header>
-    <div><img class="screenlogo" src="/logo.png" alt="OSF HealthCare"><p class="eyebrow">FY26 · Leadership Development Institute</p><h1>Where our leaders are focusing</h1></div>
+    <div><img class="screenlogo" src="/logo.png" alt="OSF HealthCare"><p class="eyebrow">FY27 Q1 · Leadership Development Institute</p><h1>Where our leaders are focusing</h1></div>
     <div class="countwrap">
       <span class="live off" id="live"><span class="pip"></span><span id="livetext">Connecting…</span></span>
       <div class="count"><div class="n" id="count">0</div><div class="l">leaders have shared their focus</div></div>
@@ -137,6 +141,6 @@
 <div class="milestone" id="milestone"><div class="card"><div class="big" id="msbig"></div><div class="sub" id="mssub"></div></div></div>
 <div class="dotpop" id="dotpop"></div>
 <script src="qrcode.js?v=20260909b"></script>
-<script src="screen-ldi.js?v=20260909b"></script>
+<script src="screen-ldi.js?v=20260917"></script>
 </body>
 </html>
