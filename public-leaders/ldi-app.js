@@ -321,6 +321,19 @@
     window.addEventListener('scroll',function(){if(pinnedId){pinnedId=null;clearActive();}hidePop();},true);
   }());
 
+  // ---- years-of-experience stepper (large +/- buttons) ----
+  (function(){
+    var yrs=el('yrs'); if(!yrs) return;
+    function step(delta){
+      var v=parseFloat(yrs.value); if(isNaN(v))v=0;
+      v=Math.round((v+delta)*2)/2; if(v<0)v=0;
+      yrs.value=v;
+    }
+    var up=el('yrsUp'), dn=el('yrsDown');
+    if(up)up.addEventListener('click',function(){step(0.5);});
+    if(dn)dn.addEventListener('click',function(){step(-0.5);});
+  })();
+
   // ---- personal-note counter ----
   (function(){
     var ta=el('approach'), cc=el('approachCount');

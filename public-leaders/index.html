@@ -69,6 +69,13 @@
   .skillscroll{max-height:440px;overflow-y:auto;padding:4px 6px 4px 2px;margin-top:8px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
   .counter{font-size:13px;color:var(--muted);font-weight:600}
   .counter b{color:var(--ink)}
+  /* number stepper (big, tap-friendly arrows) */
+  .numwrap{display:flex;align-items:stretch;gap:8px}
+  .numwrap input{flex:1;text-align:center;-moz-appearance:textfield;appearance:textfield}
+  .numwrap input::-webkit-outer-spin-button,.numwrap input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  .numstep{flex:0 0 auto;width:54px;border:1.5px solid var(--line);background:var(--soft);border-radius:12px;font-size:28px;font-weight:700;color:var(--green);cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center;user-select:none;transition:.12s;padding:0}
+  .numstep:hover{background:#fff;border-color:var(--green2)}
+  .numstep:active{transform:scale(.95);background:var(--soft)}
   /* focus card */
   .fcard{border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:0 12px 30px rgba(60,70,50,.1)}
   .fcard .top{padding:22px 26px;color:#fff;background:linear-gradient(120deg,var(--green),var(--teal))}
@@ -193,7 +200,13 @@
             <option>Supervisor</option><option>Manager</option><option>Director</option>
             <option>Vice President</option><option>SVP and above</option><option>Other</option>
           </select></div>
-        <div><label>Years of leadership experience</label><input id="yrs" type="number" min="0" step="0.5" placeholder="e.g. 0, 1.5, 5"></div>
+        <div><label>Years of leadership experience</label>
+          <div class="numwrap">
+            <button type="button" class="numstep" id="yrsDown" aria-label="Decrease years">−</button>
+            <input id="yrs" type="number" min="0" step="0.5" inputmode="decimal" placeholder="e.g. 0, 1.5, 5">
+            <button type="button" class="numstep" id="yrsUp" aria-label="Increase years">+</button>
+          </div>
+        </div>
       </div>
       <p class="note" style="margin-top:10px">Years of experience can include time outside of OSF HealthCare. Enter 0 if this is your first leadership role.</p>
       <div class="btnrow"><button class="btn ghost" data-go="0">← Back</button><button class="btn" data-go="2">Next →</button></div>
@@ -278,6 +291,6 @@
 </div>
 <div class="dotpop" id="dotpop"></div>
 <script src="html2canvas.min.js?v=20260909b"></script>
-<script src="ldi-app.js?v=20260917"></script>
+<script src="ldi-app.js?v=20260917b"></script>
 </body>
 </html>
