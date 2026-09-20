@@ -47,6 +47,19 @@ const GOALS = [
 ];
 const COMP_SET = new Set(COMPS);
 const SKILL_SET = new Set(SKILLS);
+// OSF Region / Entity standard list — validates submissions and powers dashboard/board filters.
+const REGIONS = [
+  { r: 'Central', e: ['OSF OnCall', 'Central Region - Peoria'] },
+  { r: 'Eastern', e: ['SHMC - Urbana/Danville', 'LCMMC - Evergreen Park', 'SFH - Escanaba', 'SJJWAMC & SJMC - Pontiac & Bloomington'] },
+  { r: 'MG, HomeCare, Rehab', e: ['Home Care & Rehab', 'OSF MG'] },
+  { r: 'N/A', e: ['Ministry Services - HR, Foundation'] },
+  { r: 'Professional Services', e: ['Ministry Services - Clinical Excellence Team', 'Ministry Services - Finance', 'Ministry Services - Innovation Strategy', 'Ministry Services - Mission Services', 'Ministry Services - Pointcore'] },
+  { r: 'Western', e: ['I-80 - SEMC Ottawa / SPMC Mendota / SCMC Princeton', 'SAHC - Alton', 'SAMC - Rockford', 'SKMC - Dixon', 'WCIM - SMMC/HFMC Galesburg / SLMC Kewanee'] },
+];
+const REGION_SET = new Set(REGIONS.map((x) => x.r));
+const ENTITY_SET = new Set(REGIONS.reduce((a, x) => a.concat(x.e), []));
+function cleanRegion(v) { return (typeof v === 'string' && REGION_SET.has(v)) ? v : ''; }
+function cleanEntity(v) { return (typeof v === 'string' && ENTITY_SET.has(v)) ? v : ''; }
 
 const LIMITS = {
   name: 60, division: 80, role: 60, comps: 2, skills: 3, approach: 280, goal: 200,
@@ -126,7 +139,7 @@ function ensureId(e) { if (!e.id) e.id = 'L' + Date.now().toString(36) + (idSeq+
 // public, in-room-safe view of a leader's card (no last name)
 function publicCard(e) {
   const rk = reactions[e.id] || { heart: 0, clap: 0 };
-  return { id: e.id, first: e.first || '', division: e.division || '', role: e.role || '',
+  return { id: e.id, first: e.first || '', division: e.division || '', region: e.region || '', entity: e.entity || '', role: e.role || '',
     comps: e.comps || [], skills: e.skills || [], approach: e.approach || '', goals: e.goals || {},
     react: { heart: rk.heart || 0, clap: rk.clap || 0 } };
 }
@@ -139,15 +152,19 @@ function yearsBucket(y) {
 }
 function passesFilter(e, f) {
   if (f.division && String(e.division || '').toLowerCase() !== f.division.toLowerCase()) return false;
+  if (f.region && String(e.region || '') !== f.region) return false;
+  if (f.entity && String(e.entity || '') !== f.entity) return false;
   if (f.role && String(e.role || '') !== f.role) return false;
   if (f.years && yearsBucket(e.years) !== f.years) return false;
   return true;
 }
 function readFilter(q) {
-  return { division: (q.division || '').trim(), role: (q.role || '').trim(), years: (q.years || '').trim() };
+  return { division: (q.division || '').trim(), region: (q.region || '').trim(), entity: (q.entity || '').trim(), role: (q.role || '').trim(), years: (q.years || '').trim() };
 }
 function filterTag(f) {
   const bits = [];
+  if (f.region) bits.push(f.region.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
+  if (f.entity) bits.push(f.entity.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
   if (f.division) bits.push(f.division.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
   if (f.role) bits.push(f.role.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
   if (f.years) bits.push(f.years);
@@ -192,7 +209,7 @@ function subView(e) {
   return {
     submitted: e.ts || '', submittedLocal: fmtCentral(e.ts),
     first: e.first || '', last: e.last || '',
-    division: e.division || '', role: e.role || '',
+    division: e.division || '', region: e.region || '', entity: e.entity || '', role: e.role || '',
     years: (e.years === null || e.years === undefined) ? null : e.years,
     comps: (e.comps || []).map((c) => ({ name: c.name, rank: c.rank })),
     skills: e.skills || [],
@@ -212,7 +229,7 @@ app.get('/export', (req, res) => {
   if (REQUIRE_KEY && (!EXPORT_KEY || req.query.key !== EXPORT_KEY)) return res.status(403).type('text/plain').send('Forbidden');
   const f = readFilter(req.query);
   const rows = [[
-    'Submitted (Central Time)', 'First Name', 'Last Name', 'Division', 'Leadership Role',
+    'Submitted (Central Time)', 'First Name', 'Last Name', 'Division', 'Region / Area', 'Entity', 'Leadership Role',
     'Years of Leadership Experience',
     'Action: Excellence', 'Action: One OSF Team', 'Action: Destination OSF',
     'Competency #1', 'Competency #2', 'Skills to Strengthen', 'How I\'ll Work On It',
@@ -223,7 +240,7 @@ app.get('/export', (req, res) => {
     const c2 = (e.comps && e.comps[1]) ? e.comps[1].name : '';
     const g = e.goals || {};
     rows.push([
-      fmtCentral(e.ts), e.first || '', e.last || '', e.division || '', e.role || '',
+      fmtCentral(e.ts), e.first || '', e.last || '', e.division || '', e.region || '', e.entity || '', e.role || '',
       (e.years === null || e.years === undefined) ? '' : e.years,
       g.g1 || '', g.g2 || '', g.g3 || '',
       c1, c2, (e.skills || []).join('; '), e.approach || '',
@@ -247,25 +264,25 @@ function buildWorkbook(f) {
 
   // Sheet 1: Leaders (one row per leader)
   const ws = wb.addWorksheet('Leaders', { views: [{ state: 'frozen', ySplit: 5 }] });
-  const widths = [22, 16, 16, 22, 20, 10, 40, 40, 40, 24, 24, 36, 44];
+  const widths = [22, 16, 16, 22, 18, 34, 20, 10, 40, 40, 40, 24, 24, 36, 44];
   widths.forEach((w, i) => { ws.getColumn(i + 1).width = w; });
-  ws.mergeCells('A1:M1');
+  ws.mergeCells('A1:O1');
   const t = ws.getCell('A1'); t.value = 'OSF HealthCare  ·  Leadership Development Institute';
   t.font = { name: 'Calibri', size: 16, bold: true, color: { argb: XL.white } };
   t.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: XL.brand } };
   t.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 }; ws.getRow(1).height = 30;
-  ws.mergeCells('A2:M2');
+  ws.mergeCells('A2:O2');
   const sub = ws.getCell('A2');
-  const scope = [f.division && ('Division: ' + f.division), f.role && ('Role: ' + f.role), f.years && ('Experience: ' + f.years + ' yrs')].filter(Boolean).join('   ·   ') || 'All leaders';
+  const scope = [f.region && ('Region: ' + f.region), f.entity && ('Entity: ' + f.entity), f.division && ('Division: ' + f.division), f.role && ('Role: ' + f.role), f.years && ('Experience: ' + f.years + ' yrs')].filter(Boolean).join('   ·   ') || 'All leaders';
   sub.value = `${scope}   ·   Generated ${fmtCentral(new Date().toISOString())}`;
   sub.font = { name: 'Calibri', size: 10, italic: true, color: { argb: XL.muted } };
   sub.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 }; ws.getRow(2).height = 18;
-  ws.mergeCells('A3:M3');
+  ws.mergeCells('A3:O3');
   ws.getCell('A3').value = `${list.length} leaders`;
   ws.getCell('A3').font = { name: 'Calibri', size: 10, bold: true, color: { argb: XL.ink } };
   ws.getCell('A3').alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
   ws.getRow(4).height = 6;
-  const heads = ['Submitted (Central Time)', 'First Name', 'Last Name', 'Division', 'Leadership Role',
+  const heads = ['Submitted (Central Time)', 'First Name', 'Last Name', 'Division', 'Region / Area', 'Entity', 'Leadership Role',
     'Years', 'Action: Excellence', 'Action: One OSF Team', 'Action: Destination OSF',
     'Competency #1', 'Competency #2', 'Skills to Strengthen', 'How I\'ll Work On It'];
   const hr = ws.getRow(5);
@@ -280,7 +297,7 @@ function buildWorkbook(f) {
   list.forEach((e) => {
     const row = ws.getRow(r);
     const g = e.goals || {};
-    const vals = [fmtCentral(e.ts), e.first || '', e.last || '', e.division || '', e.role || '',
+    const vals = [fmtCentral(e.ts), e.first || '', e.last || '', e.division || '', e.region || '', e.entity || '', e.role || '',
       (e.years === null || e.years === undefined) ? '' : e.years,
       g.g1 || '', g.g2 || '', g.g3 || '',
       (e.comps[0] || {}).name || '', (e.comps[1] || {}).name || '', (e.skills || []).join(', '),
@@ -293,8 +310,8 @@ function buildWorkbook(f) {
     });
     row.height = 26; r += 1; band = !band;
   });
-  if (!list.length) { ws.mergeCells('A6:M6'); ws.getCell('A6').value = 'No leaders captured yet.'; ws.getCell('A6').font = { italic: true, color: { argb: XL.muted } }; }
-  ws.autoFilter = { from: { row: 5, column: 1 }, to: { row: 5, column: 13 } };
+  if (!list.length) { ws.mergeCells('A6:O6'); ws.getCell('A6').value = 'No leaders captured yet.'; ws.getCell('A6').font = { italic: true, color: { argb: XL.muted } }; }
+  ws.autoFilter = { from: { row: 5, column: 1 }, to: { row: 5, column: 15 } };
 
   // Sheet 2: Competency summary (rank-weighted)
   const cs = wb.addWorksheet('Competency Summary');
@@ -444,6 +461,8 @@ wss.on('connection', (ws) => {
       first: cleanText(data.first, LIMITS.name),
       last: cleanText(data.last, LIMITS.name),
       division: cleanText(data.division, LIMITS.division),
+      region: cleanRegion(data.region),
+      entity: cleanEntity(data.entity),
       role: cleanText(data.role, LIMITS.role),
       years: (function () { const n = Number(data.years); return Number.isFinite(n) && n >= 0 && n <= 80 ? n : null; })(),
       comps, skills,

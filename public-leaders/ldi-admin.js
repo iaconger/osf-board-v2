@@ -18,19 +18,32 @@
   var DIVS=['Ambulatory','Acute Care','OSF Digital','Medical Group','Nursing','Foundation','Shared Services','Behavioral Health'];
   var ROLES=['Lead Physician / APP / APN','Supervisor','Manager','Director','Vice President','SVP and above'];
   var GOALS=[{key:'g1',name:'Excellence',color:'#4E8209'},{key:'g2',name:'One OSF Team',color:'#00A9CE'},{key:'g3',name:'Destination OSF',color:'#A5228E'}];
+  var REGIONS=[
+    {r:'Central', e:['OSF OnCall','Central Region - Peoria']},
+    {r:'Eastern', e:['SHMC - Urbana/Danville','LCMMC - Evergreen Park','SFH - Escanaba','SJJWAMC & SJMC - Pontiac & Bloomington']},
+    {r:'MG, HomeCare, Rehab', e:['Home Care & Rehab','OSF MG']},
+    {r:'N/A', e:['Ministry Services - HR, Foundation']},
+    {r:'Professional Services', e:['Ministry Services - Clinical Excellence Team','Ministry Services - Finance','Ministry Services - Innovation Strategy','Ministry Services - Mission Services','Ministry Services - Pointcore']},
+    {r:'Western', e:['I-80 - SEMC Ottawa / SPMC Mendota / SCMC Princeton','SAHC - Alton','SAMC - Rockford','SKMC - Dixon','WCIM - SMMC/HFMC Galesburg / SLMC Kewanee']}
+  ];
+  function entitiesFor(r){for(var i=0;i<REGIONS.length;i++)if(REGIONS[i].r===r)return REGIONS[i].e;return [];}
+  function allEntities(){var a=[];REGIONS.forEach(function(x){a=a.concat(x.e);});return a;}
+  function fillRegionSel(sel){if(!sel)return;sel.innerHTML='<option value="">All regions</option>';REGIONS.forEach(function(x){var o=document.createElement('option');o.value=x.r;o.textContent=x.r;sel.appendChild(o);});}
+  function fillEntitySel(sel,region){if(!sel)return;var list=region?entitiesFor(region):allEntities();sel.innerHTML='<option value="">All entities</option>';list.forEach(function(en){var o=document.createElement('option');o.value=en;o.textContent=en;sel.appendChild(o);});}
 
   // ---- data (loaded from server) ----
   var LEADERS=[];
   var KEY='';
 
   // ---- filter state ----
-  var F={div:'',role:'',years:''};
+  var F={div:'',region:'',entity:'',role:'',years:''};
   function inYears(y){var b=F.years;if(!b)return true;if(b==='0-2')return y<=2;if(b==='3-5')return y>=3&&y<=5;if(b==='6-10')return y>=6&&y<=10;return y>=11;}
-  function filtered(){return LEADERS.filter(function(l){return (!F.div||l.division===F.div)&&(!F.role||l.role===F.role)&&inYears(l.years);});}
+  function filtered(){return LEADERS.filter(function(l){return (!F.div||l.division===F.div)&&(!F.region||l.region===F.region)&&(!F.entity||l.entity===F.entity)&&(!F.role||l.role===F.role)&&inYears(l.years);});}
 
   // populate filter selects
   function populateDivisions(){var seen={},ds=[];LEADERS.forEach(function(l){var d=(l.division||'').trim();if(d&&!seen[d]){seen[d]=1;ds.push(d);}});ds.sort();var sel=el('fDiv');sel.innerHTML='<option value="">All divisions</option>';ds.forEach(function(d){var o=document.createElement('option');o.value=d;o.textContent=d;sel.appendChild(o);});}
   ROLES.forEach(function(rr){var o=document.createElement('option');o.value=rr;o.textContent=rr;el('fRole').appendChild(o);});
+  fillRegionSel(el('fRegion'));fillEntitySel(el('fEntity'),'');
 
   function num(n){return Number(n||0).toLocaleString();}
 
@@ -55,7 +68,7 @@
     el('compBars').innerHTML=arr.map(function(a){
       var w=Math.round(a.v/max*100);
       return '<div class="hbar"><div class="bl"><span class="dot" style="background:'+a.color+'"></span><span>'+a.name+'<small>'+a.a+' chose #1 · '+a.b+' chose #2</small></span></div>'+
-        '<div class="track"><div class="fill" style="width:'+w+'%;background:'+a.color+'"></div></div><div class="bn">'+a.v+'</div></div>';
+        '<div class="track"><div class="fill" style="width:'+w+'%;background:#007F9B"></div></div><div class="bn">'+a.v+'</div></div>';
     }).join('') || '<div class="empty">No leaders match.</div>';
   }
 
@@ -76,11 +89,11 @@
     var rolePresent={};
     data.forEach(function(l){rolePresent[l.role]=1;l.comps.forEach(function(cn){if(counts[l.role])counts[l.role][cn]++;});});
     var max=1;ROLES.forEach(function(ro){COMPS.forEach(function(c){max=Math.max(max,counts[ro][c.name]);});});
-    var head='<tr><th class="role">Role</th>'+COMPS.map(function(c){return '<th><span class="cdot" style="background:'+c.color+'"></span><span class="ct">'+c.name+'</span></th>';}).join('')+'</tr>';
+    var head='<tr><th class="role">Role</th>'+COMPS.map(function(c){return '<th><span class="ct">'+c.name+'</span></th>';}).join('')+'</tr>';
     var rows=ROLES.filter(function(ro){return rolePresent[ro];}).map(function(ro){
       return '<tr><td class="rl">'+ro+'</td>'+COMPS.map(function(c){
         var v=counts[ro][c.name];var alpha=v?(0.15+0.85*(v/max)):0;
-        var bg=v?hexA(c.color,alpha):'#f4f6f0';
+        var bg=v?hexA('#007F9B',alpha):'#f4f6f0';
         return '<td style="background:'+bg+';color:'+(alpha>0.55?'#fff':'#1c2418')+'">'+(v||'')+'</td>';
       }).join('')+'</tr>';
     }).join('');
@@ -117,7 +130,7 @@
   function browserData(){
     var list=filtered().slice();
     if(BR.q){var q=BR.q.toLowerCase();list=list.filter(function(l){
-      var hay=[l.first,l.last,l.division,l.role,l.approach].concat(l.comps).concat(l.skills).concat(GOALS.map(function(g){return (l.goals&&l.goals[g.key])||'';})).join(' ').toLowerCase();return hay.indexOf(q)>=0;});}
+      var hay=[l.first,l.last,l.division,l.region,l.entity,l.role,l.approach].concat(l.comps).concat(l.skills).concat(GOALS.map(function(g){return (l.goals&&l.goals[g.key])||'';})).join(' ').toLowerCase();return hay.indexOf(q)>=0;});}
     if(BR.sort==='div')list.sort(function(a,b){return a.division.localeCompare(b.division);});
     else if(BR.sort==='role')list.sort(function(a,b){return ROLES.indexOf(a.role)-ROLES.indexOf(b.role);});
     else list.sort(function(a,b){return b.ts-a.ts;});
@@ -138,7 +151,7 @@
         return '<div class="gcommit"><b style="color:'+g.color+'">'+esc(g.name)+':</b> '+esc(gg[g.key])+'</div>';
       }).join('')||'<span class="meta">None</span>';
       var ap=l.approach?('<span class="approach">'+esc(l.approach)+'</span>'):'<span class="meta">None</span>';
-      h+='<tr><td><div class="who">'+who+'</div><div class="meta">'+l.division+'</div></td>'+
+      h+='<tr><td><div class="who">'+who+'</div><div class="meta">'+esc(l.division)+(l.entity?(' · '+esc(l.entity)):'')+'</div></td>'+
          '<td>'+l.role+'<div class="meta">'+l.years+' yr'+(l.years===1?'':'s')+'</div></td>'+
          '<td>'+goalsCell+'</td><td>'+comps+'</td><td>'+sks+'</td><td>'+ap+'</td></tr>';
     });
@@ -158,7 +171,9 @@
   el('fDiv').addEventListener('change',function(e){F.div=e.target.value;renderAll();});
   el('fRole').addEventListener('change',function(e){F.role=e.target.value;renderAll();});
   el('fYears').addEventListener('change',function(e){F.years=e.target.value;renderAll();});
-  el('reset').addEventListener('click',function(){F={div:'',role:'',years:''};el('fDiv').value='';el('fRole').value='';el('fYears').value='';renderAll();});
+  if(el('fRegion'))el('fRegion').addEventListener('change',function(e){F.region=e.target.value;fillEntitySel(el('fEntity'),F.region);F.entity='';renderAll();});
+  if(el('fEntity'))el('fEntity').addEventListener('change',function(e){F.entity=e.target.value;renderAll();});
+  el('reset').addEventListener('click',function(){F={div:'',region:'',entity:'',role:'',years:''};el('fDiv').value='';el('fRole').value='';el('fYears').value='';if(el('fRegion'))el('fRegion').value='';fillEntitySel(el('fEntity'),'');renderAll();});
   el('tSearch').addEventListener('input',function(e){BR.q=e.target.value.trim();BR.page=0;renderBrowser();});
   el('tSort').addEventListener('change',function(e){BR.sort=e.target.value;BR.page=0;renderBrowser();});
   el('prev').addEventListener('click',function(){if(BR.page>0){BR.page--;renderBrowser();}});
@@ -167,6 +182,8 @@
   function setDownloads(){
     var p='key='+encodeURIComponent(KEY);
     if(F.div)p+='&division='+encodeURIComponent(F.div);
+    if(F.region)p+='&region='+encodeURIComponent(F.region);
+    if(F.entity)p+='&entity='+encodeURIComponent(F.entity);
     if(F.role)p+='&role='+encodeURIComponent(F.role);
     if(F.years)p+='&years='+encodeURIComponent(F.years);
     var x=el('dlxlsx'),c=el('dlcsv'),j=el('dljson');
@@ -175,7 +192,7 @@
   function normalize(subs){
     return (subs||[]).map(function(s){
       var comps=(s.comps||[]).slice().sort(function(a,b){return (a.rank||9)-(b.rank||9);}).map(function(c){return c.name;});
-      return { first:s.first||'', last:s.last||'', division:s.division||'', role:s.role||'',
+      return { first:s.first||'', last:s.last||'', division:s.division||'', region:s.region||'', entity:s.entity||'', role:s.role||'',
         years:(s.years===null||s.years===undefined)?0:Number(s.years),
         comps:comps, skills:s.skills||[], goals:(s.goals&&typeof s.goals==='object')?s.goals:{}, approach:s.approach||'', ts:(new Date(s.submitted).getTime()||0) };
     });

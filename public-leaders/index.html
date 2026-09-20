@@ -193,6 +193,12 @@
       </div>
       <label>Please specify your current division</label><input id="div" placeholder="Type your division">
       <div class="grid2">
+        <div><label>Region / Area</label>
+          <select id="region"><option value="">Select…</option></select></div>
+        <div><label>Entity</label>
+          <select id="entity"><option value="">Select a region first…</option></select></div>
+      </div>
+      <div class="grid2">
         <div><label>Your current leadership role</label>
           <select id="role">
             <option value="">Select…</option>
@@ -266,6 +272,10 @@
       <h2 style="margin-bottom:4px">Where our leaders are focusing</h2>
       <p class="note">Each dot is a leader, colored by their #1 competency. Hover or tap a dot to see that leader's focus. As more leaders add theirs, the picture of where development energy is concentrated comes to life.</p>
       <div style="margin:0 0 16px"><a class="btn ghost" href="/screen.html" target="_blank" rel="noopener">⛶ Open live room view</a></div>
+      <div class="exfilters" style="margin:0 0 16px">
+        <select id="bRegion"><option value="">All regions</option></select>
+        <select id="bEntity"><option value="">All entities</option></select>
+      </div>
       <div class="kpi"><div><div class="n" id="kLeaders" style="color:var(--green)">0</div><div class="l">leaders on the board</div></div>
         <div><div class="n" id="kTop" style="color:var(--teal);font-size:20px;font-family:Bitter,serif;padding-top:8px">…</div><div class="l">top competency right now</div></div></div>
       <div class="boardwrap">
@@ -291,6 +301,6 @@
 </div>
 <div class="dotpop" id="dotpop"></div>
 <script src="html2canvas.min.js?v=20260909b"></script>
-<script src="ldi-app.js?v=20260917b"></script>
+<script src="ldi-app.js?v=20260920"></script>
 </body>
 </html>

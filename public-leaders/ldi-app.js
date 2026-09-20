@@ -47,6 +47,19 @@
     {key:'g3',name:'Destination OSF',color:'#A5228E'}
   ];
   var GOAL_MAX=200;
+  // OSF Region / Entity standard list
+  var REGIONS=[
+    {r:'Central', e:['OSF OnCall','Central Region - Peoria']},
+    {r:'Eastern', e:['SHMC - Urbana/Danville','LCMMC - Evergreen Park','SFH - Escanaba','SJJWAMC & SJMC - Pontiac & Bloomington']},
+    {r:'MG, HomeCare, Rehab', e:['Home Care & Rehab','OSF MG']},
+    {r:'N/A', e:['Ministry Services - HR, Foundation']},
+    {r:'Professional Services', e:['Ministry Services - Clinical Excellence Team','Ministry Services - Finance','Ministry Services - Innovation Strategy','Ministry Services - Mission Services','Ministry Services - Pointcore']},
+    {r:'Western', e:['I-80 - SEMC Ottawa / SPMC Mendota / SCMC Princeton','SAHC - Alton','SAMC - Rockford','SKMC - Dixon','WCIM - SMMC/HFMC Galesburg / SLMC Kewanee']}
+  ];
+  function entitiesFor(r){for(var i=0;i<REGIONS.length;i++)if(REGIONS[i].r===r)return REGIONS[i].e;return [];}
+  function allEntities(){var a=[];REGIONS.forEach(function(x){a=a.concat(x.e);});return a;}
+  function fillRegion(sel,allLabel){if(!sel)return;sel.innerHTML='<option value="">'+allLabel+'</option>';REGIONS.forEach(function(x){var o=document.createElement('option');o.value=x.r;o.textContent=x.r;sel.appendChild(o);});}
+  function fillEntity(sel,region,allLabel){if(!sel)return;var list=region?entitiesFor(region):allEntities();sel.innerHTML='<option value="">'+allLabel+'</option>';list.forEach(function(en){var o=document.createElement('option');o.value=en;o.textContent=en;sel.appendChild(o);});}
   function compByName(n){for(var i=0;i<COMPS.length;i++)if(COMPS[i].name===n)return COMPS[i];return COMPS[0];}
   var el=function(id){return document.getElementById(id);};
   var pickedComp=[], pickedSkill=[];
@@ -112,6 +125,16 @@
 
   function esc(s){return String(s==null?'':s).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];});}
 
+  // board filters: region + entity (applies to constellation, ranking, count, explore)
+  function boardFiltered(){
+    var rgn=el('bRegion')?el('bRegion').value:''; var ent=el('bEntity')?el('bEntity').value:'';
+    return boardData.filter(function(c){
+      if(rgn && (c.region||'')!==rgn) return false;
+      if(ent && (c.entity||'')!==ent) return false;
+      return true;
+    });
+  }
+
   function renderFocus(){
     var fn=el('fn').value.trim(),ln=el('ln').value.trim();
     var who=(fn||ln)?esc((fn+' '+ln).trim()):'Your leadership focus';
@@ -134,7 +157,7 @@
   }
 
   function renderBoard(){
-    var all=boardData;
+    var all=boardFiltered();
     var cv=el('canvas');cv.innerHTML='';
     var seed=99;function r(){seed=(seed*1103515245+12345)&0x7fffffff;return seed/0x7fffffff;}
     all.forEach(function(card){
@@ -167,9 +190,9 @@
   function renderExplore(){
     var wall=el('exwall'); if(!wall) return;
     var fc=el('exComp')?el('exComp').value:''; var q=(el('exSearch')?el('exSearch').value:'').trim().toLowerCase();
-    var list=boardData.filter(function(card){
+    var list=boardFiltered().filter(function(card){
       if(fc && !(card.comps||[]).some(function(c){return c.name===fc;})) return false;
-      if(q){ var hay=[card.first,card.division,card.role].concat((card.comps||[]).map(function(c){return c.name;})).concat(card.skills||[]).join(' ').toLowerCase(); if(hay.indexOf(q)<0) return false; }
+      if(q){ var hay=[card.first,card.division,card.region,card.entity,card.role].concat((card.comps||[]).map(function(c){return c.name;})).concat(card.skills||[]).join(' ').toLowerCase(); if(hay.indexOf(q)<0) return false; }
       return true;
     }).slice().reverse();
     if(!list.length){ wall.innerHTML='<div class="exempty">No matches yet.</div>'; return; }
@@ -227,6 +250,7 @@
     var payload={ type:'submit',
       first:el('fn').value.trim(), last:el('ln').value.trim(),
       division:el('div').value.trim(), role:el('role').value, years:el('yrs').value,
+      region:(el('region')?el('region').value:''), entity:(el('entity')?el('entity').value:''),
       comps:pickedComp.map(function(n){return {name:n};}), skills:pickedSkill.slice(),
       goals:collectGoals(),
       approach:(el('approach')?el('approach').value.trim():'') };
@@ -237,7 +261,7 @@
       // if it never connects, mine falls back locally on accepted-timeout below
     })();
     // local fallback so the board still shows the person even if the socket is slow
-    setTimeout(function(){ if(!submitted){ mine={id:'local-'+Date.now(),first:el('fn').value.trim(),division:el('div').value.trim(),role:el('role').value,comps:pickedComp.map(function(n,i){return {name:n,rank:i+1};}),skills:pickedSkill.slice(),goals:collectGoals(),approach:(el('approach')?el('approach').value.trim():''),react:{heart:0,clap:0}}; boardData.push(mine); submitted=true; refreshBoardViews(); } }, 3500);
+    setTimeout(function(){ if(!submitted){ mine={id:'local-'+Date.now(),first:el('fn').value.trim(),division:el('div').value.trim(),region:(el('region')?el('region').value:''),entity:(el('entity')?el('entity').value:''),role:el('role').value,comps:pickedComp.map(function(n,i){return {name:n,rank:i+1};}),skills:pickedSkill.slice(),goals:collectGoals(),approach:(el('approach')?el('approach').value.trim():''),react:{heart:0,clap:0}}; boardData.push(mine); submitted=true; refreshBoardViews(); } }, 3500);
   }
 
   // ---- save card as image ----
@@ -266,6 +290,8 @@
     el('compNext').disabled=true;el('skillNext').disabled=true;
     GOALS.forEach(function(g){var ta=el('goal_'+g.key);if(ta)ta.value='';var cc=el('gc_'+g.key);if(cc)cc.innerHTML='<b>0</b> / '+GOAL_MAX;});
     el('fn').value='';el('ln').value='';el('div').value='';el('role').value='';el('yrs').value='';
+    if(el('region')){el('region').value='';}
+    if(el('entity')){fillEntity(el('entity'),'','Select a region first…');el('entity').value='';}
     if(el('approach')){el('approach').value='';}
     if(el('approachCount')){el('approachCount').innerHTML='<b>0</b> / 280';}
   }
@@ -359,6 +385,17 @@
         [].forEach.call(cardEl.querySelectorAll('.react'),function(btn){ btn.disabled=true; if(btn.getAttribute('data-react')===kind) btn.classList.add('chosen'); }); }
       if(ws&&ws.readyState===1) ws.send(JSON.stringify({type:'react',id:id,kind:kind}));
     });
+  })();
+
+  // ---- region / entity: sign-in dropdowns (dependent) + board filters ----
+  (function(){
+    fillRegion(el('region'),'Select…');
+    var rg=el('region'), en=el('entity');
+    if(rg&&en){ rg.addEventListener('change',function(){ fillEntity(en, rg.value, 'Select…'); }); }
+    fillRegion(el('bRegion'),'All regions'); fillEntity(el('bEntity'),'','All entities');
+    var brg=el('bRegion'), ben=el('bEntity');
+    if(brg) brg.addEventListener('change',function(){ fillEntity(ben, brg.value, 'All entities'); refreshBoardViews(); });
+    if(ben) ben.addEventListener('change',refreshBoardViews);
   })();
 
   connect();

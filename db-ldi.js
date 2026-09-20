@@ -31,6 +31,8 @@ async function init() {
       first     TEXT DEFAULT '',
       last      TEXT DEFAULT '',
       division  TEXT DEFAULT '',
+      region    TEXT DEFAULT '',
+      entity    TEXT DEFAULT '',
       role      TEXT DEFAULT '',
       years     DOUBLE PRECISION,
       comps     JSONB DEFAULT '[]'::jsonb,
@@ -44,6 +46,8 @@ async function init() {
     await pool.query(`ALTER TABLE ldi_submissions ADD COLUMN IF NOT EXISTS approach TEXT DEFAULT ''`);
     await pool.query(`ALTER TABLE ldi_submissions ADD COLUMN IF NOT EXISTS value TEXT DEFAULT ''`);
     await pool.query(`ALTER TABLE ldi_submissions ADD COLUMN IF NOT EXISTS goals JSONB DEFAULT '{}'::jsonb`);
+    await pool.query(`ALTER TABLE ldi_submissions ADD COLUMN IF NOT EXISTS region TEXT DEFAULT ''`);
+    await pool.query(`ALTER TABLE ldi_submissions ADD COLUMN IF NOT EXISTS entity TEXT DEFAULT ''`);
   } else {
     fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
   }
@@ -52,13 +56,15 @@ async function init() {
 async function loadAll() {
   if (mode === 'postgres') {
     const { rows } = await pool.query(
-      'SELECT ts, first, last, division, role, years, comps, skills, approach, value, goals FROM ldi_submissions ORDER BY id ASC'
+      'SELECT ts, first, last, division, region, entity, role, years, comps, skills, approach, value, goals FROM ldi_submissions ORDER BY id ASC'
     );
     return rows.map((r) => ({
       ts: r.ts ? new Date(r.ts).toISOString() : '',
       first: r.first || '',
       last: r.last || '',
       division: r.division || '',
+      region: r.region || '',
+      entity: r.entity || '',
       role: r.role || '',
       years: (r.years === null || r.years === undefined) ? null : Number(r.years),
       comps: Array.isArray(r.comps) ? r.comps : [],
@@ -83,8 +89,8 @@ async function loadAll() {
 function insert(entry) {
   if (mode === 'postgres') {
     pool.query(
-      'INSERT INTO ldi_submissions (ts, first, last, division, role, years, comps, skills, approach, value, goals) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)',
-      [entry.ts, entry.first || '', entry.last || '', entry.division || '', entry.role || '',
+      'INSERT INTO ldi_submissions (ts, first, last, division, region, entity, role, years, comps, skills, approach, value, goals) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)',
+      [entry.ts, entry.first || '', entry.last || '', entry.division || '', entry.region || '', entry.entity || '', entry.role || '',
         (entry.years === null || entry.years === undefined) ? null : entry.years,
         JSON.stringify(entry.comps || []), JSON.stringify(entry.skills || []), entry.approach || '', entry.value || '',
         JSON.stringify(entry.goals || {})]

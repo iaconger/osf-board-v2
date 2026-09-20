@@ -51,10 +51,8 @@
   .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:20px}
   .kpi{background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px 22px 20px;box-shadow:var(--shadow);position:relative;overflow:hidden;transition:transform .15s,box-shadow .15s}
   .kpi:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
-  .kpi::before{content:"";position:absolute;left:0;right:0;top:0;height:4px;background:var(--green2)}
-  .kpi.k2::before{background:var(--teal)} .kpi.k3::before{background:var(--magenta)} .kpi.k4::before{background:var(--orange)}
+  .kpi::before{content:"";position:absolute;left:0;right:0;top:0;height:4px;background:var(--green)}
   .kpi .n{font-size:44px;font-weight:800;line-height:1;letter-spacing:-1.5px;color:var(--green);font-variant-numeric:tabular-nums}
-  .kpi.k2 .n{color:var(--teal)} .kpi.k3 .n{color:var(--magenta)} .kpi.k4 .n{color:var(--orange)}
   .kpi .l{color:var(--muted);font-size:12.5px;margin-top:9px;line-height:1.35;font-weight:500}
 
   .grid2{display:grid;grid-template-columns:1.3fr 1fr;gap:20px}
@@ -72,7 +70,7 @@
   .skillbar{display:grid;grid-template-columns:230px 1fr auto;align-items:center;gap:12px;margin-bottom:12px}
   .skillbar .sl{font-size:13.5px;font-weight:600}
   .skillbar .track{background:var(--soft2);border-radius:999px;height:13px;overflow:hidden}
-  .skillbar .fill{height:100%;background:linear-gradient(90deg,var(--teal),var(--blue));border-radius:999px;transition:width .6s cubic-bezier(.2,.8,.2,1);min-width:4px}
+  .skillbar .fill{height:100%;background:var(--teal);border-radius:999px;transition:width .6s cubic-bezier(.2,.8,.2,1);min-width:4px}
   .skillbar .sn{font-size:13px;font-weight:800;color:var(--muted);min-width:22px;text-align:right;font-variant-numeric:tabular-nums}
 
   /* heatmap */
@@ -160,6 +158,8 @@
   <div id="dash" style="display:none">
 <div class="filters">
     <span class="fl">Filter</span>
+    <select id="fRegion"><option value="">All regions</option></select>
+    <select id="fEntity"><option value="">All entities</option></select>
     <select id="fDiv"><option value="">All divisions</option></select>
     <select id="fRole"><option value="">All roles</option></select>
     <select id="fYears">
@@ -175,7 +175,6 @@
   <div class="grid2">
     <div class="card">
       <h2>Top leader competencies</h2>
-      <p class="cardnote">Rank-weighted across leaders. A #1 priority counts double a #2. This is the headline for where to invest development.</p>
       <div id="compBars"></div>
     </div>
     <div class="card">
@@ -231,6 +230,6 @@
   </div>
   </div>
 </div>
-<script src="ldi-admin.js?v=20260917"></script>
+<script src="ldi-admin.js?v=20260920"></script>
 </body>
 </html>
