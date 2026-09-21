@@ -392,6 +392,13 @@
     fillRegion(el('region'),'Select…');
     var rg=el('region'), en=el('entity');
     if(rg&&en){ rg.addEventListener('change',function(){ fillEntity(en, rg.value, 'Select…'); }); }
+    // Pre-select region/entity from the URL (?region=&entity=) so a scoped join link/QR
+    // — one per LDI session — tags leaders automatically. Still fully editable.
+    try{
+      var q=new URLSearchParams(location.search);
+      var pr=q.get('region')||'', pe=q.get('entity')||'';
+      if(rg&&pr){ for(var i=0;i<REGIONS.length;i++){ if(REGIONS[i].r===pr){ rg.value=pr; if(en){ fillEntity(en,pr,'Select…'); if(REGIONS[i].e.indexOf(pe)>=0) en.value=pe; } break; } } }
+    }catch(e){/* no URLSearchParams => skip pre-fill */}
     fillRegion(el('bRegion'),'All regions'); fillEntity(el('bEntity'),'','All entities');
     var brg=el('bRegion'), ben=el('bEntity');
     if(brg) brg.addEventListener('change',function(){ fillEntity(ben, brg.value, 'All entities'); refreshBoardViews(); });

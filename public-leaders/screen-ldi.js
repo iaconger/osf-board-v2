@@ -22,6 +22,35 @@
   var el=function(id){return document.getElementById(id);};
   function esc(s){return String(s==null?'':s).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];});}
 
+  // OSF Region / Area → Entity taxonomy (same list as the sign-in + dashboard).
+  var REGIONS=[
+    {r:'Central',e:['OSF OnCall','Central Region - Peoria']},
+    {r:'Eastern',e:['SHMC - Urbana/Danville','LCMMC - Evergreen Park','SFH - Escanaba','SJJWAMC & SJMC - Pontiac & Bloomington']},
+    {r:'MG, HomeCare, Rehab',e:['Home Care & Rehab','OSF MG']},
+    {r:'N/A',e:['Ministry Services - HR, Foundation']},
+    {r:'Professional Services',e:['Ministry Services - Clinical Excellence Team','Ministry Services - Finance','Ministry Services - Innovation Strategy','Ministry Services - Mission Services','Ministry Services - Pointcore']},
+    {r:'Western',e:['I-80 - SEMC Ottawa / SPMC Mendota / SCMC Princeton','SAHC - Alton','SAMC - Rockford','SKMC - Dixon','WCIM - SMMC/HFMC Galesburg / SLMC Kewanee']}
+  ];
+  function entitiesFor(r){for(var i=0;i<REGIONS.length;i++)if(REGIONS[i].r===r)return REGIONS[i].e;return [];}
+
+  // Active scope for this screen (one region/entity per session). Read from the URL first
+  // (?region=...&entity=...) so a scoped link/QR self-applies, then editable via the picker.
+  var FILT={region:'',entity:''};
+  (function(){
+    try{
+      var q=new URLSearchParams(location.search);
+      var r=q.get('region')||'';var en=q.get('entity')||'';
+      for(var i=0;i<REGIONS.length;i++){if(REGIONS[i].r===r){FILT.region=r;if(REGIONS[i].e.indexOf(en)>=0)FILT.entity=en;break;}}
+    }catch(e){/* no URLSearchParams => leave unscoped */}
+  })();
+  function filterActive(){return !!(FILT.region||FILT.entity);}
+  function matchFilter(card){
+    if(!card)return false;
+    if(FILT.region&&String(card.region||'')!==FILT.region)return false;
+    if(FILT.entity&&String(card.entity||'')!==FILT.entity)return false;
+    return true;
+  }
+
   // ---- state ----
   var cards={};            // id -> card (deduped)
   var nodes={};            // id -> dot element
@@ -31,6 +60,7 @@
   var targetCount=0;       // authoritative count from server
   var milestoneAt=0;       // highest milestone already celebrated
   var seeding=false;       // true during the first snapshot, to suppress retroactive milestones
+  var filteredCount=0;     // authoritative count for the active scope (when a region/entity is set)
   var MAX_DOTS=500;        // safety cap for the animated layer
   var MILESTONES=[10,25,50,100,150,200,250,300,400,500];
 
@@ -143,13 +173,27 @@
 
   function refreshEmpty(){ el('empty').style.display=order.length?'none':'flex'; }
 
+  // wipe the board (used when the active region/entity scope changes)
+  function resetBoard(){
+    var cv=el('canvas'); if(cv){ var ds=cv.querySelectorAll('.bd'); for(var i=0;i<ds.length;i++)cv.removeChild(ds[i]); }
+    cards={};nodes={};order=[];filteredCount=0;milestoneAt=0;
+    var host=el('ranking'); if(host){host._built=false;host.innerHTML='';}
+    renderRanking();refreshEmpty();
+  }
+
   // reconcile a feed (init or periodic sync). animate only genuinely-new ids after first load.
+  // serverFiltered=true means the server already scoped feed+count to the active region/entity.
   var firstLoad=true;
-  function reconcile(feed,count){
-    var list=(feed||[]);
+  function reconcile(feed,count,serverFiltered){
+    var list=(feed||[]).filter(matchFilter);
     if(firstLoad) seeding=true;
     list.forEach(function(card){ ensureDot(card,!firstLoad); });
-    if(typeof count==='number') setCount(count); else setCount(order.length);
+    if(filterActive()){
+      filteredCount=(serverFiltered&&typeof count==='number')?count:list.length;
+      setCount(filteredCount);
+    } else {
+      setCount(typeof count==='number'?count:order.length);
+    }
     seeding=false;
     renderRanking();refreshEmpty();
     firstLoad=false;
@@ -164,19 +208,36 @@
   }
   function connect(){
     try{ var proto=location.protocol==='https:'?'wss:':'ws:'; ws=new WebSocket(proto+'//'+location.host); }catch(e){ setLive(false); setTimeout(connect,2500); return; }
-    ws.onopen=function(){ setLive(true); };
+    ws.onopen=function(){ setLive(true); if(filterActive()) requestSync(); };
     ws.onmessage=function(ev){ var d; try{d=JSON.parse(ev.data);}catch(e){return;}
-      if(d.type==='init'){ reconcile(d.feed, typeof d.count==='number'?d.count:undefined); }
-      else if(d.type==='add'){ if(d.item){ var isNew=ensureDot(d.item,true); if(isNew){ renderRanking(); refreshEmpty(); } setCount(typeof d.count==='number'?d.count:targetCount+1); } }
+      if(d.type==='init'){ reconcile(d.feed, typeof d.count==='number'?d.count:undefined, d.filtered===true); }
+      else if(d.type==='add'){
+        if(!d.item)return;
+        if(filterActive()){
+          if(matchFilter(d.item)){
+            var isNew=ensureDot(d.item,true);
+            if(isNew){ filteredCount+=1; renderRanking(); refreshEmpty(); setCount(filteredCount); }
+          }
+          // submissions outside this screen's region/entity are ignored here
+        } else {
+          var isNew2=ensureDot(d.item,true);
+          if(isNew2){ renderRanking(); refreshEmpty(); }
+          setCount(typeof d.count==='number'?d.count:targetCount+1);
+        }
+      }
       // reactions are ignored on the screen view
     };
     ws.onclose=function(){ setLive(false); setTimeout(connect,2500); };
     ws.onerror=function(){ setLive(false); try{ws.close();}catch(e){} };
   }
-  // periodic self-heal: ask the server for a fresh snapshot in case a frame was missed
+  // ask the server for a fresh snapshot (scoped to the active region/entity, if any)
+  function requestSync(){
+    if(ws&&ws.readyState===1){ try{ws.send(JSON.stringify({type:'sync',region:FILT.region,entity:FILT.entity}));}catch(e){} }
+  }
+  // periodic self-heal: in case a frame was missed, and to keep a scoped count authoritative
   function startSync(){
     if(syncTimer)clearInterval(syncTimer);
-    syncTimer=setInterval(function(){ if(ws&&ws.readyState===1){ try{ws.send(JSON.stringify({type:'sync'}));}catch(e){} } },45000);
+    syncTimer=setInterval(requestSync,20000);
   }
 
   // ---- dot detail popover (hover to preview, click to pin) ----
@@ -217,10 +278,12 @@
     window.addEventListener('scroll',function(){if(pinnedId){pinnedId=null;clearActive();}hidePop();},true);
   })();
 
-  // ---- join QR ----
+  // ---- join QR (carries the active region/entity so scanners are pre-tagged for this session) ----
   function buildQR(){
-    var url=location.origin+'/';
-    var disp=url.replace(/^https?:\/\//,'').replace(/\/$/,'');
+    var q='';
+    if(FILT.region){ q='?region='+encodeURIComponent(FILT.region); if(FILT.entity) q+='&entity='+encodeURIComponent(FILT.entity); }
+    var url=location.origin+'/'+q;
+    var disp=location.origin.replace(/^https?:\/\//,'').replace(/\/$/,''); // show the clean domain; the QR carries the scope
     var u=el('joinurl');if(u)u.textContent=disp;
     try{
       if(typeof qrcode==='function'){
@@ -230,7 +293,42 @@
     }catch(e){/* QR is a nicety; ignore if it fails */}
   }
 
-  buildQR();
+  // ---- scope chrome + picker ----
+  function scopeLabel(){ if(FILT.entity)return FILT.entity; if(FILT.region)return FILT.region+(FILT.region==='N/A'?'':' Region'); return ''; }
+  function updateChrome(){
+    var eb=el('eyebrow'); if(eb) eb.textContent='FY27 Q1 · '+(filterActive()?scopeLabel():'Leadership Development Institute');
+    var rl=document.querySelector('.ranklabel'); if(rl) rl.textContent=filterActive()?scopeLabel():'The room';
+    var empty=el('empty'); if(empty){ var big=empty.querySelector('.big'); if(big) big.textContent=filterActive()?('Waiting for the first leader in '+scopeLabel()+'…'):'Waiting for the first leader…'; }
+    buildQR();
+  }
+  function fillEntities(){
+    var es=el('scopeEnt'); if(!es)return;
+    var ents=FILT.region?entitiesFor(FILT.region):[];
+    es.innerHTML='<option value="">All entities</option>'+ents.map(function(en){return '<option value="'+esc(en)+'">'+esc(en)+'</option>';}).join('');
+    es.setAttribute('data-empty', ents.length?'0':'1'); // hidden until a region is chosen
+  }
+  function onScopeChange(){
+    try{
+      var q=new URLSearchParams();
+      if(FILT.region)q.set('region',FILT.region);
+      if(FILT.entity)q.set('entity',FILT.entity);
+      var qs=q.toString();
+      history.replaceState(null,'',location.pathname+(qs?('?'+qs):''));
+    }catch(e){/* older browser: URL stays as-is */}
+    resetBoard(); firstLoad=true; updateChrome();
+    requestSync(); setTimeout(requestSync,2200); // beat the server sync throttle on rapid switches
+  }
+  function populateScope(){
+    var rs=el('scopeSel'), es=el('scopeEnt'); if(!rs||!es)return;
+    rs.innerHTML='<option value="">All regions</option>'+REGIONS.map(function(x){return '<option value="'+esc(x.r)+'">'+esc(x.r)+'</option>';}).join('');
+    rs.value=FILT.region||'';
+    fillEntities(); es.value=FILT.entity||'';
+    rs.addEventListener('change',function(){ FILT.region=rs.value; FILT.entity=''; fillEntities(); es.value=''; onScopeChange(); });
+    es.addEventListener('change',function(){ FILT.entity=es.value; onScopeChange(); });
+  }
+
+  populateScope();
+  updateChrome();
   renderRanking();refreshEmpty();
   connect();startSync();
 })();

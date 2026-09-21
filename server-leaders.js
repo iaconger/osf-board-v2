@@ -445,9 +445,18 @@ wss.on('connection', (ws) => {
     if (data && data.type === 'react') { handleReact(ws, data); return; } // own limiter
     if (data && data.type === 'sync') { // read-only self-heal for the live screen; lightly throttled
       const now = Date.now();
-      if (now - (ws.lastSyncAt || 0) < 5000) return;
+      if (now - (ws.lastSyncAt || 0) < 2000) return;
       ws.lastSyncAt = now;
-      ws.send(JSON.stringify({ type: 'init', count: state.count, feed: feedForInit() }));
+      // A live screen scoped to one region/entity (multiple sessions, different regions)
+      // asks for a filtered snapshot so its count + ranking reflect only that scope.
+      if (data.region || data.entity) {
+        const f = readFilter({ region: data.region, entity: data.entity });
+        const matched = captured.filter((e) => passesFilter(e, f));
+        const feed = matched.slice(-200).reverse().map(publicCard);
+        ws.send(JSON.stringify({ type: 'init', filtered: true, count: matched.length, feed }));
+      } else {
+        ws.send(JSON.stringify({ type: 'init', count: state.count, feed: feedForInit() }));
+      }
       return;
     }
     if (rateLimited(ws)) return;

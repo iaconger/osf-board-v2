@@ -20,6 +20,13 @@
   .screenlogo{height:64px;width:auto;margin:0 0 16px;display:block;filter:brightness(0) invert(1);opacity:.97}
   .eyebrow{font-size:15px;font-weight:700;letter-spacing:2px;text-transform:uppercase;opacity:.85;margin:0 0 6px;color:#dcecd0}
   header h1{font-size:42px;margin:0;line-height:1.02}
+  /* region/entity scope picker (per-session, e.g. one region per LDI cohort) */
+  .scope{display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap}
+  .scope .scopelbl{font-size:12px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;opacity:.72;color:#dcecd0}
+  .scope select{font-family:inherit;font-size:14px;font-weight:600;color:#12220a;background:rgba(255,255,255,.94);
+    border:1px solid rgba(255,255,255,.5);border-radius:99px;padding:6px 14px;cursor:pointer;max-width:340px}
+  .scope select:focus{outline:2px solid #fff;outline-offset:1px}
+  .scope select#scopeEnt[data-empty="1"]{display:none}
   .countwrap{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
   .count .n{font-size:78px;font-weight:800;line-height:.9;letter-spacing:-3px;font-variant-numeric:tabular-nums}
   .count .l{font-size:15px;opacity:.85;margin-top:2px}
@@ -112,10 +119,16 @@
 <div class="top"></div>
 <div class="wrap">
   <header>
-    <div><img class="screenlogo" src="/logo.png" alt="OSF HealthCare"><p class="eyebrow">FY27 Q1 · Leadership Development Institute</p><h1>Where our leaders are focusing</h1></div>
+    <div><img class="screenlogo" src="/logo.png" alt="OSF HealthCare"><p class="eyebrow" id="eyebrow">FY27 Q1 · Leadership Development Institute</p><h1 id="title">Where our leaders are focusing</h1>
+      <div class="scope">
+        <span class="scopelbl">Showing</span>
+        <select id="scopeSel" aria-label="Region / Area"><option value="">All regions</option></select>
+        <select id="scopeEnt" aria-label="Entity"><option value="">All entities</option></select>
+      </div>
+    </div>
     <div class="countwrap">
       <span class="live off" id="live"><span class="pip"></span><span id="livetext">Connecting…</span></span>
-      <div class="count"><div class="n" id="count">0</div><div class="l">leaders have shared their focus</div></div>
+      <div class="count"><div class="n" id="count">0</div><div class="l" id="countlabel">leaders have shared their focus</div></div>
     </div>
   </header>
   <main>
@@ -141,6 +154,6 @@
 <div class="milestone" id="milestone"><div class="card"><div class="big" id="msbig"></div><div class="sub" id="mssub"></div></div></div>
 <div class="dotpop" id="dotpop"></div>
 <script src="qrcode.js?v=20260909b"></script>
-<script src="screen-ldi.js?v=20260917"></script>
+<script src="screen-ldi.js?v=20260920"></script>
 </body>
 </html>
