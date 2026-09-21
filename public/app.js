@@ -499,6 +499,7 @@
         if(cur === 7){ setCount(); renderPage(board.page); }
       } else if(m.type === 'accepted'){ arrive(m.item, m.count, true); }
       else if(m.type === 'add'){ arrive(m.item, m.count, false); }
+      else if(m.type === 'reset'){ try{ location.reload(); }catch(e){} }
     };
     ws.onclose = function(){ board.ws = null; setTimeout(boardConnect, 2500); };
     ws.onerror = function(){ try{ ws.close(); }catch(e){} };

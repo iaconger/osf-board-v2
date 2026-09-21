@@ -225,6 +225,17 @@
           setCount(typeof d.count==='number'?d.count:targetCount+1);
         }
       }
+      else if(d.type==='remove'){
+        if(d.id&&nodes[d.id]){
+          var rn=nodes[d.id]; if(rn&&rn.parentNode)rn.parentNode.removeChild(rn);
+          delete nodes[d.id]; delete cards[d.id];
+          var oi=order.indexOf(d.id); if(oi>=0)order.splice(oi,1);
+          if(filterActive()){ filteredCount=Math.max(0,filteredCount-1); setCount(filteredCount); }
+          else { setCount(Math.max(0,targetCount-1)); }
+          renderRanking(); refreshEmpty();
+        } else if(!filterActive()){ setCount(Math.max(0,targetCount-1)); }
+      }
+      else if(d.type==='reset'){ resetBoard(); setCount(0); }
       // reactions are ignored on the screen view
     };
     ws.onclose=function(){ setLive(false); setTimeout(connect,2500); };

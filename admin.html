@@ -243,8 +243,18 @@
       </div>
     </div>
 
+    <div class="card">
+      <h2>Manage responses</h2>
+      <p class="cardnote">Remove a single team's response, or clear everything. Deleting is permanent and cannot be undone. Enter your admin key to enable the Delete buttons in the table above and the Clear all button below.</p>
+      <div class="controls">
+        <input class="search" id="adminKey" type="password" placeholder="Admin key to enable deleting" autocomplete="off" spellcheck="false" style="max-width:360px">
+        <button class="pbtn" id="clearAll" type="button" style="background:#b3261e;border-color:#b3261e;color:#fff">Clear all responses</button>
+      </div>
+      <div class="cardnote" id="mmsg" style="display:none"><span id="mmsgtext"></span></div>
+    </div>
+
   </div>
 </div>
-<script src="admin.js?v=20260910"></script>
+<script src="admin.js?v=20260921"></script>
 </body>
 </html>

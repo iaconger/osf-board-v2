@@ -208,6 +208,7 @@ app.use(helmet({
   },
   crossOriginEmbedderPolicy: false,
 }));
+app.use(express.json({ limit: '32kb' }));
 
 app.get('/healthz', (_req, res) => res.status(200).type('text/plain').send('ok'));
 
@@ -267,6 +268,7 @@ app.get('/export.json', (req, res) => {
     subs.push({
       submitted: e.ts || '',
       submittedLocal: fmtCentral(e.ts),
+      rid: (e._dbid === undefined ? null : e._dbid),
       department: dept,
       team,
       worksWith: e.connections || [],
@@ -472,6 +474,33 @@ app.get('/export.xlsx', async (req, res) => {
 app.get('/favicon.ico', (_req, res) => res.status(204).end());
 // Leadership dashboard lives at /insights (also /admin.html for back-compat)
 app.get(['/insights', '/insights.html'], (_req, res) => res.sendFile(`${__dirname}/public/admin.html`));
+
+// ---- Admin: delete a single response, or clear all. Always requires the EXPORT_KEY
+// (even when the dashboard is open for viewing), so viewers can't delete anything.
+function adminKeyOk(req) { return Boolean(EXPORT_KEY) && req.body && req.body.key === EXPORT_KEY; }
+app.post('/admin/delete', (req, res) => {
+  if (!adminKeyOk(req)) return res.status(403).json({ error: 'Forbidden' });
+  const rid = req.body.rid;
+  if (rid === undefined || rid === null || rid === '') return res.status(400).json({ error: 'Missing rid' });
+  const idx = captured.findIndex((e) => String(e._dbid) === String(rid));
+  if (idx < 0) return res.status(404).json({ error: 'Not found' });
+  captured.splice(idx, 1);
+  db.remove(rid).catch(() => {});
+  state.count = SEED_COUNT + captured.length;
+  // The staff board dots are anonymous (no per-card id), so a single delete updates
+  // the dashboard + exports immediately; open big-screen boards refresh on reload.
+  return res.json({ ok: true, count: captured.length });
+});
+app.post('/admin/reset', (req, res) => {
+  if (!adminKeyOk(req)) return res.status(403).json({ error: 'Forbidden' });
+  captured.length = 0;
+  state.feed.length = 0;
+  state.count = SEED_COUNT;
+  db.clearAll().catch(() => {});
+  broadcastAll({ type: 'reset' });
+  return res.json({ ok: true, count: 0 });
+});
+
 app.use(express.static(`${__dirname}/public`, { maxAge: 0, etag: true, index: ['index.html'], dotfiles: 'ignore' }));
 
 const server = http.createServer(app);
@@ -491,6 +520,10 @@ function broadcastExcept(sender, payload) {
   for (const client of wss.clients) {
     if (client !== sender && client.readyState === 1) client.send(message);
   }
+}
+function broadcastAll(payload) {
+  const message = JSON.stringify(payload);
+  for (const client of wss.clients) { if (client.readyState === 1) client.send(message); }
 }
 
 function rateLimited(ws) {
@@ -558,7 +591,7 @@ wss.on('connection', (ws) => {
     applyEntry(entry);        // one dot, count += 1
     captured.push(entry);
     if (captured.length > LIMITS.captured) captured.shift();
-    db.insert(entry);
+    db.insert(entry).then((id) => { if (id !== null && id !== undefined) entry._dbid = id; }).catch(() => {});
 
     const item = { team, commit: clean[0].text, goal: '', commitments: clean };
     ws.send(JSON.stringify({ type: 'accepted', item, count: state.count }));

@@ -190,6 +190,7 @@ app.use(helmet({
   },
   crossOriginEmbedderPolicy: false,
 }));
+app.use(express.json({ limit: '32kb' }));
 
 app.get('/healthz', (_req, res) => res.status(200).type('text/plain').send('ok'));
 
@@ -207,6 +208,7 @@ app.get('/status', (_req, res) => {
 
 function subView(e) {
   return {
+    rid: (e._dbid === undefined ? null : e._dbid),
     submitted: e.ts || '', submittedLocal: fmtCentral(e.ts),
     first: e.first || '', last: e.last || '',
     division: e.division || '', region: e.region || '', entity: e.entity || '', role: e.role || '',
@@ -390,6 +392,33 @@ app.get('/export.xlsx', async (req, res) => {
 app.get('/favicon.ico', (_req, res) => res.status(204).end());
 // Leadership dashboard lives at /insights (also /admin.html for back-compat)
 app.get(['/insights', '/insights.html'], (_req, res) => res.sendFile(`${__dirname}/public-leaders/admin.html`));
+
+// ---- Admin: delete a single response, or clear all. Always requires the EXPORT_KEY
+// (even when the dashboard is open for viewing), so viewers can't delete anything.
+function adminKeyOk(req) { return Boolean(EXPORT_KEY) && req.body && req.body.key === EXPORT_KEY; }
+app.post('/admin/delete', (req, res) => {
+  if (!adminKeyOk(req)) return res.status(403).json({ error: 'Forbidden' });
+  const rid = req.body.rid;
+  if (rid === undefined || rid === null || rid === '') return res.status(400).json({ error: 'Missing rid' });
+  const idx = captured.findIndex((e) => String(e._dbid) === String(rid));
+  if (idx < 0) return res.status(404).json({ error: 'Not found' });
+  const [gone] = captured.splice(idx, 1);
+  state.count = Math.max(0, state.count - 1);
+  if (gone && gone.id) delete reactions[gone.id];
+  db.remove(rid).catch(() => {});
+  if (gone && gone.id) broadcastAll({ type: 'remove', id: gone.id });
+  return res.json({ ok: true, count: state.count });
+});
+app.post('/admin/reset', (req, res) => {
+  if (!adminKeyOk(req)) return res.status(403).json({ error: 'Forbidden' });
+  captured.length = 0;
+  state.count = 0;
+  for (const k of Object.keys(reactions)) delete reactions[k];
+  db.clearAll().catch(() => {});
+  broadcastAll({ type: 'reset' });
+  return res.json({ ok: true, count: 0 });
+});
+
 app.use(express.static(`${__dirname}/public-leaders`, { maxAge: 0, etag: true, index: ['index.html'], dotfiles: 'ignore' }));
 
 const server = http.createServer(app);
@@ -482,7 +511,7 @@ wss.on('connection', (ws) => {
     applyEntry();
     captured.push(entry);
     if (captured.length > LIMITS.captured) captured.shift();
-    db.insert(entry);
+    db.insert(entry).then((id) => { if (id !== null && id !== undefined) entry._dbid = id; }).catch(() => {});
 
     const item = publicCard(entry);
     ws.send(JSON.stringify({ type: 'accepted', item, count: state.count }));

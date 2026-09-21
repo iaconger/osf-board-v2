@@ -228,8 +228,18 @@
       <div class="btns"><button class="pbtn" id="prev">‹ Previous</button><button class="pbtn" id="next">Next ›</button></div>
     </div>
   </div>
+
+  <div class="card">
+    <h2>Manage responses</h2>
+    <p class="cardnote">Remove a single response, or clear everything. Deleting is permanent and cannot be undone. Enter your admin key to enable the Delete buttons in the table above and the Clear all button below.</p>
+    <div class="controls">
+      <input class="search" id="adminKey" type="password" placeholder="Admin key (your EXPORT_KEY) to enable deleting" autocomplete="off" spellcheck="false" style="max-width:360px">
+      <button class="btn" id="clearAll" type="button" style="background:#b3261e;border-color:#b3261e">Clear all responses</button>
+    </div>
+    <div class="dlnote" id="mmsg" style="display:none"><span>↳</span><span id="mmsgtext"></span></div>
+  </div>
   </div>
 </div>
-<script src="ldi-admin.js?v=20260920"></script>
+<script src="ldi-admin.js?v=20260921"></script>
 </body>
 </html>

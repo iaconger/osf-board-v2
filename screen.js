@@ -76,7 +76,7 @@
         feed.unshift(it); if (feed.length > 60) feed.pop();
         renderFeed();
         makeDot(it, true);
-      }
+      } else if (m.type === 'reset') { try { location.reload(); } catch (e) { /* noop */ } }
     };
     ws.onclose = function () { setTimeout(connect, 2000); };
     ws.onerror = function () { try { ws.close(); } catch (e) { /* noop */ } };

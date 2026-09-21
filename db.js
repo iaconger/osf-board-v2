@@ -50,13 +50,14 @@ async function init() {
 async function loadAll() {
   if (mode === 'postgres') {
     const { rows } = await pool.query(
-      'SELECT ts, team, work, connections, reach, commitment, goal, commitments FROM submissions ORDER BY id ASC'
+      'SELECT id, ts, team, work, connections, reach, commitment, goal, commitments FROM submissions ORDER BY id ASC'
     );
     return rows.map((r) => {
       let commitments = Array.isArray(r.commitments) ? r.commitments : [];
       // older rows predate the commitments column: rebuild from the legacy pair
       if (!commitments.length) commitments = [{ text: r.commitment || '', goal: r.goal || '' }];
       return {
+        _dbid: r.id,
         ts: r.ts ? new Date(r.ts).toISOString() : '',
         team: r.team,
         work: r.work || '',
@@ -71,9 +72,10 @@ async function loadAll() {
   const out = [];
   try {
     if (fs.existsSync(DATA_FILE)) {
+      let i = 0;
       for (const line of fs.readFileSync(DATA_FILE, 'utf8').split('\n')) {
         if (!line) continue;
-        try { out.push(JSON.parse(line)); } catch { /* skip malformed line */ }
+        try { const o = JSON.parse(line); o._dbid = 'f' + (i++); out.push(o); } catch { /* skip malformed line */ }
       }
     }
   } catch { /* ignore read errors */ }
@@ -86,13 +88,38 @@ function insert(entry) {
     const commitments = Array.isArray(entry.commitments) && entry.commitments.length
       ? entry.commitments
       : [{ text: entry.commit || '', goal: entry.goal || '' }];
-    pool.query(
-      'INSERT INTO submissions (ts, team, work, connections, reach, commitment, goal, commitments) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)',
+    return pool.query(
+      'INSERT INTO submissions (ts, team, work, connections, reach, commitment, goal, commitments) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id',
       [entry.ts, entry.team, entry.work || '', JSON.stringify(entry.connections || []), entry.reach || '', entry.commit, entry.goal || '', JSON.stringify(commitments)]
-    ).catch((err) => { console.error('db insert failed:', err.message); }); // eslint-disable-line no-console
-  } else {
-    try { fs.appendFile(DATA_FILE, `${JSON.stringify(entry)}\n`, () => {}); } catch { /* ignore */ }
+    ).then((r) => (r.rows[0] ? r.rows[0].id : null))
+      .catch((err) => { console.error('db insert failed:', err.message); return null; }); // eslint-disable-line no-console
   }
+  try { fs.appendFile(DATA_FILE, `${JSON.stringify(entry)}\n`, () => {}); } catch { /* ignore */ }
+  return Promise.resolve(null);
 }
 
-module.exports = { init, loadAll, insert, mode };
+// Delete one row by its _dbid (numeric id in postgres, 'f<index>' in file mode).
+async function remove(dbid) {
+  if (dbid === null || dbid === undefined) return false;
+  if (mode === 'postgres') {
+    const n = Number(dbid); if (!Number.isFinite(n)) return false;
+    const r = await pool.query('DELETE FROM submissions WHERE id=$1', [n]);
+    return r.rowCount > 0;
+  }
+  try {
+    const idx = Number(String(dbid).replace(/^f/, ''));
+    if (!Number.isFinite(idx) || !fs.existsSync(DATA_FILE)) return false;
+    const lines = fs.readFileSync(DATA_FILE, 'utf8').split('\n').filter((l) => l);
+    if (idx < 0 || idx >= lines.length) return false;
+    lines.splice(idx, 1);
+    fs.writeFileSync(DATA_FILE, lines.length ? lines.join('\n') + '\n' : '');
+    return true;
+  } catch { return false; }
+}
+
+async function clearAll() {
+  if (mode === 'postgres') { await pool.query('TRUNCATE TABLE submissions RESTART IDENTITY'); return true; }
+  try { fs.writeFileSync(DATA_FILE, ''); return true; } catch { return false; }
+}
+
+module.exports = { init, loadAll, insert, remove, clearAll, mode };

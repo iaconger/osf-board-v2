@@ -56,9 +56,10 @@ async function init() {
 async function loadAll() {
   if (mode === 'postgres') {
     const { rows } = await pool.query(
-      'SELECT ts, first, last, division, region, entity, role, years, comps, skills, approach, value, goals FROM ldi_submissions ORDER BY id ASC'
+      'SELECT id, ts, first, last, division, region, entity, role, years, comps, skills, approach, value, goals FROM ldi_submissions ORDER BY id ASC'
     );
     return rows.map((r) => ({
+      _dbid: r.id,
       ts: r.ts ? new Date(r.ts).toISOString() : '',
       first: r.first || '',
       last: r.last || '',
@@ -77,27 +78,56 @@ async function loadAll() {
   const out = [];
   try {
     if (fs.existsSync(DATA_FILE)) {
+      let i = 0;
       for (const line of fs.readFileSync(DATA_FILE, 'utf8').split('\n')) {
         if (!line) continue;
-        try { out.push(JSON.parse(line)); } catch { /* skip malformed */ }
+        try { const o = JSON.parse(line); o._dbid = 'f' + (i++); out.push(o); } catch { /* skip malformed */ }
       }
     }
   } catch { /* ignore */ }
   return out;
 }
 
+// Returns a promise that resolves to the new row's database id (postgres) or null (file).
 function insert(entry) {
   if (mode === 'postgres') {
-    pool.query(
-      'INSERT INTO ldi_submissions (ts, first, last, division, region, entity, role, years, comps, skills, approach, value, goals) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)',
+    return pool.query(
+      'INSERT INTO ldi_submissions (ts, first, last, division, region, entity, role, years, comps, skills, approach, value, goals) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING id',
       [entry.ts, entry.first || '', entry.last || '', entry.division || '', entry.region || '', entry.entity || '', entry.role || '',
         (entry.years === null || entry.years === undefined) ? null : entry.years,
         JSON.stringify(entry.comps || []), JSON.stringify(entry.skills || []), entry.approach || '', entry.value || '',
         JSON.stringify(entry.goals || {})]
-    ).catch((err) => { console.error('ldi db insert failed:', err.message); }); // eslint-disable-line no-console
-  } else {
-    try { fs.appendFile(DATA_FILE, `${JSON.stringify(entry)}\n`, () => {}); } catch { /* ignore */ }
+    ).then((r) => (r.rows[0] ? r.rows[0].id : null))
+      .catch((err) => { console.error('ldi db insert failed:', err.message); return null; }); // eslint-disable-line no-console
   }
+  try { fs.appendFile(DATA_FILE, `${JSON.stringify(entry)}\n`, () => {}); } catch { /* ignore */ }
+  return Promise.resolve(null);
 }
 
-module.exports = { init, loadAll, insert, mode };
+// Delete one row by its _dbid. Postgres uses the numeric id; file mode rewrites
+// the data file, dropping the line at index N (id looks like 'f<N>').
+async function remove(dbid) {
+  if (dbid === null || dbid === undefined) return false;
+  if (mode === 'postgres') {
+    const n = Number(dbid); if (!Number.isFinite(n)) return false;
+    const r = await pool.query('DELETE FROM ldi_submissions WHERE id=$1', [n]);
+    return r.rowCount > 0;
+  }
+  try {
+    const idx = Number(String(dbid).replace(/^f/, ''));
+    if (!Number.isFinite(idx) || !fs.existsSync(DATA_FILE)) return false;
+    const lines = fs.readFileSync(DATA_FILE, 'utf8').split('\n').filter((l) => l);
+    if (idx < 0 || idx >= lines.length) return false;
+    lines.splice(idx, 1);
+    fs.writeFileSync(DATA_FILE, lines.length ? lines.join('\n') + '\n' : '');
+    return true;
+  } catch { return false; }
+}
+
+// Remove every row.
+async function clearAll() {
+  if (mode === 'postgres') { await pool.query('TRUNCATE TABLE ldi_submissions RESTART IDENTITY'); return true; }
+  try { fs.writeFileSync(DATA_FILE, ''); return true; } catch { return false; }
+}
+
+module.exports = { init, loadAll, insert, remove, clearAll, mode };

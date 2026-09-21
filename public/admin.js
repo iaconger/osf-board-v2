@@ -264,7 +264,7 @@
       return;
     }
     var html = '<table><thead><tr>' +
-      '<th>Team</th><th>Goal</th><th>Commitment</th><th>When &amp; who they work with</th>' +
+      '<th>Team</th><th>Goal</th><th>Commitment</th><th>When &amp; who they work with</th><th>Manage</th>' +
       '</tr></thead><tbody>';
     slice.forEach(function (o) {
       var e = o.e;
@@ -276,6 +276,8 @@
         (e.department ? '<div class="meta">' + esc(e.department) + '</div>' : '');
       var metaCell = '<div class="meta">' + esc(when) + '</div>' +
         (works ? '<div class="meta" style="margin-top:4px">Works with: ' + esc(works) + '</div>' : '');
+      var manageCell = (e.rid === null || e.rid === undefined) ? '<span class="meta">—</span>' :
+        '<button type="button" class="delrow" data-rid="' + esc(String(e.rid)) + '" data-name="' + esc(e.team || 'this team') + '" style="border:1px solid #e0b4b0;background:#fdeceb;color:#b3261e;border-radius:8px;padding:6px 12px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap">Delete</button>';
       list.forEach(function (c, i) {
         var goal = c.pillar || '';
         html += '<tr' + (i === 0 ? ' class="teamsep"' : '') + '>';
@@ -283,6 +285,7 @@
         html += '<td>' + (goal ? '<span class="pill ' + pillarClass(goal) + '">' + esc(goal) + '</span>' : '') + '</td>';
         html += '<td class="stmt">' + esc(c.commitment || '') + '</td>';
         if (i === 0) html += '<td rowspan="' + rows + '">' + metaCell + '</td>';
+        if (i === 0) html += '<td rowspan="' + rows + '">' + manageCell + '</td>';
         html += '</tr>';
       });
     });
@@ -340,6 +343,35 @@
   el('refresh').addEventListener('click', load);
   keyInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') load(); });
   wireBrowser();
+
+  // ---- delete / clear-all (always requires the admin key) ----
+  function mmsg(t, kind) { var m = el('mmsg'), x = el('mmsgtext'); if (!m || !x) return; if (!t) { m.style.display = 'none'; x.textContent = ''; return; } m.style.display = 'flex'; x.textContent = t; x.style.color = (kind === 'err' ? '#b3261e' : (kind === 'ok' ? '#3f6d08' : '')); }
+  function adminKeyVal() { var a = el('adminKey'); return a ? a.value.trim() : ''; }
+  function post(path, body) { return fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); }
+  function doDelete(rid, name, btn) {
+    var k = adminKeyVal(); if (!k) { mmsg('Enter your admin key above to enable deleting.', 'err'); var a = el('adminKey'); if (a) a.focus(); return; }
+    if (!window.confirm('Delete the response from ' + (name || 'this team') + '? This cannot be undone.')) return;
+    if (btn) { btn.disabled = true; btn.textContent = 'Deleting…'; }
+    post('/admin/delete', { key: k, rid: rid }).then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { s: r.status, j: j }; }); }).then(function (o) {
+      if (o.s === 200 && o.j.ok) { mmsg('Deleted.', 'ok'); load(); }
+      else if (o.s === 403) { mmsg('That admin key was not accepted. Check your EXPORT_KEY and try again.', 'err'); if (btn) { btn.disabled = false; btn.textContent = 'Delete'; } }
+      else { mmsg('Could not delete (error ' + o.s + ').', 'err'); if (btn) { btn.disabled = false; btn.textContent = 'Delete'; } }
+    }).catch(function () { mmsg('Could not reach the server.', 'err'); if (btn) { btn.disabled = false; btn.textContent = 'Delete'; } });
+  }
+  function doReset() {
+    var k = adminKeyVal(); if (!k) { mmsg('Enter your admin key above to enable deleting.', 'err'); var a = el('adminKey'); if (a) a.focus(); return; }
+    if (!window.confirm('Clear ALL responses? This permanently deletes every response and cannot be undone.')) return;
+    if (!window.confirm('Are you sure? This is your last chance to cancel.')) return;
+    var b = el('clearAll'); if (b) { b.disabled = true; b.textContent = 'Clearing…'; }
+    post('/admin/reset', { key: k }).then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { s: r.status, j: j }; }); }).then(function (o) {
+      if (b) { b.disabled = false; b.textContent = 'Clear all responses'; }
+      if (o.s === 200 && o.j.ok) { mmsg('All responses cleared.', 'ok'); load(); }
+      else if (o.s === 403) { mmsg('That admin key was not accepted. Check your EXPORT_KEY and try again.', 'err'); }
+      else { mmsg('Could not clear (error ' + o.s + ').', 'err'); }
+    }).catch(function () { if (b) { b.disabled = false; b.textContent = 'Clear all responses'; } mmsg('Could not reach the server.', 'err'); });
+  }
+  if (el('tablewrap')) el('tablewrap').addEventListener('click', function (e) { var b = e.target.closest ? e.target.closest('.delrow') : null; if (b) doDelete(b.getAttribute('data-rid'), b.getAttribute('data-name'), b); });
+  if (el('clearAll')) el('clearAll').addEventListener('click', doReset);
 
   load(); // auto-load (open); if the server is re-secured, the key gate shows on 403
 })();

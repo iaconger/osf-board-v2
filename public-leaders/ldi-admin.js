@@ -141,7 +141,7 @@
     if(BR.page>=pages)BR.page=pages-1;if(BR.page<0)BR.page=0;
     var start=BR.page*BR.size;var slice=list.slice(start,start+BR.size);
     if(!total){el('tablewrap').innerHTML='<div class="empty">No leaders match.</div>';el('pager').style.display='none';return;}
-    var h='<table class="subs"><thead><tr><th>Leader</th><th>Role &amp; experience</th><th>Strategic goal commitments</th><th>Competencies (ranked)</th><th>Skills to strengthen</th><th>How they\'ll work on it</th></tr></thead><tbody>';
+    var h='<table class="subs"><thead><tr><th>Leader</th><th>Role &amp; experience</th><th>Strategic goal commitments</th><th>Competencies (ranked)</th><th>Skills to strengthen</th><th>How they\'ll work on it</th><th>Manage</th></tr></thead><tbody>';
     slice.forEach(function(l){
       var who=(l.first||l.last)?((l.first+' '+l.last).trim()):'<span class="meta">(anonymous)</span>';
       var comps=l.comps.map(function(cn,idx){var col=compColor(cn);return '<span class="cchip"><span class="r" style="background:'+col+'">'+(idx+1)+'</span><span class="dot" style="background:'+col+'"></span>'+cn+'</span>';}).join('');
@@ -151,9 +151,12 @@
         return '<div class="gcommit"><b style="color:'+g.color+'">'+esc(g.name)+':</b> '+esc(gg[g.key])+'</div>';
       }).join('')||'<span class="meta">None</span>';
       var ap=l.approach?('<span class="approach">'+esc(l.approach)+'</span>'):'<span class="meta">None</span>';
+      var nm=((l.first||'')+' '+(l.last||'')).trim()||'this response';
+      var del=(l.rid===null||l.rid===undefined)?'<span class="meta">—</span>':
+        '<button type="button" class="delrow" data-rid="'+esc(String(l.rid))+'" data-name="'+esc(nm)+'" style="border:1px solid #e0b4b0;background:#fdeceb;color:#b3261e;border-radius:8px;padding:6px 12px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap">Delete</button>';
       h+='<tr><td><div class="who">'+who+'</div><div class="meta">'+esc(l.division)+(l.entity?(' · '+esc(l.entity)):'')+'</div></td>'+
          '<td>'+l.role+'<div class="meta">'+l.years+' yr'+(l.years===1?'':'s')+'</div></td>'+
-         '<td>'+goalsCell+'</td><td>'+comps+'</td><td>'+sks+'</td><td>'+ap+'</td></tr>';
+         '<td>'+goalsCell+'</td><td>'+comps+'</td><td>'+sks+'</td><td>'+ap+'</td><td>'+del+'</td></tr>';
     });
     h+='</tbody></table>';el('tablewrap').innerHTML=h;
     el('pinfo').textContent='Showing '+(start+1)+' to '+Math.min(start+BR.size,total)+' of '+total+' leaders'+(pages>1?'   ·   page '+(BR.page+1)+' of '+pages:'');
@@ -179,6 +182,35 @@
   el('prev').addEventListener('click',function(){if(BR.page>0){BR.page--;renderBrowser();}});
   el('next').addEventListener('click',function(){BR.page++;renderBrowser();});
 
+  // ---- delete / clear-all (always requires the admin key) ----
+  function mmsg(t,kind){var m=el('mmsg'),x=el('mmsgtext');if(!m||!x)return;if(!t){m.style.display='none';x.textContent='';return;}m.style.display='flex';x.textContent=t;x.style.color=(kind==='err'?'#b3261e':(kind==='ok'?'#3f6d08':''));}
+  function adminKeyVal(){var a=el('adminKey');return a?a.value.trim():'';}
+  function post(path,body){return fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});}
+  function doDelete(rid,name,btn){
+    var k=adminKeyVal(); if(!k){mmsg('Enter your admin key above to enable deleting.','err');var a=el('adminKey');if(a)a.focus();return;}
+    if(!window.confirm('Delete '+(name||'this response')+'? This cannot be undone.'))return;
+    if(btn){btn.disabled=true;btn.textContent='Deleting…';}
+    post('/admin/delete',{key:k,rid:rid}).then(function(r){return r.json().catch(function(){return {};}).then(function(j){return {s:r.status,j:j};});}).then(function(o){
+      if(o.s===200&&o.j.ok){ LEADERS=LEADERS.filter(function(l){return String(l.rid)!==String(rid);}); renderAll(); mmsg('Deleted. '+ (o.j.count!=null?(o.j.count+' remaining.'):''),'ok'); }
+      else if(o.s===403){ mmsg('That admin key was not accepted. Check your EXPORT_KEY and try again.','err'); if(btn){btn.disabled=false;btn.textContent='Delete';} }
+      else { mmsg('Could not delete (error '+o.s+').','err'); if(btn){btn.disabled=false;btn.textContent='Delete';} }
+    }).catch(function(){mmsg('Could not reach the server.','err');if(btn){btn.disabled=false;btn.textContent='Delete';}});
+  }
+  function doReset(){
+    var k=adminKeyVal(); if(!k){mmsg('Enter your admin key above to enable deleting.','err');var a=el('adminKey');if(a)a.focus();return;}
+    if(!window.confirm('Clear ALL responses? This permanently deletes every response and cannot be undone.'))return;
+    if(!window.confirm('Are you sure? This is your last chance to cancel.'))return;
+    var b=el('clearAll'); if(b){b.disabled=true;b.textContent='Clearing…';}
+    post('/admin/reset',{key:k}).then(function(r){return r.json().catch(function(){return {};}).then(function(j){return {s:r.status,j:j};});}).then(function(o){
+      if(b){b.disabled=false;b.textContent='Clear all responses';}
+      if(o.s===200&&o.j.ok){ LEADERS=[]; renderAll(); mmsg('All responses cleared.','ok'); }
+      else if(o.s===403){ mmsg('That admin key was not accepted. Check your EXPORT_KEY and try again.','err'); }
+      else { mmsg('Could not clear (error '+o.s+').','err'); }
+    }).catch(function(){if(b){b.disabled=false;b.textContent='Clear all responses';}mmsg('Could not reach the server.','err');});
+  }
+  el('tablewrap').addEventListener('click',function(e){var b=e.target.closest?e.target.closest('.delrow'):null;if(b)doDelete(b.getAttribute('data-rid'),b.getAttribute('data-name'),b);});
+  if(el('clearAll'))el('clearAll').addEventListener('click',doReset);
+
   function setDownloads(){
     var p='key='+encodeURIComponent(KEY);
     if(F.div)p+='&division='+encodeURIComponent(F.div);
@@ -192,7 +224,7 @@
   function normalize(subs){
     return (subs||[]).map(function(s){
       var comps=(s.comps||[]).slice().sort(function(a,b){return (a.rank||9)-(b.rank||9);}).map(function(c){return c.name;});
-      return { first:s.first||'', last:s.last||'', division:s.division||'', region:s.region||'', entity:s.entity||'', role:s.role||'',
+      return { rid:(s.rid===undefined?null:s.rid), first:s.first||'', last:s.last||'', division:s.division||'', region:s.region||'', entity:s.entity||'', role:s.role||'',
         years:(s.years===null||s.years===undefined)?0:Number(s.years),
         comps:comps, skills:s.skills||[], goals:(s.goals&&typeof s.goals==='object')?s.goals:{}, approach:s.approach||'', ts:(new Date(s.submitted).getTime()||0) };
     });

@@ -240,6 +240,8 @@
       else if(d.type==='add'){ if(d.item) boardData.push(d.item); refreshBoardViews(); }
       else if(d.type==='accepted'){ if(d.item){ mine=d.item; boardData.push(d.item); } submitted=true; refreshBoardViews(); }
       else if(d.type==='reactions'){ var c=findCard(d.id); if(c){ c.react={heart:d.heart,clap:d.clap}; updateReactionCounts(d.id); } }
+      else if(d.type==='remove'){ if(d.id){ boardData=boardData.filter(function(x){return x.id!==d.id;}); refreshBoardViews(); } }
+      else if(d.type==='reset'){ boardData=[]; refreshBoardViews(); }
     };
     ws.onclose=function(){ wsReady=false; setTimeout(connect,2500); };
     ws.onerror=function(){ try{ws.close();}catch(e){} };
