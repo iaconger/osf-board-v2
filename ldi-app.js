@@ -47,19 +47,53 @@
     {key:'g3',name:'Destination OSF',color:'#A5228E'}
   ];
   var GOAL_MAX=200;
-  // OSF Region / Entity standard list
-  var REGIONS=[
-    {r:'Central', e:['OSF OnCall','Central Region - Peoria']},
-    {r:'Eastern', e:['SHMC - Urbana/Danville','LCMMC - Evergreen Park','SFH - Escanaba','SJJWAMC & SJMC - Pontiac & Bloomington']},
-    {r:'MG, HomeCare, Rehab', e:['Home Care & Rehab','OSF MG']},
-    {r:'N/A', e:['Ministry Services - HR, Foundation']},
-    {r:'Professional Services', e:['Ministry Services - Clinical Excellence Team','Ministry Services - Finance','Ministry Services - Innovation Strategy','Ministry Services - Mission Services','Ministry Services - Pointcore']},
-    {r:'Western', e:['I-80 - SEMC Ottawa / SPMC Mendota / SCMC Princeton','SAHC - Alton','SAMC - Rockford','SKMC - Dixon','WCIM - SMMC/HFMC Galesburg / SLMC Kewanee']}
+  // OSF Region + LDI standard lists.
+  // These two questions are INDEPENDENT: choosing a region does not filter the LDI
+  // list. (Branching is what made HR hard to find in the first round.)
+  var REGIONS=['Central','Eastern','Western','Other'];
+  var LDIS=[
+    'Central Region - Peoria',
+    'Home Care & Rehab',
+    'I-80 = SEMC - Ottawa / SPMC - Mendota / SCMC - Princeton',
+    'LCMMC - Evergreen Park',
+    'Ministry Services - Clinical Excellence Team',
+    'Ministry Services - Finance',
+    'Ministry Services - HR & Foundation',
+    'Ministry Services - Innovation Strategy (Innovation, MarCom, Bus Dev, Strategy)',
+    'Ministry Services - Mission Services, etc.',
+    'OSF MG',
+    'OSF OnCall',
+    'Pointcore',
+    'SAHC - Alton',
+    'SAMC - Rockford',
+    'SFH & MG - Escanaba',
+    'SHMC - Urbana/Danville',
+    'SJJWAMC & SJMC - Pontiac & Bloomington',
+    'SKMC - Dixon',
+    'WCIM = SMMC/HFMC - Galesburg / SLMC - Kewanee'
   ];
-  function entitiesFor(r){for(var i=0;i<REGIONS.length;i++)if(REGIONS[i].r===r)return REGIONS[i].e;return [];}
-  function allEntities(){var a=[];REGIONS.forEach(function(x){a=a.concat(x.e);});return a;}
-  function fillRegion(sel,allLabel){if(!sel)return;sel.innerHTML='<option value="">'+allLabel+'</option>';REGIONS.forEach(function(x){var o=document.createElement('option');o.value=x.r;o.textContent=x.r;sel.appendChild(o);});}
-  function fillEntity(sel,region,allLabel){if(!sel)return;var list=region?entitiesFor(region):allEntities();sel.innerHTML='<option value="">'+allLabel+'</option>';list.forEach(function(en){var o=document.createElement('option');o.value=en;o.textContent=en;sel.appendChild(o);});}
+  // Values already present in collected data, so responses captured under the old
+  // taxonomy stay visible and filterable on the board. Never used for sign-in.
+  function existingVals(key){var out=[];try{(boardData||[]).forEach(function(c){var v=((c&&c[key])||'').trim();if(v&&out.indexOf(v)<0)out.push(v);});}catch(e){}return out;}
+  function unionList(base,key){var out=base.slice();existingVals(key).forEach(function(v){if(out.indexOf(v)<0)out.push(v);});return out;}
+  function optionsInto(sel,list,allLabel){
+    if(!sel)return; var cur=sel.value;
+    sel.innerHTML='<option value="">'+allLabel+'</option>';
+    list.forEach(function(v){var o=document.createElement('option');o.value=v;o.textContent=v;sel.appendChild(o);});
+    if(cur){sel.value=cur;}
+  }
+  function fillRegion(sel,allLabel,withExisting){optionsInto(sel,withExisting?unionList(REGIONS,'region'):REGIONS,allLabel);}
+  function fillEntity(sel,_region,allLabel,withExisting){optionsInto(sel,withExisting?unionList(LDIS,'entity'):LDIS,allLabel);}
+  // Region value to store: the free-text box wins when "Other" is selected.
+  function regionVal(){
+    var r=el('region')?el('region').value:'';
+    if(r==='Other'){var o=el('regionOther');var t=o?o.value.trim():'';if(t)return t;}
+    return r;
+  }
+  function syncRegionOther(){
+    var r=el('region')?el('region').value:'', w=el('regionOtherWrap');
+    if(w)w.style.display=(r==='Other')?'block':'none';
+  }
   function compByName(n){for(var i=0;i<COMPS.length;i++)if(COMPS[i].name===n)return COMPS[i];return COMPS[0];}
   var el=function(id){return document.getElementById(id);};
   var pickedComp=[], pickedSkill=[];
@@ -224,7 +258,10 @@
     var hb=cardEl.querySelector('[data-react="heart"] .cnt'); var cb=cardEl.querySelector('[data-react="clap"] .cnt');
     if(hb)hb.textContent=card.react.heart; if(cb)cb.textContent=card.react.clap;
   }
-  function refreshBoardViews(){ if(isOn(6)){ renderBoard(); renderExplore(); } }
+  function refreshBoardViews(){
+    fillRegion(el('bRegion'),'All regions',true); fillEntity(el('bEntity'),'','All LDIs',true);
+    if(isOn(6)){ renderBoard(); renderExplore(); }
+  }
 
   // ---- WebSocket ----
   var ws=null, wsReady=false;
@@ -240,6 +277,8 @@
       else if(d.type==='add'){ if(d.item) boardData.push(d.item); refreshBoardViews(); }
       else if(d.type==='accepted'){ if(d.item){ mine=d.item; boardData.push(d.item); } submitted=true; refreshBoardViews(); }
       else if(d.type==='reactions'){ var c=findCard(d.id); if(c){ c.react={heart:d.heart,clap:d.clap}; updateReactionCounts(d.id); } }
+      else if(d.type==='remove'){ if(d.id){ boardData=boardData.filter(function(x){return x.id!==d.id;}); refreshBoardViews(); } }
+      else if(d.type==='reset'){ boardData=[]; refreshBoardViews(); }
     };
     ws.onclose=function(){ wsReady=false; setTimeout(connect,2500); };
     ws.onerror=function(){ try{ws.close();}catch(e){} };
@@ -250,7 +289,7 @@
     var payload={ type:'submit',
       first:el('fn').value.trim(), last:el('ln').value.trim(),
       division:el('div').value.trim(), role:el('role').value, years:el('yrs').value,
-      region:(el('region')?el('region').value:''), entity:(el('entity')?el('entity').value:''),
+      region:regionVal(), entity:(el('entity')?el('entity').value:''),
       comps:pickedComp.map(function(n){return {name:n};}), skills:pickedSkill.slice(),
       goals:collectGoals(),
       approach:(el('approach')?el('approach').value.trim():'') };
@@ -261,7 +300,7 @@
       // if it never connects, mine falls back locally on accepted-timeout below
     })();
     // local fallback so the board still shows the person even if the socket is slow
-    setTimeout(function(){ if(!submitted){ mine={id:'local-'+Date.now(),first:el('fn').value.trim(),division:el('div').value.trim(),region:(el('region')?el('region').value:''),entity:(el('entity')?el('entity').value:''),role:el('role').value,comps:pickedComp.map(function(n,i){return {name:n,rank:i+1};}),skills:pickedSkill.slice(),goals:collectGoals(),approach:(el('approach')?el('approach').value.trim():''),react:{heart:0,clap:0}}; boardData.push(mine); submitted=true; refreshBoardViews(); } }, 3500);
+    setTimeout(function(){ if(!submitted){ mine={id:'local-'+Date.now(),first:el('fn').value.trim(),division:el('div').value.trim(),region:regionVal(),entity:(el('entity')?el('entity').value:''),role:el('role').value,comps:pickedComp.map(function(n,i){return {name:n,rank:i+1};}),skills:pickedSkill.slice(),goals:collectGoals(),approach:(el('approach')?el('approach').value.trim():''),react:{heart:0,clap:0}}; boardData.push(mine); submitted=true; refreshBoardViews(); } }, 3500);
   }
 
   // ---- save card as image ----
@@ -291,7 +330,9 @@
     GOALS.forEach(function(g){var ta=el('goal_'+g.key);if(ta)ta.value='';var cc=el('gc_'+g.key);if(cc)cc.innerHTML='<b>0</b> / '+GOAL_MAX;});
     el('fn').value='';el('ln').value='';el('div').value='';el('role').value='';el('yrs').value='';
     if(el('region')){el('region').value='';}
-    if(el('entity')){fillEntity(el('entity'),'','Select a region first…');el('entity').value='';}
+    if(el('regionOther')){el('regionOther').value='';}
+    syncRegionOther();
+    if(el('entity')){fillEntity(el('entity'),'','Select…');el('entity').value='';}
     if(el('approach')){el('approach').value='';}
     if(el('approachCount')){el('approachCount').innerHTML='<b>0</b> / 280';}
   }
@@ -387,14 +428,24 @@
     });
   })();
 
-  // ---- region / entity: sign-in dropdowns (dependent) + board filters ----
+  // ---- region / LDI: sign-in dropdowns (independent) + board filters ----
   (function(){
     fillRegion(el('region'),'Select…');
     var rg=el('region'), en=el('entity');
-    if(rg&&en){ rg.addEventListener('change',function(){ fillEntity(en, rg.value, 'Select…'); }); }
-    fillRegion(el('bRegion'),'All regions'); fillEntity(el('bEntity'),'','All entities');
+    fillEntity(en,'','Select…');
+    if(rg) rg.addEventListener('change',syncRegionOther);
+    syncRegionOther();
+    // Pre-select region/LDI from the URL (?region=&entity=) so a scoped join link/QR,
+    // one per LDI session, tags leaders automatically. Still fully editable.
+    try{
+      var q=new URLSearchParams(location.search);
+      var pr=q.get('region')||'', pe=q.get('entity')||'';
+      if(rg&&pr&&REGIONS.indexOf(pr)>=0){ rg.value=pr; syncRegionOther(); }
+      if(en&&pe&&LDIS.indexOf(pe)>=0){ en.value=pe; }
+    }catch(e){/* no URLSearchParams => skip pre-fill */}
+    fillRegion(el('bRegion'),'All regions',true); fillEntity(el('bEntity'),'','All LDIs',true);
     var brg=el('bRegion'), ben=el('bEntity');
-    if(brg) brg.addEventListener('change',function(){ fillEntity(ben, brg.value, 'All entities'); refreshBoardViews(); });
+    if(brg) brg.addEventListener('change',refreshBoardViews);
     if(ben) ben.addEventListener('change',refreshBoardViews);
   })();
 

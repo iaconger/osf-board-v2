@@ -22,16 +22,19 @@
   var el=function(id){return document.getElementById(id);};
   function esc(s){return String(s==null?'':s).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];});}
 
-  // OSF Region / Area → Entity taxonomy (same list as the sign-in + dashboard).
-  var REGIONS=[
-    {r:'Central',e:['OSF OnCall','Central Region - Peoria']},
-    {r:'Eastern',e:['SHMC - Urbana/Danville','LCMMC - Evergreen Park','SFH - Escanaba','SJJWAMC & SJMC - Pontiac & Bloomington']},
-    {r:'MG, HomeCare, Rehab',e:['Home Care & Rehab','OSF MG']},
-    {r:'N/A',e:['Ministry Services - HR, Foundation']},
-    {r:'Professional Services',e:['Ministry Services - Clinical Excellence Team','Ministry Services - Finance','Ministry Services - Innovation Strategy','Ministry Services - Mission Services','Ministry Services - Pointcore']},
-    {r:'Western',e:['I-80 - SEMC Ottawa / SPMC Mendota / SCMC Princeton','SAHC - Alton','SAMC - Rockford','SKMC - Dixon','WCIM - SMMC/HFMC Galesburg / SLMC Kewanee']}
+  // OSF Region + LDI lists (same as the sign-in + dashboard). Independent, not branched.
+  var REGIONS=['Central','Eastern','Western','Other'];
+  var LDIS=[
+    'Central Region - Peoria','Home Care & Rehab',
+    'I-80 = SEMC - Ottawa / SPMC - Mendota / SCMC - Princeton','LCMMC - Evergreen Park',
+    'Ministry Services - Clinical Excellence Team','Ministry Services - Finance',
+    'Ministry Services - HR & Foundation',
+    'Ministry Services - Innovation Strategy (Innovation, MarCom, Bus Dev, Strategy)',
+    'Ministry Services - Mission Services, etc.','OSF MG','OSF OnCall','Pointcore',
+    'SAHC - Alton','SAMC - Rockford','SFH & MG - Escanaba','SHMC - Urbana/Danville',
+    'SJJWAMC & SJMC - Pontiac & Bloomington','SKMC - Dixon',
+    'WCIM = SMMC/HFMC - Galesburg / SLMC - Kewanee'
   ];
-  function entitiesFor(r){for(var i=0;i<REGIONS.length;i++)if(REGIONS[i].r===r)return REGIONS[i].e;return [];}
 
   // Active scope for this screen (one region/entity per session). Read from the URL first
   // (?region=...&entity=...) so a scoped link/QR self-applies, then editable via the picker.
@@ -40,7 +43,7 @@
     try{
       var q=new URLSearchParams(location.search);
       var r=q.get('region')||'';var en=q.get('entity')||'';
-      for(var i=0;i<REGIONS.length;i++){if(REGIONS[i].r===r){FILT.region=r;if(REGIONS[i].e.indexOf(en)>=0)FILT.entity=en;break;}}
+      if(r)FILT.region=r; if(en)FILT.entity=en;
     }catch(e){/* no URLSearchParams => leave unscoped */}
   })();
   function filterActive(){return !!(FILT.region||FILT.entity);}
@@ -314,9 +317,11 @@
   }
   function fillEntities(){
     var es=el('scopeEnt'); if(!es)return;
-    var ents=FILT.region?entitiesFor(FILT.region):[];
-    es.innerHTML='<option value="">All entities</option>'+ents.map(function(en){return '<option value="'+esc(en)+'">'+esc(en)+'</option>';}).join('');
-    es.setAttribute('data-empty', ents.length?'0':'1'); // hidden until a region is chosen
+    // Full LDI list always, independent of region. Include any legacy value in play.
+    var ents=LDIS.slice();
+    if(FILT.entity&&ents.indexOf(FILT.entity)<0)ents.push(FILT.entity);
+    es.innerHTML='<option value="">All LDIs</option>'+ents.map(function(en){return '<option value="'+esc(en)+'">'+esc(en)+'</option>';}).join('');
+    es.setAttribute('data-empty','0');
   }
   function onScopeChange(){
     try{
@@ -331,10 +336,11 @@
   }
   function populateScope(){
     var rs=el('scopeSel'), es=el('scopeEnt'); if(!rs||!es)return;
-    rs.innerHTML='<option value="">All regions</option>'+REGIONS.map(function(x){return '<option value="'+esc(x.r)+'">'+esc(x.r)+'</option>';}).join('');
+    var rgs=REGIONS.slice(); if(FILT.region&&rgs.indexOf(FILT.region)<0)rgs.push(FILT.region);
+    rs.innerHTML='<option value="">All regions</option>'+rgs.map(function(r){return '<option value="'+esc(r)+'">'+esc(r)+'</option>';}).join('');
     rs.value=FILT.region||'';
     fillEntities(); es.value=FILT.entity||'';
-    rs.addEventListener('change',function(){ FILT.region=rs.value; FILT.entity=''; fillEntities(); es.value=''; onScopeChange(); });
+    rs.addEventListener('change',function(){ FILT.region=rs.value; onScopeChange(); });
     es.addEventListener('change',function(){ FILT.entity=es.value; onScopeChange(); });
   }
 

@@ -22,6 +22,38 @@
   var el=function(id){return document.getElementById(id);};
   function esc(s){return String(s==null?'':s).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];});}
 
+  // OSF Region + LDI lists (same as the sign-in + dashboard). Independent, not branched.
+  var REGIONS=['Central','Eastern','Western','Other'];
+  var LDIS=[
+    'Central Region - Peoria','Home Care & Rehab',
+    'I-80 = SEMC - Ottawa / SPMC - Mendota / SCMC - Princeton','LCMMC - Evergreen Park',
+    'Ministry Services - Clinical Excellence Team','Ministry Services - Finance',
+    'Ministry Services - HR & Foundation',
+    'Ministry Services - Innovation Strategy (Innovation, MarCom, Bus Dev, Strategy)',
+    'Ministry Services - Mission Services, etc.','OSF MG','OSF OnCall','Pointcore',
+    'SAHC - Alton','SAMC - Rockford','SFH & MG - Escanaba','SHMC - Urbana/Danville',
+    'SJJWAMC & SJMC - Pontiac & Bloomington','SKMC - Dixon',
+    'WCIM = SMMC/HFMC - Galesburg / SLMC - Kewanee'
+  ];
+
+  // Active scope for this screen (one region/entity per session). Read from the URL first
+  // (?region=...&entity=...) so a scoped link/QR self-applies, then editable via the picker.
+  var FILT={region:'',entity:''};
+  (function(){
+    try{
+      var q=new URLSearchParams(location.search);
+      var r=q.get('region')||'';var en=q.get('entity')||'';
+      if(r)FILT.region=r; if(en)FILT.entity=en;
+    }catch(e){/* no URLSearchParams => leave unscoped */}
+  })();
+  function filterActive(){return !!(FILT.region||FILT.entity);}
+  function matchFilter(card){
+    if(!card)return false;
+    if(FILT.region&&String(card.region||'')!==FILT.region)return false;
+    if(FILT.entity&&String(card.entity||'')!==FILT.entity)return false;
+    return true;
+  }
+
   // ---- state ----
   var cards={};            // id -> card (deduped)
   var nodes={};            // id -> dot element
@@ -31,6 +63,7 @@
   var targetCount=0;       // authoritative count from server
   var milestoneAt=0;       // highest milestone already celebrated
   var seeding=false;       // true during the first snapshot, to suppress retroactive milestones
+  var filteredCount=0;     // authoritative count for the active scope (when a region/entity is set)
   var MAX_DOTS=500;        // safety cap for the animated layer
   var MILESTONES=[10,25,50,100,150,200,250,300,400,500];
 
@@ -143,13 +176,27 @@
 
   function refreshEmpty(){ el('empty').style.display=order.length?'none':'flex'; }
 
+  // wipe the board (used when the active region/entity scope changes)
+  function resetBoard(){
+    var cv=el('canvas'); if(cv){ var ds=cv.querySelectorAll('.bd'); for(var i=0;i<ds.length;i++)cv.removeChild(ds[i]); }
+    cards={};nodes={};order=[];filteredCount=0;milestoneAt=0;
+    var host=el('ranking'); if(host){host._built=false;host.innerHTML='';}
+    renderRanking();refreshEmpty();
+  }
+
   // reconcile a feed (init or periodic sync). animate only genuinely-new ids after first load.
+  // serverFiltered=true means the server already scoped feed+count to the active region/entity.
   var firstLoad=true;
-  function reconcile(feed,count){
-    var list=(feed||[]);
+  function reconcile(feed,count,serverFiltered){
+    var list=(feed||[]).filter(matchFilter);
     if(firstLoad) seeding=true;
     list.forEach(function(card){ ensureDot(card,!firstLoad); });
-    if(typeof count==='number') setCount(count); else setCount(order.length);
+    if(filterActive()){
+      filteredCount=(serverFiltered&&typeof count==='number')?count:list.length;
+      setCount(filteredCount);
+    } else {
+      setCount(typeof count==='number'?count:order.length);
+    }
     seeding=false;
     renderRanking();refreshEmpty();
     firstLoad=false;
@@ -164,19 +211,47 @@
   }
   function connect(){
     try{ var proto=location.protocol==='https:'?'wss:':'ws:'; ws=new WebSocket(proto+'//'+location.host); }catch(e){ setLive(false); setTimeout(connect,2500); return; }
-    ws.onopen=function(){ setLive(true); };
+    ws.onopen=function(){ setLive(true); if(filterActive()) requestSync(); };
     ws.onmessage=function(ev){ var d; try{d=JSON.parse(ev.data);}catch(e){return;}
-      if(d.type==='init'){ reconcile(d.feed, typeof d.count==='number'?d.count:undefined); }
-      else if(d.type==='add'){ if(d.item){ var isNew=ensureDot(d.item,true); if(isNew){ renderRanking(); refreshEmpty(); } setCount(typeof d.count==='number'?d.count:targetCount+1); } }
+      if(d.type==='init'){ reconcile(d.feed, typeof d.count==='number'?d.count:undefined, d.filtered===true); }
+      else if(d.type==='add'){
+        if(!d.item)return;
+        if(filterActive()){
+          if(matchFilter(d.item)){
+            var isNew=ensureDot(d.item,true);
+            if(isNew){ filteredCount+=1; renderRanking(); refreshEmpty(); setCount(filteredCount); }
+          }
+          // submissions outside this screen's region/entity are ignored here
+        } else {
+          var isNew2=ensureDot(d.item,true);
+          if(isNew2){ renderRanking(); refreshEmpty(); }
+          setCount(typeof d.count==='number'?d.count:targetCount+1);
+        }
+      }
+      else if(d.type==='remove'){
+        if(d.id&&nodes[d.id]){
+          var rn=nodes[d.id]; if(rn&&rn.parentNode)rn.parentNode.removeChild(rn);
+          delete nodes[d.id]; delete cards[d.id];
+          var oi=order.indexOf(d.id); if(oi>=0)order.splice(oi,1);
+          if(filterActive()){ filteredCount=Math.max(0,filteredCount-1); setCount(filteredCount); }
+          else { setCount(Math.max(0,targetCount-1)); }
+          renderRanking(); refreshEmpty();
+        } else if(!filterActive()){ setCount(Math.max(0,targetCount-1)); }
+      }
+      else if(d.type==='reset'){ resetBoard(); setCount(0); }
       // reactions are ignored on the screen view
     };
     ws.onclose=function(){ setLive(false); setTimeout(connect,2500); };
     ws.onerror=function(){ setLive(false); try{ws.close();}catch(e){} };
   }
-  // periodic self-heal: ask the server for a fresh snapshot in case a frame was missed
+  // ask the server for a fresh snapshot (scoped to the active region/entity, if any)
+  function requestSync(){
+    if(ws&&ws.readyState===1){ try{ws.send(JSON.stringify({type:'sync',region:FILT.region,entity:FILT.entity}));}catch(e){} }
+  }
+  // periodic self-heal: in case a frame was missed, and to keep a scoped count authoritative
   function startSync(){
     if(syncTimer)clearInterval(syncTimer);
-    syncTimer=setInterval(function(){ if(ws&&ws.readyState===1){ try{ws.send(JSON.stringify({type:'sync'}));}catch(e){} } },45000);
+    syncTimer=setInterval(requestSync,20000);
   }
 
   // ---- dot detail popover (hover to preview, click to pin) ----
@@ -217,10 +292,12 @@
     window.addEventListener('scroll',function(){if(pinnedId){pinnedId=null;clearActive();}hidePop();},true);
   })();
 
-  // ---- join QR ----
+  // ---- join QR (carries the active region/entity so scanners are pre-tagged for this session) ----
   function buildQR(){
-    var url=location.origin+'/';
-    var disp=url.replace(/^https?:\/\//,'').replace(/\/$/,'');
+    var q='';
+    if(FILT.region){ q='?region='+encodeURIComponent(FILT.region); if(FILT.entity) q+='&entity='+encodeURIComponent(FILT.entity); }
+    var url=location.origin+'/'+q;
+    var disp=location.origin.replace(/^https?:\/\//,'').replace(/\/$/,''); // show the clean domain; the QR carries the scope
     var u=el('joinurl');if(u)u.textContent=disp;
     try{
       if(typeof qrcode==='function'){
@@ -230,7 +307,45 @@
     }catch(e){/* QR is a nicety; ignore if it fails */}
   }
 
-  buildQR();
+  // ---- scope chrome + picker ----
+  function scopeLabel(){ if(FILT.entity)return FILT.entity; if(FILT.region)return FILT.region+(FILT.region==='N/A'?'':' Region'); return ''; }
+  function updateChrome(){
+    var eb=el('eyebrow'); if(eb) eb.textContent='FY27 Q1 · '+(filterActive()?scopeLabel():'Leadership Development Institute');
+    var rl=document.querySelector('.ranklabel'); if(rl) rl.textContent=filterActive()?scopeLabel():'The room';
+    var empty=el('empty'); if(empty){ var big=empty.querySelector('.big'); if(big) big.textContent=filterActive()?('Waiting for the first leader in '+scopeLabel()+'…'):'Waiting for the first leader…'; }
+    buildQR();
+  }
+  function fillEntities(){
+    var es=el('scopeEnt'); if(!es)return;
+    // Full LDI list always, independent of region. Include any legacy value in play.
+    var ents=LDIS.slice();
+    if(FILT.entity&&ents.indexOf(FILT.entity)<0)ents.push(FILT.entity);
+    es.innerHTML='<option value="">All LDIs</option>'+ents.map(function(en){return '<option value="'+esc(en)+'">'+esc(en)+'</option>';}).join('');
+    es.setAttribute('data-empty','0');
+  }
+  function onScopeChange(){
+    try{
+      var q=new URLSearchParams();
+      if(FILT.region)q.set('region',FILT.region);
+      if(FILT.entity)q.set('entity',FILT.entity);
+      var qs=q.toString();
+      history.replaceState(null,'',location.pathname+(qs?('?'+qs):''));
+    }catch(e){/* older browser: URL stays as-is */}
+    resetBoard(); firstLoad=true; updateChrome();
+    requestSync(); setTimeout(requestSync,2200); // beat the server sync throttle on rapid switches
+  }
+  function populateScope(){
+    var rs=el('scopeSel'), es=el('scopeEnt'); if(!rs||!es)return;
+    var rgs=REGIONS.slice(); if(FILT.region&&rgs.indexOf(FILT.region)<0)rgs.push(FILT.region);
+    rs.innerHTML='<option value="">All regions</option>'+rgs.map(function(r){return '<option value="'+esc(r)+'">'+esc(r)+'</option>';}).join('');
+    rs.value=FILT.region||'';
+    fillEntities(); es.value=FILT.entity||'';
+    rs.addEventListener('change',function(){ FILT.region=rs.value; onScopeChange(); });
+    es.addEventListener('change',function(){ FILT.entity=es.value; onScopeChange(); });
+  }
+
+  populateScope();
+  updateChrome();
   renderRanking();refreshEmpty();
   connect();startSync();
 })();

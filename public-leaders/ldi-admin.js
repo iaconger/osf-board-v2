@@ -18,18 +18,34 @@
   var DIVS=['Ambulatory','Acute Care','OSF Digital','Medical Group','Nursing','Foundation','Shared Services','Behavioral Health'];
   var ROLES=['Lead Physician / APP / APN','Supervisor','Manager','Director','Vice President','SVP and above'];
   var GOALS=[{key:'g1',name:'Excellence',color:'#4E8209'},{key:'g2',name:'One OSF Team',color:'#00A9CE'},{key:'g3',name:'Destination OSF',color:'#A5228E'}];
-  var REGIONS=[
-    {r:'Central', e:['OSF OnCall','Central Region - Peoria']},
-    {r:'Eastern', e:['SHMC - Urbana/Danville','LCMMC - Evergreen Park','SFH - Escanaba','SJJWAMC & SJMC - Pontiac & Bloomington']},
-    {r:'MG, HomeCare, Rehab', e:['Home Care & Rehab','OSF MG']},
-    {r:'N/A', e:['Ministry Services - HR, Foundation']},
-    {r:'Professional Services', e:['Ministry Services - Clinical Excellence Team','Ministry Services - Finance','Ministry Services - Innovation Strategy','Ministry Services - Mission Services','Ministry Services - Pointcore']},
-    {r:'Western', e:['I-80 - SEMC Ottawa / SPMC Mendota / SCMC Princeton','SAHC - Alton','SAMC - Rockford','SKMC - Dixon','WCIM - SMMC/HFMC Galesburg / SLMC Kewanee']}
+  var REGIONS=['Central','Eastern','Western','Other'];
+  var LDIS=[
+    'Central Region - Peoria',
+    'Home Care & Rehab',
+    'I-80 = SEMC - Ottawa / SPMC - Mendota / SCMC - Princeton',
+    'LCMMC - Evergreen Park',
+    'Ministry Services - Clinical Excellence Team',
+    'Ministry Services - Finance',
+    'Ministry Services - HR & Foundation',
+    'Ministry Services - Innovation Strategy (Innovation, MarCom, Bus Dev, Strategy)',
+    'Ministry Services - Mission Services, etc.',
+    'OSF MG',
+    'OSF OnCall',
+    'Pointcore',
+    'SAHC - Alton',
+    'SAMC - Rockford',
+    'SFH & MG - Escanaba',
+    'SHMC - Urbana/Danville',
+    'SJJWAMC & SJMC - Pontiac & Bloomington',
+    'SKMC - Dixon',
+    'WCIM = SMMC/HFMC - Galesburg / SLMC - Kewanee'
   ];
-  function entitiesFor(r){for(var i=0;i<REGIONS.length;i++)if(REGIONS[i].r===r)return REGIONS[i].e;return [];}
-  function allEntities(){var a=[];REGIONS.forEach(function(x){a=a.concat(x.e);});return a;}
-  function fillRegionSel(sel){if(!sel)return;sel.innerHTML='<option value="">All regions</option>';REGIONS.forEach(function(x){var o=document.createElement('option');o.value=x.r;o.textContent=x.r;sel.appendChild(o);});}
-  function fillEntitySel(sel,region){if(!sel)return;var list=region?entitiesFor(region):allEntities();sel.innerHTML='<option value="">All entities</option>';list.forEach(function(en){var o=document.createElement('option');o.value=en;o.textContent=en;sel.appendChild(o);});}
+  // Union the canonical list with values already in the data so responses captured
+  // under the earlier taxonomy stay selectable. Nothing is dropped or rewritten.
+  function unionList(base,key){var out=base.slice();try{(LEADERS||[]).forEach(function(l){var v=((l&&l[key])||'').trim();if(v&&out.indexOf(v)<0)out.push(v);});}catch(e){}return out;}
+  function optionsInto(sel,list,allLabel){if(!sel)return;var cur=sel.value;sel.innerHTML='<option value="">'+allLabel+'</option>';list.forEach(function(v){var o=document.createElement('option');o.value=v;o.textContent=v;sel.appendChild(o);});if(cur)sel.value=cur;}
+  function fillRegionSel(sel){optionsInto(sel,unionList(REGIONS,'region'),'All regions');}
+  function fillEntitySel(sel,_region){optionsInto(sel,unionList(LDIS,'entity'),'All LDIs');}
 
   // ---- data (loaded from server) ----
   var LEADERS=[];
@@ -41,7 +57,7 @@
   function filtered(){return LEADERS.filter(function(l){return (!F.div||l.division===F.div)&&(!F.region||l.region===F.region)&&(!F.entity||l.entity===F.entity)&&(!F.role||l.role===F.role)&&inYears(l.years);});}
 
   // populate filter selects
-  function populateDivisions(){var seen={},ds=[];LEADERS.forEach(function(l){var d=(l.division||'').trim();if(d&&!seen[d]){seen[d]=1;ds.push(d);}});ds.sort();var sel=el('fDiv');sel.innerHTML='<option value="">All divisions</option>';ds.forEach(function(d){var o=document.createElement('option');o.value=d;o.textContent=d;sel.appendChild(o);});}
+  function populateDivisions(){var seen={},ds=[];LEADERS.forEach(function(l){var d=(l.division||'').trim();if(d&&!seen[d]){seen[d]=1;ds.push(d);}});ds.sort();var sel=el('fDiv');sel.innerHTML='<option value="">All departments</option>';ds.forEach(function(d){var o=document.createElement('option');o.value=d;o.textContent=d;sel.appendChild(o);});}
   ROLES.forEach(function(rr){var o=document.createElement('option');o.value=rr;o.textContent=rr;el('fRole').appendChild(o);});
   fillRegionSel(el('fRegion'));fillEntitySel(el('fEntity'),'');
 
@@ -53,7 +69,7 @@
     var avg=data.length?(yrs/data.length):0;
     var tiles=[
       {n:num(data.length),l:'leaders have shared their focus',c:''},
-      {n:num(Object.keys(divs).length),l:'divisions represented',c:'k2'},
+      {n:num(Object.keys(divs).length),l:'departments represented',c:'k2'},
       {n:num(Object.keys(roles).length),l:'leadership levels represented',c:'k3'},
       {n:(Math.round(avg*10)/10).toString(),l:'avg years of leadership experience',c:'k4'}
     ];
@@ -122,7 +138,7 @@
     el('divBars').innerHTML=arr.map(function(a){
       var w=Math.round(a.n/max*100);
       return '<div class="skillbar"><div class="sl">'+a.name+'</div><div class="track"><div class="fill" style="width:'+w+'%;background:#4E8209"></div></div><div class="sn">'+a.n+'</div></div>';
-    }).join('') || '<div class="empty">No divisions yet.</div>';
+    }).join('') || '<div class="empty">No departments yet.</div>';
   }
 
   // ---- submissions browser ----
@@ -174,7 +190,7 @@
   el('fDiv').addEventListener('change',function(e){F.div=e.target.value;renderAll();});
   el('fRole').addEventListener('change',function(e){F.role=e.target.value;renderAll();});
   el('fYears').addEventListener('change',function(e){F.years=e.target.value;renderAll();});
-  if(el('fRegion'))el('fRegion').addEventListener('change',function(e){F.region=e.target.value;fillEntitySel(el('fEntity'),F.region);F.entity='';renderAll();});
+  if(el('fRegion'))el('fRegion').addEventListener('change',function(e){F.region=e.target.value;renderAll();});
   if(el('fEntity'))el('fEntity').addEventListener('change',function(e){F.entity=e.target.value;renderAll();});
   el('reset').addEventListener('click',function(){F={div:'',region:'',entity:'',role:'',years:''};el('fDiv').value='';el('fRole').value='';el('fYears').value='';if(el('fRegion'))el('fRegion').value='';fillEntitySel(el('fEntity'),'');renderAll();});
   el('tSearch').addEventListener('input',function(e){BR.q=e.target.value.trim();BR.page=0;renderBrowser();});
@@ -240,6 +256,7 @@
     }).then(function(d){ if(!d)return;
       LEADERS=normalize(d.submissions||[]);
       populateDivisions();
+      fillRegionSel(el('fRegion')); fillEntitySel(el('fEntity'),'');
       el('gate').style.display='none';
       el('dash').style.display='block';
       renderAll();

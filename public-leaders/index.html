@@ -191,13 +191,16 @@
         <div><label>First name (optional)</label><input id="fn" placeholder="First name"></div>
         <div><label>Last name (optional)</label><input id="ln" placeholder="Last name"></div>
       </div>
-      <label>Please specify your current division</label><input id="div" placeholder="e.g. Marketing, Nursing, Supply Chain">
       <div class="grid2">
-        <div><label>Region / Area</label>
+        <div><label>Region</label>
           <select id="region"><option value="">Select…</option></select></div>
-        <div><label>Entity</label>
-          <select id="entity"><option value="">Select a region first…</option></select></div>
+        <div><label>LDI</label>
+          <select id="entity"><option value="">Select…</option></select></div>
       </div>
+      <div id="regionOtherWrap" style="display:none">
+        <label>Which region? (optional)</label><input id="regionOther" maxlength="60" placeholder="Type your region">
+      </div>
+      <label>Department</label><input id="div" placeholder="e.g. Imaging, Ethics, Maintenance, Surgery">
       <div class="grid2">
         <div><label>Your current leadership role</label>
           <select id="role">
@@ -274,7 +277,7 @@
       <div style="margin:0 0 16px"><a class="btn ghost" href="/screen.html" target="_blank" rel="noopener">⛶ Open live room view</a></div>
       <div class="exfilters" style="margin:0 0 16px">
         <select id="bRegion"><option value="">All regions</option></select>
-        <select id="bEntity"><option value="">All entities</option></select>
+        <select id="bEntity"><option value="">All LDIs</option></select>
       </div>
       <div class="kpi"><div><div class="n" id="kLeaders" style="color:var(--green)">0</div><div class="l">leaders on the board</div></div>
         <div><div class="n" id="kTop" style="color:var(--teal);font-size:20px;font-family:Bitter,serif;padding-top:8px">…</div><div class="l">top competency right now</div></div></div>
@@ -301,6 +304,6 @@
 </div>
 <div class="dotpop" id="dotpop"></div>
 <script src="html2canvas.min.js?v=20260909b"></script>
-<script src="ldi-app.js?v=20260921"></script>
+<script src="ldi-app.js?v=20260924"></script>
 </body>
 </html>

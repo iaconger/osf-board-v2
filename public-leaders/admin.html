@@ -159,8 +159,8 @@
 <div class="filters">
     <span class="fl">Filter</span>
     <select id="fRegion"><option value="">All regions</option></select>
-    <select id="fEntity"><option value="">All entities</option></select>
-    <select id="fDiv"><option value="">All divisions</option></select>
+    <select id="fEntity"><option value="">All LDIs</option></select>
+    <select id="fDiv"><option value="">All departments</option></select>
     <select id="fRole"><option value="">All roles</option></select>
     <select id="fYears">
       <option value="">All experience</option>
@@ -199,8 +199,8 @@
 
   <div class="grid2">
     <div class="card">
-      <h2>Participation by division</h2>
-      <p class="cardnote">Leaders who have submitted, by division.</p>
+      <h2>Participation by department</h2>
+      <p class="cardnote">Leaders who have submitted, by department.</p>
       <div id="divBars"></div>
     </div>
     <div class="card">
@@ -211,7 +211,7 @@
         <a class="btn ghost" id="dlcsv" href="#">CSV</a>
         <a class="btn ghost" id="dljson" href="#">JSON</a>
       </div>
-      <div class="dlnote"><span>↳</span><span>Downloads mirror the filters above. Set them to export just Directors, one division, or a single experience band.</span></div>
+      <div class="dlnote"><span>↳</span><span>Downloads mirror the filters above. Set them to export just Directors, one department, or a single experience band.</span></div>
     </div>
   </div>
 
@@ -219,8 +219,8 @@
     <h2>All leaders</h2>
     <p class="cardnote">Every leader who submitted. Search, sort, and page through them.</p>
     <div class="controls">
-      <input class="search" id="tSearch" placeholder="Search name, division, competency, or skill…">
-      <select id="tSort"><option value="recent">Most recent</option><option value="div">Division A to Z</option><option value="role">Role</option></select>
+      <input class="search" id="tSearch" placeholder="Search name, department, competency, or skill…">
+      <select id="tSort"><option value="recent">Most recent</option><option value="div">Department A to Z</option><option value="role">Role</option></select>
     </div>
     <div class="tablewrap" id="tablewrap"></div>
     <div class="pager" id="pager" style="display:none">
@@ -239,6 +239,6 @@
   </div>
   </div>
 </div>
-<script src="ldi-admin.js?v=20260921"></script>
+<script src="ldi-admin.js?v=20260924"></script>
 </body>
 </html>

@@ -48,17 +48,50 @@ const GOALS = [
 const COMP_SET = new Set(COMPS);
 const SKILL_SET = new Set(SKILLS);
 // OSF Region / Entity standard list — validates submissions and powers dashboard/board filters.
-const REGIONS = [
-  { r: 'Central', e: ['OSF OnCall', 'Central Region - Peoria'] },
-  { r: 'Eastern', e: ['SHMC - Urbana/Danville', 'LCMMC - Evergreen Park', 'SFH - Escanaba', 'SJJWAMC & SJMC - Pontiac & Bloomington'] },
-  { r: 'MG, HomeCare, Rehab', e: ['Home Care & Rehab', 'OSF MG'] },
-  { r: 'N/A', e: ['Ministry Services - HR, Foundation'] },
-  { r: 'Professional Services', e: ['Ministry Services - Clinical Excellence Team', 'Ministry Services - Finance', 'Ministry Services - Innovation Strategy', 'Ministry Services - Mission Services', 'Ministry Services - Pointcore'] },
-  { r: 'Western', e: ['I-80 - SEMC Ottawa / SPMC Mendota / SCMC Princeton', 'SAHC - Alton', 'SAMC - Rockford', 'SKMC - Dixon', 'WCIM - SMMC/HFMC Galesburg / SLMC Kewanee'] },
+// Region + LDI are INDEPENDENT lists (no branching). Legacy values from the
+// first round stay accepted so previously collected rows keep validating.
+const REGIONS = ['Central', 'Eastern', 'Western', 'Other'];
+const LDIS = [
+  'Central Region - Peoria',
+  'Home Care & Rehab',
+  'I-80 = SEMC - Ottawa / SPMC - Mendota / SCMC - Princeton',
+  'LCMMC - Evergreen Park',
+  'Ministry Services - Clinical Excellence Team',
+  'Ministry Services - Finance',
+  'Ministry Services - HR & Foundation',
+  'Ministry Services - Innovation Strategy (Innovation, MarCom, Bus Dev, Strategy)',
+  'Ministry Services - Mission Services, etc.',
+  'OSF MG',
+  'OSF OnCall',
+  'Pointcore',
+  'SAHC - Alton',
+  'SAMC - Rockford',
+  'SFH & MG - Escanaba',
+  'SHMC - Urbana/Danville',
+  'SJJWAMC & SJMC - Pontiac & Bloomington',
+  'SKMC - Dixon',
+  'WCIM = SMMC/HFMC - Galesburg / SLMC - Kewanee',
 ];
-const REGION_SET = new Set(REGIONS.map((x) => x.r));
-const ENTITY_SET = new Set(REGIONS.reduce((a, x) => a.concat(x.e), []));
-function cleanRegion(v) { return (typeof v === 'string' && REGION_SET.has(v)) ? v : ''; }
+// Values used before 2026-09-24. Accepted on write so nothing already collected
+// is invalidated, and so a legacy scoped screen link still filters.
+const LEGACY_REGIONS = ['MG, HomeCare, Rehab', 'N/A', 'Professional Services'];
+const LEGACY_LDIS = [
+  'Ministry Services - HR, Foundation', 'Ministry Services - Innovation Strategy',
+  'Ministry Services - Mission Services', 'Ministry Services - Pointcore',
+  'SFH - Escanaba', 'I-80 - SEMC Ottawa / SPMC Mendota / SCMC Princeton',
+  'WCIM - SMMC/HFMC Galesburg / SLMC Kewanee',
+];
+const REGION_SET = new Set(REGIONS.concat(LEGACY_REGIONS));
+const ENTITY_SET = new Set(LDIS.concat(LEGACY_LDIS));
+// "Other" lets a leader type their own region, so free text is allowed for region.
+// Trimmed and capped; the LDI list stays a closed set.
+function cleanRegion(v) {
+  if (typeof v !== 'string') return '';
+  const t = v.trim().replace(/\s+/g, ' ');
+  if (!t) return '';
+  if (REGION_SET.has(t)) return t;
+  return t.slice(0, 60);
+}
 function cleanEntity(v) { return (typeof v === 'string' && ENTITY_SET.has(v)) ? v : ''; }
 
 const LIMITS = {
@@ -231,7 +264,7 @@ app.get('/export', (req, res) => {
   if (REQUIRE_KEY && (!EXPORT_KEY || req.query.key !== EXPORT_KEY)) return res.status(403).type('text/plain').send('Forbidden');
   const f = readFilter(req.query);
   const rows = [[
-    'Submitted (Central Time)', 'First Name', 'Last Name', 'Division', 'Region / Area', 'Entity', 'Leadership Role',
+    'Submitted (Central Time)', 'First Name', 'Last Name', 'Department', 'Region', 'LDI', 'Leadership Role',
     'Years of Leadership Experience',
     'Action: Excellence', 'Action: One OSF Team', 'Action: Destination OSF',
     'Competency #1', 'Competency #2', 'Skills to Strengthen', 'How I\'ll Work On It',
@@ -284,7 +317,7 @@ function buildWorkbook(f) {
   ws.getCell('A3').font = { name: 'Calibri', size: 10, bold: true, color: { argb: XL.ink } };
   ws.getCell('A3').alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
   ws.getRow(4).height = 6;
-  const heads = ['Submitted (Central Time)', 'First Name', 'Last Name', 'Division', 'Region / Area', 'Entity', 'Leadership Role',
+  const heads = ['Submitted (Central Time)', 'First Name', 'Last Name', 'Department', 'Region', 'LDI', 'Leadership Role',
     'Years', 'Action: Excellence', 'Action: One OSF Team', 'Action: Destination OSF',
     'Competency #1', 'Competency #2', 'Skills to Strengthen', 'How I\'ll Work On It'];
   const hr = ws.getRow(5);
