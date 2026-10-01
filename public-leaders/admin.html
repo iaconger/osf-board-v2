@@ -46,6 +46,14 @@
   .filters select:focus{outline:none;border-color:var(--green2);background:#fff}
   .filters .reset{margin-left:auto;border:0;background:none;color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;text-decoration:underline;font-family:inherit}
   .filters .reset:hover{color:var(--green)}
+  /* multi-select filter dropdowns */
+  .ms{position:relative;display:inline-block}
+  .ms .ms-btn{padding:9px 30px 9px 13px;border:1.5px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;background:var(--soft) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%235C665A' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 12px center;color:var(--ink);cursor:pointer;transition:.15s;max-width:230px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left}
+  .ms .ms-btn:hover{border-color:#cdd8c1}
+  .ms .ms-pop{position:absolute;z-index:30;top:calc(100% + 4px);left:0;min-width:240px;max-width:320px;max-height:300px;overflow-y:auto;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:6px}
+  .ms .ms-opt{display:flex;align-items:flex-start;gap:9px;padding:8px 10px;border-radius:8px;font-size:14px;color:var(--ink);cursor:pointer;line-height:1.35}
+  .ms .ms-opt:hover{background:var(--soft)}
+  .ms .ms-opt input{margin-top:2px;flex:0 0 auto;width:16px;height:16px;accent-color:var(--green)}
 
   /* kpis */
   .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:20px}
@@ -158,10 +166,10 @@
   <div id="dash" style="display:none">
 <div class="filters">
     <span class="fl">Filter</span>
-    <select id="fRegion"><option value="">All regions</option></select>
-    <select id="fEntity"><option value="">All LDIs</option></select>
-    <select id="fDiv"><option value="">All departments</option></select>
-    <select id="fRole"><option value="">All roles</option></select>
+    <div class="ms" id="fRegion"></div>
+    <div class="ms" id="fEntity"></div>
+    <div class="ms" id="fDiv"></div>
+    <div class="ms" id="fRole"></div>
     <select id="fYears">
       <option value="">All experience</option>
       <option value="0-2">0 to 2 years</option><option value="3-5">3 to 5 years</option>
@@ -239,6 +247,6 @@
   </div>
   </div>
 </div>
-<script src="ldi-admin.js?v=20260924"></script>
+<script src="ldi-admin.js?v=20261001"></script>
 </body>
 </html>

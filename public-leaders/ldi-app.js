@@ -122,20 +122,54 @@
     el('compNext').disabled=pickedComp.length===0;
   }
 
-  // ---- skills ----
+  // ---- skills (shown per chosen competency; pick 1-2 for each) ----
   var sl=el('skillList');
-  SKILLS.forEach(function(s){
-    var d=document.createElement('div');d.className='skill';d.setAttribute('data-name',s[0]);
-    d.innerHTML='<div class="sh"><span class="ck">✓</span>'+s[0]+'</div><div class="sd">'+s[1]+'</div>';
-    d.addEventListener('click',function(){toggleSkill(s[0],d);});
-    sl.appendChild(d);
-  });
-  function toggleSkill(name,d){
+  // Which skills belong to each competency (from OSF's Leader Competencies & Skills guide).
+  var COMP_SKILLS={
+    'Model our Mission & Values':['Values-Driven Leadership','Purposeful Compassion','Ethical Stewardship','Operational Integrity'],
+    'Personal Growth':['Emotional Intelligence: Self-Awareness','Emotional Intelligence: Self-Management','Feedback','Learning Agility'],
+    'Communicate Purposefully':['Active Listening','Clarity & Transparency','Constructive Communication','Strategic Alignment'],
+    'Develop People':['Clear Expectations','Compassionate Accountability','Coaching for Growth','Performance Analytics','Continuous Improvement'],
+    'Dynamic Collaborations':['Emotional Intelligence: Social Awareness','Emotional Intelligence: Relationship Management','Cross-Functional Collaboration','Diversity & Inclusion'],
+    'System Thinking':['Data-Informed Planning','Business Acumen','Process Optimization','Strategic Foresight'],
+    'Drive Transformation':['Cultivating Innovation','Inspires Change','Strategic Execution']
+  };
+  var SKILL_DESC={}; SKILLS.forEach(function(s){SKILL_DESC[s[0]]=s[1];});
+  var MAX_PER_COMP=2;
+  function skillsInComp(c){return COMP_SKILLS[c]||[];}
+  function pickedInComp(c){var set=skillsInComp(c);return pickedSkill.filter(function(nm){return set.indexOf(nm)>=0;});}
+  // Rebuild the skills step from the leader's chosen competencies (called on entry to step 4).
+  function renderSkillStep(){
+    if(!sl)return;
+    // drop any picks whose competency is no longer selected
+    pickedSkill=pickedSkill.filter(function(nm){return pickedComp.some(function(c){return skillsInComp(c).indexOf(nm)>=0;});});
+    sl.innerHTML='';
+    pickedComp.forEach(function(cName){
+      var col=compByName(cName).color;
+      var grp=document.createElement('div');grp.className='skillgroup';
+      grp.innerHTML='<div class="sgh"><span class="dot" style="background:'+col+'"></span>'+esc(cName)+'<span class="sgsub">Pick 1 or 2</span></div>';
+      skillsInComp(cName).forEach(function(nm){
+        var d=document.createElement('div');d.className='skill';d.setAttribute('data-name',nm);
+        if(pickedSkill.indexOf(nm)>=0)d.classList.add('sel');
+        d.innerHTML='<div class="sh"><span class="ck">✓</span>'+esc(nm)+'</div><div class="sd">'+esc(SKILL_DESC[nm]||'')+'</div>';
+        d.addEventListener('click',function(){toggleSkill(nm,cName,d);});
+        grp.appendChild(d);
+      });
+      sl.appendChild(grp);
+    });
+    updateSkillState();
+  }
+  function toggleSkill(name,comp,d){
     var i=pickedSkill.indexOf(name);
-    if(i>=0){pickedSkill.splice(i,1);} else {if(pickedSkill.length>=3)return; pickedSkill.push(name);}
-    d.classList.toggle('sel',pickedSkill.indexOf(name)>=0);
-    el('skillCount').textContent=pickedSkill.length+' of 3 selected';
-    el('skillNext').disabled=pickedSkill.length===0;
+    if(i>=0){pickedSkill.splice(i,1);d.classList.remove('sel');}
+    else{ if(pickedInComp(comp).length>=MAX_PER_COMP)return; pickedSkill.push(name);d.classList.add('sel'); }
+    updateSkillState();
+  }
+  function updateSkillState(){
+    // ready when every chosen competency has 1 or 2 skills
+    var ok=pickedComp.length>0 && pickedComp.every(function(c){var n=pickedInComp(c).length;return n>=1&&n<=2;});
+    if(el('skillCount'))el('skillCount').textContent=pickedSkill.length+' selected';
+    if(el('skillNext'))el('skillNext').disabled=!ok;
   }
 
   // ---- strategic goal commitments (one action per goal) ----
@@ -325,7 +359,7 @@
     pickedComp=[];pickedSkill=[];mine=null;submitted=false;reacted={};
     [].forEach.call(cg.children,function(ch){ch.classList.remove('sel');ch.querySelector('.rank').textContent='';});
     [].forEach.call(sl.children,function(ch){ch.classList.remove('sel');});
-    el('compCount').textContent='0 of 2 selected';el('skillCount').textContent='0 of 3 selected';
+    el('compCount').textContent='0 of 2 selected';el('skillCount').textContent='0 selected';
     el('compNext').disabled=true;el('skillNext').disabled=true;
     GOALS.forEach(function(g){var ta=el('goal_'+g.key);if(ta)ta.value='';var cc=el('gc_'+g.key);if(cc)cc.innerHTML='<b>0</b> / '+GOAL_MAX;});
     el('fn').value='';el('ln').value='';el('div').value='';el('role').value='';el('yrs').value='';
@@ -339,6 +373,7 @@
   function go(s){
     var n=String(s);
     [].forEach.call(document.querySelectorAll('.step'),function(st){st.classList.toggle('on',st.getAttribute('data-s')===n);});
+    if(n==='4')renderSkillStep();
     if(n==='5')renderFocus();
     if(n==='6'){ sendSubmit(); renderBoard(); renderExplore(); }
     try{window.scrollTo({top:0,behavior:'smooth'});}catch(e){}
@@ -347,6 +382,11 @@
     var t=e.target.closest('[data-go]');if(!t)return;
     var s=t.getAttribute('data-go');
     if(s==='0')resetAll();
+    if(t.id==='demoNext'){ // require first + last name before leaving demographics
+      var fn=el('fn')?el('fn').value.trim():'', ln=el('ln')?el('ln').value.trim():'';
+      if(!fn||!ln){ var er=el('demoErr'); if(er)er.style.display='block'; var f=(!fn?el('fn'):el('ln')); if(f)f.focus(); return; }
+      var er2=el('demoErr'); if(er2)er2.style.display='none';
+    }
     go(s);
   });
 

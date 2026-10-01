@@ -119,6 +119,46 @@ function cleanText(value, max) {
   if (typeof value !== 'string') return '';
   return value.replace(/[<>]/g, '').trim().slice(0, max);
 }
+// Department is free text, so tidy it into clean, groupable data: map case/punctuation
+// variants and common shorthand to a standard name; keep anything unknown as typed.
+const DEPARTMENTS = ['Nursing', 'Pharmacy', 'Laboratory', 'Imaging & Radiology', 'Care Management', 'Behavioral Health',
+  'Patient Experience', 'Supply Chain', 'Environmental Services', 'Facilities', 'Food & Nutrition', 'OSF Digital / IT',
+  'Finance', 'Revenue Cycle', 'Human Resources', 'Medical Group', 'Emergency Services', 'Surgical Services',
+  'Rehabilitation', 'Home Care', 'Quality & Safety', 'Population Health', 'Mission Services', 'Ethics',
+  'OSF Foundation', 'Marketing & Communications'];
+function deptKey(s) { return String(s || '').toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, ' ').trim(); }
+const DEPT_CANON = {}; DEPARTMENTS.forEach((d) => { DEPT_CANON[deptKey(d)] = d; });
+const DEPT_SYNONYMS = {};
+(function () {
+  const add = (canon, keys) => keys.forEach((k) => { DEPT_SYNONYMS[deptKey(k)] = canon; });
+  add('Marketing & Communications', ['marketing', 'mktg', 'marcom', 'comms', 'communications', 'marketing communications']);
+  add('OSF Digital / IT', ['it', 'i t', 'digital', 'osf digital', 'information technology', 'information services', 'tech']);
+  add('Human Resources', ['hr', 'human resource', 'people']);
+  add('Emergency Services', ['ed', 'er', 'emergency', 'emergency department', 'emergency room']);
+  add('Revenue Cycle', ['rev cycle', 'revenue', 'rcm']);
+  add('Environmental Services', ['evs', 'housekeeping']);
+  add('Rehabilitation', ['rehab', 'therapy']);
+  add('Laboratory', ['lab', 'labs']);
+  add('Imaging & Radiology', ['radiology', 'imaging', 'rad', 'xray', 'x ray']);
+  add('Food & Nutrition', ['nutrition', 'dietary', 'food service', 'food services']);
+  add('Medical Group', ['mg', 'medical group', 'omg']);
+  add('Supply Chain', ['supply', 'supply chain management', 'scm', 'logistics']);
+  add('Quality & Safety', ['quality', 'safety']);
+  add('Population Health', ['pop health', 'population']);
+  add('OSF Foundation', ['foundation']);
+  add('Mission Services', ['mission']);
+  add('Facilities', ['facility', 'maintenance', 'plant ops', 'plant operations']);
+  add('Behavioral Health', ['behavioral', 'bh', 'mental health']);
+  add('Care Management', ['case management', 'care mgmt', 'case mgmt']);
+  add('Surgical Services', ['surgery', 'surgical', 'periop', 'perioperative']);
+  add('Home Care', ['home health', 'homecare']);
+}());
+function normalizeDept(v) {
+  let s = cleanText(v, LIMITS.division); if (!s) return '';
+  s = s.replace(/\s+/g, ' ').trim();
+  const k = deptKey(s);
+  return DEPT_SYNONYMS[k] || DEPT_CANON[k] || s;
+}
 function originAllowed(origin, host) {
   if (!origin) return false;
   let parsed;
@@ -184,23 +224,26 @@ function yearsBucket(y) {
   if (y <= 2) return '0-2'; if (y <= 5) return '3-5'; if (y <= 10) return '6-10'; return '11+';
 }
 function passesFilter(e, f) {
-  if (f.division && String(e.division || '').toLowerCase() !== f.division.toLowerCase()) return false;
-  if (f.region && String(e.region || '') !== f.region) return false;
-  if (f.entity && String(e.entity || '') !== f.entity) return false;
-  if (f.role && String(e.role || '') !== f.role) return false;
-  if (f.years && yearsBucket(e.years) !== f.years) return false;
+  // each field is an array of accepted values (comma-separated in the query); empty = all
+  if (f.division.length && !f.division.some((d) => d.toLowerCase() === String(e.division || '').toLowerCase())) return false;
+  if (f.region.length && f.region.indexOf(String(e.region || '')) < 0) return false;
+  if (f.entity.length && f.entity.indexOf(String(e.entity || '')) < 0) return false;
+  if (f.role.length && f.role.indexOf(String(e.role || '')) < 0) return false;
+  if (f.years.length && f.years.indexOf(yearsBucket(e.years)) < 0) return false;
   return true;
 }
 function readFilter(q) {
-  return { division: (q.division || '').trim(), region: (q.region || '').trim(), entity: (q.entity || '').trim(), role: (q.role || '').trim(), years: (q.years || '').trim() };
+  const arr = (v) => String(v || '').split(',').map((s) => s.trim()).filter(Boolean);
+  return { division: arr(q.division), region: arr(q.region), entity: arr(q.entity), role: arr(q.role), years: arr(q.years) };
 }
 function filterTag(f) {
   const bits = [];
-  if (f.region) bits.push(f.region.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
-  if (f.entity) bits.push(f.entity.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
-  if (f.division) bits.push(f.division.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
-  if (f.role) bits.push(f.role.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
-  if (f.years) bits.push(f.years);
+  const tag = (a) => a.join('-').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  if (f.region.length) bits.push(tag(f.region));
+  if (f.entity.length) bits.push(tag(f.entity));
+  if (f.division.length) bits.push(tag(f.division));
+  if (f.role.length) bits.push(tag(f.role));
+  if (f.years.length) bits.push(tag(f.years));
   return bits.length ? `-${bits.join('-')}` : '';
 }
 
@@ -308,7 +351,7 @@ function buildWorkbook(f) {
   t.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 }; ws.getRow(1).height = 30;
   ws.mergeCells('A2:O2');
   const sub = ws.getCell('A2');
-  const scope = [f.region && ('Region: ' + f.region), f.entity && ('Entity: ' + f.entity), f.division && ('Division: ' + f.division), f.role && ('Role: ' + f.role), f.years && ('Experience: ' + f.years + ' yrs')].filter(Boolean).join('   ·   ') || 'All leaders';
+  const scope = [f.region.length && ('Region: ' + f.region.join(', ')), f.entity.length && ('LDI: ' + f.entity.join(', ')), f.division.length && ('Department: ' + f.division.join(', ')), f.role.length && ('Role: ' + f.role.join(', ')), f.years.length && ('Experience: ' + f.years.join(', ') + ' yrs')].filter(Boolean).join('   ·   ') || 'All leaders';
   sub.value = `${scope}   ·   Generated ${fmtCentral(new Date().toISOString())}`;
   sub.font = { name: 'Calibri', size: 10, italic: true, color: { argb: XL.muted } };
   sub.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 }; ws.getRow(2).height = 18;
@@ -531,7 +574,7 @@ wss.on('connection', (ws) => {
       ts: new Date().toISOString(),
       first: cleanText(data.first, LIMITS.name),
       last: cleanText(data.last, LIMITS.name),
-      division: cleanText(data.division, LIMITS.division),
+      division: normalizeDept(data.division),
       region: cleanRegion(data.region),
       entity: cleanEntity(data.entity),
       role: cleanText(data.role, LIMITS.role),

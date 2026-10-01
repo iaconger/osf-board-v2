@@ -67,6 +67,10 @@
   .skill.sel .sh .ck{background:var(--teal);border-color:var(--teal)}
   .skill .sd{font-size:13px;color:var(--muted);line-height:1.5;margin-top:5px}
   .skillscroll{max-height:440px;overflow-y:auto;padding:4px 6px 4px 2px;margin-top:8px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .skillgroup{margin:6px 0 14px}
+  .skillgroup .sgh{display:flex;align-items:center;gap:9px;font-size:15px;font-weight:800;color:var(--ink);margin:10px 2px 8px}
+  .skillgroup .sgh .dot{width:13px;height:13px;border-radius:50%;flex:0 0 auto}
+  .skillgroup .sgh .sgsub{margin-left:auto;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
   .counter{font-size:13px;color:var(--muted);font-weight:600}
   .counter b{color:var(--ink)}
   /* number stepper (big, tap-friendly arrows) */
@@ -186,10 +190,10 @@
       <div class="progress"><i class="cur"></i><i></i><i></i><i></i></div>
       <p class="eyebrow">Section 1 · Demographics</p>
       <h2>A little about you</h2>
-      <p class="note">This information will help us look at the data in different ways. Name is optional.</p>
+      <p class="note">This information will help us look at the data in different ways.</p>
       <div class="grid2">
-        <div><label>First name (optional)</label><input id="fn" placeholder="First name"></div>
-        <div><label>Last name (optional)</label><input id="ln" placeholder="Last name"></div>
+        <div><label>First name <span style="color:#b3261e;font-weight:700">*</span></label><input id="fn" placeholder="First name" required></div>
+        <div><label>Last name <span style="color:#b3261e;font-weight:700">*</span></label><input id="ln" placeholder="Last name" required></div>
       </div>
       <div class="grid2">
         <div><label>Region</label>
@@ -197,10 +201,19 @@
         <div><label>LDI</label>
           <select id="entity"><option value="">Select…</option></select></div>
       </div>
-      <div id="regionOtherWrap" style="display:none">
-        <label>Which region? (optional)</label><input id="regionOther" maxlength="60" placeholder="Type your region">
-      </div>
-      <label>Department</label><input id="div" placeholder="e.g. Imaging, Ethics, Maintenance, Surgery">
+      <label>Department</label><input id="div" list="deptList" autocomplete="off" placeholder="Start typing… e.g. Marketing, Nursing, Supply Chain">
+      <datalist id="deptList">
+        <option value="Nursing"></option><option value="Pharmacy"></option><option value="Laboratory"></option>
+        <option value="Imaging & Radiology"></option><option value="Care Management"></option><option value="Behavioral Health"></option>
+        <option value="Patient Experience"></option><option value="Supply Chain"></option><option value="Environmental Services"></option>
+        <option value="Facilities"></option><option value="Food & Nutrition"></option><option value="OSF Digital / IT"></option>
+        <option value="Finance"></option><option value="Revenue Cycle"></option><option value="Human Resources"></option>
+        <option value="Medical Group"></option><option value="Emergency Services"></option><option value="Surgical Services"></option>
+        <option value="Rehabilitation"></option><option value="Home Care"></option><option value="Quality & Safety"></option>
+        <option value="Population Health"></option><option value="Mission Services"></option><option value="Ethics"></option>
+        <option value="OSF Foundation"></option><option value="Marketing & Communications"></option>
+      </datalist>
+      <p id="demoErr" class="note" style="display:none;color:#b3261e;margin-top:8px">Please enter your first and last name to continue.</p>
       <div class="grid2">
         <div><label>Your current leadership role</label>
           <select id="role">
@@ -218,7 +231,7 @@
         </div>
       </div>
       <p class="note" style="margin-top:10px">Years of experience can include time outside of OSF HealthCare. Enter 0 if this is your first leadership role.</p>
-      <div class="btnrow"><button class="btn ghost" data-go="0">← Back</button><button class="btn" data-go="2">Next →</button></div>
+      <div class="btnrow"><button class="btn ghost" data-go="0">← Back</button><button class="btn" data-go="2" id="demoNext">Next →</button></div>
     </div>
 
     <!-- 2 strategic goal commitments -->
@@ -248,7 +261,7 @@
       <div class="progress"><i class="done"></i><i class="done"></i><i class="done"></i><i class="cur"></i></div>
       <p class="eyebrow">Section 3 · Leader Competencies</p>
       <h2>Which leadership skills will you strengthen to lead this effort?</h2>
-      <p class="note" style="margin-bottom:12px">Given the competencies you selected, pick the skills you might strengthen to effectively lead this effort. Be sure they connect to the competencies you chose. Please select at most 3.</p>
+      <p class="note" style="margin-bottom:12px">These are the skills that align to the competencies you chose. For each competency, pick 1 or 2 skills you will strengthen this year.</p>
       <div class="skillscroll" id="skillList"></div>
       <div class="approachbox">
         <p class="ah">How will you work on it? <span style="font-weight:600;color:var(--muted)">(optional)</span></p>
@@ -257,7 +270,7 @@
         <div class="approachrow"><span class="counter" id="approachCount"><b>0</b> / 280</span></div>
       </div>
       <div class="btnrow"><button class="btn ghost" data-go="3">← Back</button>
-        <div style="display:flex;align-items:center;gap:14px"><span class="counter" id="skillCount">0 of 3 selected</span><button class="btn" data-go="5" id="skillNext" disabled>See my focus →</button></div></div>
+        <div style="display:flex;align-items:center;gap:14px"><span class="counter" id="skillCount">0 selected</span><button class="btn" data-go="5" id="skillNext" disabled>See my focus →</button></div></div>
     </div>
 
     <!-- 5 focus card -->
@@ -304,6 +317,6 @@
 </div>
 <div class="dotpop" id="dotpop"></div>
 <script src="html2canvas.min.js?v=20260909b"></script>
-<script src="ldi-app.js?v=20260924"></script>
+<script src="ldi-app.js?v=20261001"></script>
 </body>
 </html>

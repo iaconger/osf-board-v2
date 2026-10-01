@@ -51,15 +51,38 @@
   var LEADERS=[];
   var KEY='';
 
-  // ---- filter state ----
-  var F={div:'',region:'',entity:'',role:'',years:''};
+  // ---- filter state (each category is multi-select: an array of chosen values) ----
+  var F={div:[],region:[],entity:[],role:[],years:''};
   function inYears(y){var b=F.years;if(!b)return true;if(b==='0-2')return y<=2;if(b==='3-5')return y>=3&&y<=5;if(b==='6-10')return y>=6&&y<=10;return y>=11;}
-  function filtered(){return LEADERS.filter(function(l){return (!F.div||l.division===F.div)&&(!F.region||l.region===F.region)&&(!F.entity||l.entity===F.entity)&&(!F.role||l.role===F.role)&&inYears(l.years);});}
+  function has(a,v){return !a.length || a.indexOf(v)>=0;}
+  function filtered(){return LEADERS.filter(function(l){return has(F.div,l.division)&&has(F.region,l.region)&&has(F.entity,l.entity)&&has(F.role,l.role)&&inYears(l.years);});}
 
-  // populate filter selects
-  function populateDivisions(){var seen={},ds=[];LEADERS.forEach(function(l){var d=(l.division||'').trim();if(d&&!seen[d]){seen[d]=1;ds.push(d);}});ds.sort();var sel=el('fDiv');sel.innerHTML='<option value="">All departments</option>';ds.forEach(function(d){var o=document.createElement('option');o.value=d;o.textContent=d;sel.appendChild(o);});}
-  ROLES.forEach(function(rr){var o=document.createElement('option');o.value=rr;o.textContent=rr;el('fRole').appendChild(o);});
-  fillRegionSel(el('fRegion'));fillEntitySel(el('fEntity'),'');
+  // ---- multi-select filter dropdowns (checkbox lists; empty = all) ----
+  function closeMS(except){[].forEach.call(document.querySelectorAll('.ms-pop'),function(p){if(p!==except)p.hidden=true;});}
+  document.addEventListener('click',function(e){ if(!(e.target.closest&&e.target.closest('.ms'))) closeMS(null); });
+  function buildMS(id,key,options,allLabel){
+    var host=el(id); if(!host)return; var sel=F[key];
+    host.innerHTML=''; host.className='ms';
+    var btn=document.createElement('button'); btn.type='button'; btn.className='ms-btn';
+    var pop=document.createElement('div'); pop.className='ms-pop'; pop.hidden=true;
+    function relabel(){ btn.textContent=(sel.length===0?allLabel:(sel.length===1?sel[0]:sel.length+' selected')); }
+    options.forEach(function(opt){
+      var lab=document.createElement('label'); lab.className='ms-opt';
+      var cb=document.createElement('input'); cb.type='checkbox'; cb.value=opt; cb.checked=sel.indexOf(opt)>=0;
+      cb.addEventListener('change',function(){ var i=sel.indexOf(opt); if(cb.checked){if(i<0)sel.push(opt);}else{if(i>=0)sel.splice(i,1);} relabel(); renderAll(); });
+      lab.appendChild(cb); lab.appendChild(document.createTextNode(' '+opt)); pop.appendChild(lab);
+    });
+    btn.addEventListener('click',function(e){ e.stopPropagation(); var willOpen=pop.hidden; closeMS(pop); pop.hidden=!willOpen; });
+    host.appendChild(btn); host.appendChild(pop); relabel();
+  }
+  function deptOptions(){var seen={},ds=[];LEADERS.forEach(function(l){var d=(l.division||'').trim();if(d&&!seen[d]){seen[d]=1;ds.push(d);}});ds.sort();return ds;}
+  function buildAllMS(){
+    buildMS('fRegion','region',REGIONS,'All regions');            // Central / Eastern / Western / Other (independent of LDI)
+    buildMS('fEntity','entity',unionList(LDIS,'entity'),'All LDIs');
+    buildMS('fDiv','div',deptOptions(),'All departments');
+    buildMS('fRole','role',ROLES.slice(),'All roles');
+  }
+  buildAllMS();
 
   function num(n){return Number(n||0).toLocaleString();}
 
@@ -187,12 +210,8 @@
     el('asof').textContent='As of '+new Date().toLocaleString();
   }
 
-  el('fDiv').addEventListener('change',function(e){F.div=e.target.value;renderAll();});
-  el('fRole').addEventListener('change',function(e){F.role=e.target.value;renderAll();});
   el('fYears').addEventListener('change',function(e){F.years=e.target.value;renderAll();});
-  if(el('fRegion'))el('fRegion').addEventListener('change',function(e){F.region=e.target.value;renderAll();});
-  if(el('fEntity'))el('fEntity').addEventListener('change',function(e){F.entity=e.target.value;renderAll();});
-  el('reset').addEventListener('click',function(){F={div:'',region:'',entity:'',role:'',years:''};el('fDiv').value='';el('fRole').value='';el('fYears').value='';if(el('fRegion'))el('fRegion').value='';fillEntitySel(el('fEntity'),'');renderAll();});
+  el('reset').addEventListener('click',function(){F={div:[],region:[],entity:[],role:[],years:''};el('fYears').value='';buildAllMS();renderAll();});
   el('tSearch').addEventListener('input',function(e){BR.q=e.target.value.trim();BR.page=0;renderBrowser();});
   el('tSort').addEventListener('change',function(e){BR.sort=e.target.value;BR.page=0;renderBrowser();});
   el('prev').addEventListener('click',function(){if(BR.page>0){BR.page--;renderBrowser();}});
@@ -229,10 +248,10 @@
 
   function setDownloads(){
     var p='key='+encodeURIComponent(KEY);
-    if(F.div)p+='&division='+encodeURIComponent(F.div);
-    if(F.region)p+='&region='+encodeURIComponent(F.region);
-    if(F.entity)p+='&entity='+encodeURIComponent(F.entity);
-    if(F.role)p+='&role='+encodeURIComponent(F.role);
+    if(F.div.length)p+='&division='+encodeURIComponent(F.div.join(','));
+    if(F.region.length)p+='&region='+encodeURIComponent(F.region.join(','));
+    if(F.entity.length)p+='&entity='+encodeURIComponent(F.entity.join(','));
+    if(F.role.length)p+='&role='+encodeURIComponent(F.role.join(','));
     if(F.years)p+='&years='+encodeURIComponent(F.years);
     var x=el('dlxlsx'),c=el('dlcsv'),j=el('dljson');
     if(x)x.href='/export.xlsx?'+p; if(c)c.href='/export?'+p; if(j)j.href='/export.json?'+p;
@@ -255,8 +274,7 @@
       return r.json();
     }).then(function(d){ if(!d)return;
       LEADERS=normalize(d.submissions||[]);
-      populateDivisions();
-      fillRegionSel(el('fRegion')); fillEntitySel(el('fEntity'),'');
+      buildAllMS();
       el('gate').style.display='none';
       el('dash').style.display='block';
       renderAll();
