@@ -438,10 +438,31 @@
   .wel-title{font-family:"Chaparral Pro","Bitter",Georgia,serif;font-weight:600;font-size:clamp(40px,7vw,54px);line-height:1.05;transition:opacity .4s ease,transform .4s ease;animation:welUp .45s var(--ease) .6s backwards}
   .wel-logo{height:58px;width:auto;display:block;margin:34px auto 0;filter:brightness(0) invert(1);opacity:.95;transition:opacity .4s ease,transform .4s ease;animation:welUp .5s var(--ease) .82s backwards}
   @keyframes welUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+  /* ---- preview (demo) mode ---- */
+  .demobar{position:sticky;top:0;z-index:60;display:none;align-items:center;gap:12px;flex-wrap:wrap;
+    background:#fff6e2;border-bottom:1px solid #f0d9a4;color:#6b4e00;
+    padding:10px 18px;font-size:13.5px;line-height:1.35}
+  body.demo .demobar{display:flex}
+  .demobar .dbdot{width:9px;height:9px;border-radius:50%;background:#E57200;flex:0 0 auto;
+    box-shadow:0 0 0 3px rgba(229,114,0,.18)}
+  .demobar b{font-weight:700;letter-spacing:.2px}
+  .demobar .dbtxt{color:#7d6224}
+  .demobar .dbexit{margin-left:auto;border:1px solid #d9bd7a;background:#fff;color:#6b4e00;
+    border-radius:999px;padding:6px 15px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+  .demobar .dbexit:hover{background:#fffaf0}
+  .demo-alt{display:flex;flex-direction:column;align-items:center;gap:8px;margin:14px auto 0}
+  .demo-hint{font-size:13px;color:var(--muted,#5c665a);text-align:center;margin:0;max-width:430px}
+  @media print{.demobar{display:none !important}}
 </style>
 
 </head>
 <body>
+<div class="demobar" id="demobar" role="status">
+  <span class="dbdot" aria-hidden="true"></span>
+  <b>Preview mode</b>
+  <span class="dbtxt">Sample answers are filled in. Nothing is saved and your team is not added to the board.</span>
+  <button type="button" class="dbexit" id="demoExit">Exit preview</button>
+</div>
 <div class="splash" id="splash" aria-hidden="true"><div class="wel-inner">
   <svg class="wel-target" viewBox="0 0 238.87 226.92" aria-hidden="true">
 <g class="wl wl1"><path transform="matrix(.1,0,0,-.1,0,226.92)" d="M1758.43 1400.33C1756.11 1401.72 1753.79 1403.09 1751.44 1404.43 1581.08 1502.8 1379.36 1497.66 1219.09 1408.53 1138.1 1363.49 1067.7 1297 1017.27 1211.57 1017.17 1211.39 1017.06 1211.22 1016.96 1211.05 1015.05 1207.91 1013.23 1204.72 1011.47 1201.49 1011.47 1201.48 1011.46 1201.48 1011.45 1201.47 993.289 1168.02 982.973 1129.68 982.973 1088.95 982.973 958.539 1088.69 852.828 1219.09 852.828 1117.91 852.828 1023.25 880.68 942.328 929.16 785.004 1023.37 679.688 1195.51 679.688 1392.23 679.688 1394.94 679.707 1397.64 679.754 1400.33 684.082 1694.5 923.898 1931.63 1219.09 1931.63 1514.29 1931.63 1754.1 1694.5 1758.43 1400.33" fill="rgba(255,255,255,.16)" stroke="#ffffff" stroke-width="24"/></g>
@@ -480,6 +501,11 @@
         </div>
         <button class="btn" data-go="1" style="margin:0 auto">Start together
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+        <div class="demo-alt">
+          <button class="btn ghost" type="button" id="demoBtn">Preview it first
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+          <p class="demo-hint">For leaders. Walk the whole experience with sample answers before you do it with your team. Nothing is saved and nothing is added to the board.</p>
+        </div>
       </div>
     </section>
 
@@ -655,6 +681,6 @@
 
 <script src="osf-art.js"></script>
 
-<script src="app.js?v=20260916"></script>
+<script src="app.js?v=20261006"></script>
 </body>
 </html>
