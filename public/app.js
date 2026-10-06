@@ -47,50 +47,30 @@
 
   // ---- preview (demo) mode: leaders walk the real flow, nothing is submitted ----
   var DEMO = false;
-  var DEMO_DATA = {
-    dept: 'Marketing',
-    name: 'UX & SEO',
-    work: 'We design and improve the digital experiences people use to find care and get answers.',
-    reach: 'Anyone who visits our site to find a provider, book a visit or understand their care.',
-    connections: ['Patient Experience','OSF Digital / IT','Marketing & Communications','Medical Group'],
-    commitments: [
-      'We will test every new page with real people before it goes live, so what we ship is clear the first time.',
-      'We will bring Digital and Patient Experience into our work early instead of handing finished designs over.',
-      'We will make finding and booking care on our site fast enough that people choose OSF first.'
-    ]
-  };
-  function setVal(el, v){ if(!el) return; el.value = v; }
-  function enterDemo(){
-    DEMO = true;
-    document.body.classList.add('demo');
-    setVal(teamDept, DEMO_DATA.dept); setVal(teamName, DEMO_DATA.name);
-    if(teamWork) setVal(teamWork, DEMO_DATA.work);
-    setVal(reach, DEMO_DATA.reach);
-    selected.length = 0;
-    Array.prototype.slice.call(chipsBox.querySelectorAll('.chip')).forEach(function(c){
-      var on = DEMO_DATA.connections.indexOf(c.textContent.trim()) >= 0;
-      c.classList.toggle('on', on);
-      if(on) selected.push(c.textContent.trim());
-    });
-    var base = Array.prototype.slice.call(commitList.querySelectorAll('.commit-item:not(.commit-extra) .commit-in'));
-    base.forEach(function(t,i){ t.value = DEMO_DATA.commitments[i] || ''; setCommitCount(t); });
-    if(toConn) toConn.disabled = false;
-    updateSel(); gateReach(); gateFinish();
-    show(1);
-  }
-  function exitDemo(){
-    DEMO = false;
-    document.body.classList.remove('demo');
+  // Preview starts empty on purpose: the leader fills it in exactly as their
+  // team will, so the rehearsal matches the real thing.
+  function clearFlow(){
     teamDept.value=''; teamName.value=''; if(teamWork) teamWork.value=''; reach.value='';
     Array.prototype.slice.call(commitList.querySelectorAll('.commit-item.commit-extra')).forEach(function(it){ it.parentNode.removeChild(it); });
     Array.prototype.slice.call(commitList.querySelectorAll('.commit-in')).forEach(function(t){ t.value=''; setCommitCount(t); });
     selected.length=0;
     Array.prototype.slice.call(chipsBox.querySelectorAll('.chip.on')).forEach(function(c){ c.classList.remove('on'); });
+    updateSel(); gateFinish(); gateReach(); if(toConn) toConn.disabled = true;
+  }
+  function enterDemo(){
+    DEMO = true;
+    document.body.classList.add('demo');
+    clearFlow();
+    show(1);
+  }
+  function exitDemo(){
+    DEMO = false;
+    document.body.classList.remove('demo');
+    clearFlow();
     // drop the preview's local-only dot so the board is honest again
     board.feed = board.feed.filter(function(f){ return !f.demo; });
     board.count = board.realCount || board.count;
     board.submitted = false;
-    updateSel(); gateFinish(); gateReach(); if(toConn) toConn.disabled = true;
     show(0);
   }
   var demoBtn = document.getElementById('demoBtn');
